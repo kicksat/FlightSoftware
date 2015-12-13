@@ -38,6 +38,8 @@ void setup() {
   
   pinMode(LED, OUTPUT);
   digitalWrite(LED, LOW);
+
+  Serial.println("Ready");
 }
 
 void loop() {
@@ -52,9 +54,18 @@ void loop() {
       Serial.println("Deploying Antenna 1");
       delay(1000);
       digitalWrite(LED, HIGH);
-      digitalWrite(ANTENNA_BURN_1, HIGH);
-      delay(ANTENNA_BURN_TIME);
-      digitalWrite(ANTENNA_BURN_1, LOW);
+      for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k)
+      {
+        // PWM with 10% duty cycle
+        digitalWrite(ANTENNA_BURN_1, HIGH);
+        delay(5);
+        digitalWrite(ANTENNA_BURN_1, LOW);
+        delay(45);
+        digitalWrite(ANTENNA_BURN_1, HIGH);
+        delay(5);
+        digitalWrite(ANTENNA_BURN_1, LOW);
+        delay(45);
+      }
       digitalWrite(LED, LOW);
       antenna1_deployed = 1;
     }
@@ -63,9 +74,18 @@ void loop() {
       Serial.println("Deploying Antenna 2");
       delay(1000);
       digitalWrite(LED, HIGH);
-      digitalWrite(ANTENNA_BURN_2, HIGH);
-      delay(ANTENNA_BURN_TIME);
-      digitalWrite(ANTENNA_BURN_2, LOW);
+      for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k)
+      {
+        // PWM with 10% duty cycle
+        digitalWrite(ANTENNA_BURN_2, HIGH);
+        delay(5);
+        digitalWrite(ANTENNA_BURN_2, LOW);
+        delay(45);
+        digitalWrite(ANTENNA_BURN_2, HIGH);
+        delay(5);
+        digitalWrite(ANTENNA_BURN_2, LOW);
+        delay(45);
+      }
       digitalWrite(LED, LOW);
       antenna2_deployed = 1;
     }
@@ -74,9 +94,19 @@ void loop() {
       Serial.println("Arming Sprite Deployer");
       delay(1000);
       digitalWrite(LED, HIGH);
-      digitalWrite(DEPLOY_BURN_1, HIGH);
-      delay(ANTENNA_BURN_TIME);
-      digitalWrite(DEPLOY_BURN_1, LOW);
+      for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k)
+      {
+        // PWM with 10% duty cycle
+        digitalWrite(DEPLOY_BURN_1, HIGH);
+        delay(5);
+        digitalWrite(DEPLOY_BURN_1, LOW);
+        delay(45);
+        digitalWrite(DEPLOY_BURN_1, HIGH);
+        delay(5);
+        digitalWrite(DEPLOY_BURN_1, LOW);
+        delay(45);
+        
+      }
       digitalWrite(LED, LOW);
       sprites_armed = 1;
     }
@@ -85,9 +115,18 @@ void loop() {
       Serial.println("Deploying Sprites");
       delay(1000);
       digitalWrite(LED, HIGH);
-      digitalWrite(DEPLOY_BURN_2, HIGH);
-      delay(SPRITE_BURN_TIME);
-      digitalWrite(DEPLOY_BURN_2, LOW);
+      for (unsigned int k = 0; k < SPRITE_BURN_TIME/100; ++k)
+      {
+        // PWM with 20% duty cycle
+        digitalWrite(DEPLOY_BURN_2, HIGH);
+        delay(10);
+        digitalWrite(DEPLOY_BURN_2, LOW);
+        delay(40);
+        digitalWrite(DEPLOY_BURN_2, HIGH);
+        delay(10);
+        digitalWrite(DEPLOY_BURN_2, LOW);
+        delay(40);
+      }
       digitalWrite(LED, LOW);
       sprites_deployed = 1;
     }
