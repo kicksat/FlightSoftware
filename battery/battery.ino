@@ -1,3 +1,5 @@
+#define LED             13
+
 unsigned int val;
 float v, i;
 
@@ -7,10 +9,15 @@ void setup() {
   analogReadRes(10);
   analogReadAveraging(32);
   analogReference(DEFAULT);
+
+
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  digitalWrite(LED, HIGH);
+  
   val = analogRead(A1);
   v = val*(426.0/110.0)*(3.3/1024);
   Serial.print("Voltage: ");
@@ -23,5 +30,7 @@ void loop() {
   Serial.print(i);
   Serial.println(" mA");
   
-  delay(2000);
+  delay(1000);
+  digitalWrite(LED,LOW);
+  delay(1000);
 }
