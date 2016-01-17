@@ -26,7 +26,13 @@ void loop() {
 
   val = analogRead(A0);
   i = val*200.0*(3.3/1024);
-  Serial.print("Current: ");
+  Serial.print("Current Out: ");
+  Serial.print(i);
+  Serial.println(" mA");
+
+  val = analogRead(A2);
+  i = val*200.0*(3.3/1024);
+  Serial.print("Current In: ");
   Serial.print(i);
   Serial.println(" mA");
   
