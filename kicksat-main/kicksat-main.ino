@@ -9,7 +9,7 @@
 
 //Constants
 #define ANTENNA_BURN_TIME   2000 //milliseconds
-#define SPRITE_BURN_TIME   8000 //milliseconds
+#define SPRITE_BURN_TIME   12000 //milliseconds
 
 unsigned char antenna1_deployed = 0;
 unsigned char antenna2_deployed = 0;
@@ -117,15 +117,15 @@ void loop() {
       digitalWrite(LED, HIGH);
       for (unsigned int k = 0; k < SPRITE_BURN_TIME/100; ++k)
       {
-        // PWM with 20% duty cycle
+        // PWM with 30% duty cycle
         digitalWrite(DEPLOY_BURN_2, HIGH);
-        delay(10);
+        delay(15);
         digitalWrite(DEPLOY_BURN_2, LOW);
-        delay(40);
+        delay(35);
         digitalWrite(DEPLOY_BURN_2, HIGH);
-        delay(10);
+        delay(15);
         digitalWrite(DEPLOY_BURN_2, LOW);
-        delay(40);
+        delay(35);
       }
       digitalWrite(LED, LOW);
       sprites_deployed = 1;
