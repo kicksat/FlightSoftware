@@ -1,5 +1,9 @@
+#define NO_PORTB_PINCHANGES
+#define NO_PORTC_PINCHANGES
+
 #include <EasyTransfer.h>
 #include <LowPower.h>
+#include <PinChangeInt.h>
 #include <avr/wdt.h>
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
@@ -7,11 +11,13 @@
 // Pins and Constants
 #define RESET_ENB   12
 #define LED         13
-#define WD_PIN      0
+#define WD_PIN      1   // labeled TX0
+#define SW_PIN      0   
+#define TEST_LED    10
 
 unsigned long last_updated = 0;  // seconds
-unsigned long now = 0;    // milliseconds
-volatile char reset_flag = 0;     // for hysteresis
+unsigned long now = 0;           // milliseconds
+volatile char reset_flag = 0;    // for hysteresis
 int led_flip = 1;
 
 // Structs for serial communication
@@ -31,16 +37,33 @@ EasyTransfer ET_data;
 
 info sat_info;
 
+// Called when rising pin change detected on pin 0
+void heartbeat() {
+  reset_flag = 0;
+  digitalWrite(LED, LOW);
+  wdt_reset();
+}
+
+void switchMode() {
+  // TODO: Implement switching modes
+  Serial.begin(9600);
+  ET_data.begin(details(sat_info), &Serial);
+//  reset_flag = 0;
+  digitalWrite(TEST_LED, HIGH);
+  wdt_reset();
+}
+
 void setup() {
-//  Serial.begin(9600);
-  
   pinMode(RESET_ENB, OUTPUT);
   pinMode(LED, OUTPUT);
   pinMode(WD_PIN, INPUT);
+  pinMode(TEST_LED, OUTPUT);
+
+  attachPinChangeInterrupt(WD_PIN, heartbeat, RISING);
+  attachPinChangeInterrupt(SW_PIN, switchMode, RISING);
   
 //  ET_data.begin(details(sat_info), &Serial);
 
-//  delay(1000);
   for (int k = 0; k < 3; k++) {
     digitalWrite(LED, HIGH);
     delay(250);
@@ -48,18 +71,22 @@ void setup() {
     delay(250);
    }
   digitalWrite(LED, LOW);
-//  wdt_enable(WDTO_8S);
-//  wdt_setup();
-  pinSetup();
-//  Serial.println("Watchdog Ready");
-
 }
 
 void loop() {
   LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
-//  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-//  sleep_enable();
+
+
+  // CHECK MODE AND THEN DO SERIAL STUFF
+  
+  // TESTING STUFF
+  digitalWrite(TEST_LED, HIGH);
+  delay(1000);
+  digitalWrite(TEST_LED, LOW);
+
 }
+
+
 
 void wdt_setup() {
 
@@ -77,6 +104,7 @@ void wdt_setup() {
 
 ISR(WDT_vect) {
   digitalWrite(LED, HIGH);
+//  digitalWrite(TEST_LED, HIGH);
 //  (led_flip) ? digitalWrite(LED, HIGH) : digitalWrite(LED, LOW);
 //  led_flip = !led_flip;
 //  if (reset_flag) {
@@ -85,16 +113,16 @@ ISR(WDT_vect) {
   reset_flag = 1;
 }
 
-ISR(PCINT2_vect) {
-//  if (digitalRead(WD_PIN)) {
-  if(PIND & (1 << PD1)){
-    reset_flag = 0;
-    digitalWrite(LED, LOW);
-    wdt_reset();
-//    (led_flip) ? digitalWrite(LED, HIGH) : digitalWrite(LED, LOW);
-//    led_flip = !led_flip;
-  }
-}
+//ISR(PCINT2_vect) {
+////  if (digitalRead(WD_PIN)) {
+//  if(PIND & (1 << PD1)){
+//    reset_flag = 0;
+//    digitalWrite(LED, LOW);
+//    wdt_reset();
+////    (led_flip) ? digitalWrite(LED, HIGH) : digitalWrite(LED, LOW);
+////    led_flip = !led_flip;
+//  }
+//}
 
 void sleepNow() {
 
@@ -138,5 +166,6 @@ void resetBoard() {
     reset_flag = 0;
     delay(100);
   }
+}
   
 
