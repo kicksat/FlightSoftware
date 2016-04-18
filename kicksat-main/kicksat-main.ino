@@ -20,7 +20,7 @@ char command_buffer[4];
 
 void setup() {
   Serial.begin(9600);
-  
+  \\ Setting all burn pins to output
   pinMode(ANTENNA_BURN_1, OUTPUT);
   digitalWrite(ANTENNA_BURN_1, LOW);
   
@@ -32,12 +32,12 @@ void setup() {
   
   pinMode(DEPLOY_BURN_2, OUTPUT);
   digitalWrite(DEPLOY_BURN_2, LOW);
-  
+  \\ GPS Pin
   pinMode(ENAB_GPS, OUTPUT);
   digitalWrite(ENAB_GPS, LOW);
   
   pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
+  digitalWrite(LED, LOW); // Shut LED Off
 
   Serial.println("Ready");
 }
@@ -49,12 +49,12 @@ void loop() {
     Serial.readBytes(command_buffer, 3);
     Serial.println(command_buffer);
     
-    if(strcmp(command_buffer, "AB1") == 0)
+    if(strcmp(command_buffer, "AB1") == 0) //If deployer 1 command is received
     {
-      Serial.println("Deploying Antenna 1");
+      Serial.println("Deploying Antenna 1"); 
       delay(1000);
       digitalWrite(LED, HIGH);
-      for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k)
+      for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) // Each loop is 100ms`
       {
         // PWM with 10% duty cycle
         digitalWrite(ANTENNA_BURN_1, HIGH);

@@ -12,31 +12,31 @@ void setup() {
 
 
   pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
+  digitalWrite(LED, LOW); // Shut off LED
 }
 
 void loop() {
-  digitalWrite(LED, HIGH);
+  digitalWrite(LED, HIGH); // LED On
   
-  val = analogRead(A1);
-  v = val*(426.0/110.0)*(3.3/1024);
-  Serial.print("Voltage: ");
+  val = analogRead(A1); // Read Voltage
+  v = val*(426.0/110.0)*(3.3/1024); // Convert to Volts
+  Serial.print("Voltage: "); 
   Serial.print(v);
   Serial.println(" v");
 
-  val = analogRead(A0);
-  i = val*200.0*(3.3/1024);
+  val = analogRead(A0); // Read Current Out
+  i = val*200.0*(3.3/1024); //Convert to mA
   Serial.print("Current Out: ");
   Serial.print(i);
   Serial.println(" mA");
 
-  val = analogRead(A2);
-  i = val*200.0*(3.3/1024);
+  val = analogRead(A2); // Read Current In
+  i = val*200.0*(3.3/1024); //Convert to mA
   Serial.print("Current In: ");
   Serial.print(i);
   Serial.println(" mA");
   
   delay(1000);
-  digitalWrite(LED,LOW);
+  digitalWrite(LED,LOW); // LED Off
   delay(1000);
 }
