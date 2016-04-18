@@ -49,12 +49,12 @@ void loop() {
     Serial.readBytes(command_buffer, 3);
     Serial.println(command_buffer);
     
-    if(strcmp(command_buffer, "AB1") == 0) //If deployer 1 command is received
+    if(strcmp(command_buffer, "AB1") == 0) //Command burn for Antenna 1
     {
       Serial.println("Deploying Antenna 1"); 
       delay(1000);
       digitalWrite(LED, HIGH);
-      for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) // Each loop is 100ms`
+      for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) 
       {
         // PWM with 10% duty cycle
         digitalWrite(ANTENNA_BURN_1, HIGH);
@@ -69,7 +69,7 @@ void loop() {
       digitalWrite(LED, LOW);
       antenna1_deployed = 1;
     }
-    else if(strcmp(command_buffer, "AB2") == 0)
+    else if(strcmp(command_buffer, "AB2") == 0) //Command burn for Antenna 2
     {
       Serial.println("Deploying Antenna 2");
       delay(1000);
@@ -89,7 +89,7 @@ void loop() {
       digitalWrite(LED, LOW);
       antenna2_deployed = 1;
     }
-    else if(strcmp(command_buffer, "DB1") == 0)
+    else if(strcmp(command_buffer, "DB1") == 0) //Command burn for monofilament safety
     {
       Serial.println("Arming Sprite Deployer");
       delay(1000);
@@ -110,7 +110,7 @@ void loop() {
       digitalWrite(LED, LOW);
       sprites_armed = 1;
     }
-    else if(strcmp(command_buffer, "DB2") == 0)
+    else if(strcmp(command_buffer, "DB2") == 0) //Command burn for mainß deployer piece
     {
       Serial.println("Deploying Sprites");
       delay(1000);
