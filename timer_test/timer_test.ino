@@ -2,7 +2,7 @@
 #include <Snooze.h>
 
 #define BEAT_PERIOD    3000   // 3 seconds
-#define DATA_PERIOD    12000  // 1 day
+#define DATA_PERIOD    24000  // 1 day
 #define LED            13
 #define WD_PIN         0
 #define SW_PIN         1
@@ -97,17 +97,21 @@ void loop() {
 
   if (now - prev_data_sent > DATA_PERIOD) {
     // TODO : implement
-    Serial.println("Data message");
+    Serial.print("Data message, tries: ");
+    Serial.print(tries);
     serialMode();
     tries = 0;
-    delay(1000);
+    ack_received = 0;
+//    delay(1000);
     digitalWrite(LED, HIGH);
+    Serial.println(tries);
     while (tries < 3 && !ack_received) {
       Serial.println("in while loops");
       buffer_index = 0;
       ET.sendData();
       start_t = millis();
       while (millis() - start_t < SERIAL_TIMEOUT) {
+        Serial.println("in other while loop");
         if (Serial1.available()) {
           char new_byte = Serial1.read();
           Serial.print("received charg:  ");
@@ -132,11 +136,14 @@ void loop() {
     }
 
     // TODO: switch back to watchdog mode
+    Serial.println("out of while loop");
     digitalWrite(LED, LOW);
+    Serial.println("serial ended 2");
     Serial1.end();
     watchdogMode();
   } 
-  
+
+  delay(2000);
 }
 
 // function to switch into serial
