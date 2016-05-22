@@ -89,4 +89,3 @@ u16 crc16_ccitt(const u8 *buf, u32 len, u16 crc)
 #ifdef __cplusplus
 }
 #endif
-

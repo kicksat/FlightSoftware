@@ -1,6 +1,3 @@
-// #ifdef __cplusplus
-// extern "C" {
-// #endif
 /*
  * Copyright (C) 2015 Swift Navigation Inc.
  * Contact: Fergus Noble <fergus@swift-nav.com>
@@ -22,10 +19,10 @@
  *
  *  * Messages for reading and writing the device's device settings.
  * 
- * These are in the implementation-defined range (0x0000-0x00FF). Note
- * that some of these messages share the same message type ID for both
- * the host request and the device response. See the accompanying
- * document for descriptions of settings configurations and examples:
+ * Note that some of these messages share the same message type ID for both the
+ * host request and the device response. See the accompanying document for
+ * descriptions of settings configurations and examples:
+ * 
  * https://github.com/swift-nav/piksi\_firmware/blob/master/docs/settings.pdf
  * \{ */
 
@@ -59,7 +56,7 @@ process to this message when it is received from sender ID
 
 /** Read device configuration settings (host => device)
  *
-* The setting message reads the devices configuration.
+* The setting message reads the device configuration.
  */
 #define SBP_MSG_SETTINGS_READ_REQ           0x00A4
 typedef struct __attribute__((packed)) {
@@ -72,7 +69,7 @@ this message when it is received from sender ID 0x42.
 
 /** Read device configuration settings (host <= device)
  *
-* The setting message reads the devices configuration.
+* The setting message reads the device configuration.
  */
 #define SBP_MSG_SETTINGS_READ_RESP          0x00A5
 typedef struct __attribute__((packed)) {
@@ -126,7 +123,3 @@ typedef struct __attribute__((packed)) {
 /** \} */
 
 #endif /* LIBSBP_SETTINGS_MESSAGES_H */
-
-// #ifdef __cplusplus
-// }
-// #endif

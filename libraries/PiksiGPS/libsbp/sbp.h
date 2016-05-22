@@ -1,7 +1,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 /*
  * Copyright (C) 2011-2014 Swift Navigation Inc.
  * Contact: Fergus Noble <fergus@swift-nav.com>
@@ -87,7 +86,6 @@ s8 sbp_send_message(sbp_state_t *s, u16 msg_type, u16 sender_id, u8 len, u8 *pay
                     u32 (*write)(u8 *buff, u32 n, void* context));
 
 #endif /* LIBSBP_SBP_H */
-
 
 #ifdef __cplusplus
 }

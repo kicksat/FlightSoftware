@@ -129,6 +129,7 @@ void loop() {
       if (ET.receiveData()) {
         digitalWrite(TEST_LED, HIGH);
         Serial.write(ack_buff, 4);
+//        digitalWrite(TEST_LED, LOW);
         break;
 //       Just for fun, we will blink it out too
 //       for (int i = satInfo.x_vel; i>0; i--) {
@@ -141,7 +142,7 @@ void loop() {
       delay(100);  //TODO: REMOVE?
       digitalWrite(TEST_LED, LOW);
     }
-//    digitalWrite(TEST_LED, LOW);
+    digitalWrite(TEST_LED, LOW);
     Serial.end();
     watchdogMode();
 //    (led_flip) ? digitalWrite(TEST_LED, HIGH) : digitalWrite(TEST_LED, LOW);

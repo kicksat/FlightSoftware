@@ -24,6 +24,7 @@
 #define LIBSBP_ACQUISITION_MESSAGES_H
 
 #include "common.h"
+#include "gnss_signal.h"
 
 
 /** Satellite acquisition result
@@ -36,16 +37,12 @@
  */
 #define SBP_MSG_ACQ_RESULT       0x0014
 typedef struct __attribute__((packed)) {
-  float snr;    /**< SNR of best point. Currently dimensonless, but will have
-units of dB Hz in the revision of this message.
+  float snr;    /**< SNR of best point. Currently in arbitrary SNR points, but will
+be in units of dB Hz in a later revision of this message.
  */
   float cp;     /**< Code phase of best point [chips] */
   float cf;     /**< Carrier frequency of best point [hz] */
-  u32 sid;    /**< Signal identifier of the satellite signal for which acquisition
-was attempted - values 0x00 through 0x1F represent GPS PRNs 1
-through 32 respectively (PRN-1 notation); other values reserved
-for future use.
- */
+  sbp_gnss_signal_t sid;    /**< GNSS signal for which acquisition was attempted */
 } msg_acq_result_t;
 
 

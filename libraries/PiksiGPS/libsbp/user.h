@@ -11,21 +11,32 @@
  */
 
 /*****************************************************************************
- * Automatically generated with generate.py. Please do not hand edit!
+ * Automatically generated from yaml/swiftnav/sbp/user.yaml
+ * with generate.py. Please do not hand edit!
  *****************************************************************************/
 
-#ifndef LIBSBP_VERSION_H
-#define LIBSBP_VERSION_H
-
-/** \addtogroup sbp
+/** \defgroup user User
+ *
+ *  * Messages reserved for use by the user.
  * \{ */
 
-/** Protocol major version. */
-#define SBP_MAJOR_VERSION 0
-/** Protocol minor version. */
-#define SBP_MINOR_VERSION 52
+#ifndef LIBSBP_USER_MESSAGES_H
+#define LIBSBP_USER_MESSAGES_H
+
+#include "common.h"
+
+
+/** User data
+ *
+ * This message can contain any application specific user data up to a
+ * maximum length of 255 bytes per message.
+ */
+#define SBP_MSG_USER_DATA 0x0800
+typedef struct __attribute__((packed)) {
+  u8 contents[0]; /**< User data payload */
+} msg_user_data_t;
+
 
 /** \} */
 
-
-#endif /* LIBSBP_VERSION_H */
+#endif /* LIBSBP_USER_MESSAGES_H */
