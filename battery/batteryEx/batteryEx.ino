@@ -1,7 +1,7 @@
 #include "battery.h"
 
 #define LED 13
-
+#define GPS_PIN 17
 
 
 unsigned int volt, currIn, currOut;
@@ -13,6 +13,9 @@ void setup() {
   battery.init();
   pinMode(LED, OUTPUT);
   digitalWrite(LED, LOW);
+  pinMode(GPS_PIN ,OUTPUT);
+    
+  digitalWrite(GPS_PIN, LOW);
   
 
 }
@@ -35,6 +38,8 @@ void loop() {
   delay(1000);
   digitalWrite(LED,LOW); // LED Off
   delay(1000);
+
+   digitalWrite(GPS_PIN, HIGH);
 
 
 

@@ -10,13 +10,13 @@ class battery {
 public:
     void init();
     void update();
-    unsigned int getVoltage();
-    unsigned int getCurrentIn();
-    unsigned int getCurrentOut();
+    float getVoltage();
+    float getCurrentIn();
+    float getCurrentOut();
 
-    unsigned int voltage;
-    unsigned int currentIn;
-    unsigned int currentOut;
+    float voltage;
+    float currentIn;
+    float currentOut;
 
 };
 

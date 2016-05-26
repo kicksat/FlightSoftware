@@ -13,6 +13,8 @@ void battery::init() {
 void battery::update() {
     unsigned int val;
 
+    // TODO: make sure voltage levels are correct
+
     val = analogRead(A1); // Read Voltage
     voltage = val*(426.0/110.0)*(3.3/1024); // Convert to Volts
 
@@ -21,17 +23,17 @@ void battery::update() {
 
     val = analogRead(A2); // Read Current In
     currentIn = val*200.0*(3.3/1024); //Convert to mA
-
 }
-unsigned int battery::getVoltage(){
+
+float battery::getVoltage() {
     return voltage;
-
 }
-unsigned int battery::getCurrentIn(){
+
+float battery::getCurrentIn() {
     return currentIn;
-
 }
-unsigned int battery::getCurrentOut(){
+
+float battery::getCurrentOut() {
     return currentOut;
 }
 
