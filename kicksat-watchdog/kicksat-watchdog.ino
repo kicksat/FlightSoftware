@@ -181,6 +181,7 @@ void loop() {
           break;
       }
     }
+    Serial.println("entering lp mode");
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
   } else {
     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
