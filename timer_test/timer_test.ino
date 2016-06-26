@@ -12,7 +12,8 @@
   #define DATA_PERIOD    24000  // 1 day
   #define BATTERY_PERIOD 10000 // 10 secs
   #define RADIO_PERIOD   12000 // 20 secs
-  #define RADIO_RX_TIME  8000 // 15 seconds
+  #define LONG_RADIO_PERIOD 20000
+  #define RADIO_RX_TIME  10000 // 15 seconds
   #define SLEEP_TIME     BEAT_PERIOD - 500
   #define SERIAL_TIMEOUT 2000
   #define LED            13
@@ -23,10 +24,11 @@
   #define DATA_PERIOD    24000  // 1 day
   #define BATTERY_PERIOD 10000 // 10 secs
   #define RADIO_PERIOD   100000 // 100 secs
+  #define LONG_RADIO_PERIOD 200000
   #define RADIO_RX_TIME  15000 // 15 seconds
   #define SLEEP_TIME     BEAT_PERIOD - 500
   #define SERIAL_TIMEOUT 2000
-  #define CMD_LENGTH            15
+  #define CMD_LENGTH            16
   #define GPS_TIMEOUT    600000  // 10 min
 #endif
 
@@ -51,7 +53,7 @@
 #define LOW_BATTERY_VOLTAGE   6.8 
 #define PWR_CONSERVE_VOLTAGE  7.1
 #define PACKET_SIZE           sizeof(info)
-//#define ACK_SIZE              8
+#define ACK_SIZE              8
 
 
 #define RADIO_TRIES             3
@@ -81,6 +83,7 @@ uint32_t prev_millis = 0;
 uint64_t seconds = 0;       //not necessary?
 unsigned long now = 0;
 
+unsigned long radio_period = RADIO_PERIOD;
 unsigned long prev_beat_sent;
 unsigned long prev_led_sent;
 unsigned long prev_data_sent;
@@ -90,6 +93,7 @@ unsigned long radioRxEnd;
 unsigned long gpsEnd;
 
 bool low_power_mode = 0;
+bool pwr_cnsrv_mode = 0;
 bool gps_on = 0;
 bool radioRxMode = 0;
 bool radioTxKillSwitch = 0;
@@ -112,10 +116,8 @@ uint32_t ack_received = 0;
 int led_flip = 1;
 #endif
 
-msg_pos_ecef_t     pos_ecef1;
+msg_pos_ecef_t     position;
 msg_vel_ecef_t     velocity;
-
-      
 
 unsigned int radio_tries = 0;
 
@@ -128,13 +130,13 @@ PiksiGPS gps;
 AX25 radio = AX25(KICKSAT_RADIO_SS, KICKSAT_RADIO_INTERUPT, KICKSAT_RADIO_SDN ); 
 info sat_info;
 battery battery;
-///TODO: burn burn;
+burn burn;
 
 void setup() {
   
   #ifdef DEBUG
   Serial.begin(9600);
-  pinMode(LED, OUTPUT);
+//  pinMode(LED, OUTPUT);
   #endif
   
   pinMode(WD_PIN, OUTPUT);
@@ -142,7 +144,7 @@ void setup() {
   pinMode(KICKSAT_RADIO_SDN, OUTPUT);
   digitalWrite(KICKSAT_RADIO_SDN, HIGH);
   config.setTimer(SLEEP_TIME);
-//TODO  burn.init()
+  burn.init();  //TODO : test
   battery.init();
   //TODO: add pins init
 
@@ -204,13 +206,13 @@ void loop() {
   if (now - prev_beat_sent > BEAT_PERIOD) {
     #ifdef DEBUG
     Serial.println("heartbeat");
-    digitalWrite(LED, HIGH);
+//    digitalWrite(LED, HIGH);
     #endif
     digitalWrite(WD_PIN, HIGH);
     delay(100);
     digitalWrite(WD_PIN,LOW);
     #ifdef DEBUG
-    digitalWrite(LED, LOW);
+//    digitalWrite(LED, LOW);
     #endif
     prev_beat_sent = now;
     }
@@ -225,10 +227,29 @@ void loop() {
     sat_info.currentIn = battery.getCurrentIn();
     sat_info.currentOut = battery.getCurrentOut();
     if (sat_info.voltage < LOW_BATTERY_VOLTAGE) {
-//      low_power_mode = 1;
+      low_power_mode = 1;
+      pwr_cnsrv_mode = 0;
+      #ifdef DEBUG
+      Serial.println("Low Power Mode");
+      #endif
     } else if (sat_info.voltage < PWR_CONSERVE_VOLTAGE) {
+      #ifdef DEBUG
+      Serial.println("Pwr Convserve Mode");
+      #endif
+      pwr_cnsrv_mode = 1;
+      low_power_mode = 0;
+      radio_period = LONG_RADIO_PERIOD;
+//      conservePwr();
       // TODO: function to go into pwr conserve mode
       //TODO: figure out how to get out of low power modes
+    } else {
+      #ifdef DEBUG
+      Serial.println("Battery Volt Good");
+      #endif
+      low_power_mode = 0;
+      pwr_cnsrv_mode = 0;
+      radio_period = RADIO_PERIOD;
+      //TODO: to get out of pwrconserve or low power mode
     }
     prev_battery = now;
   }
@@ -238,6 +259,7 @@ void loop() {
     if (now < radioRxEnd) {
       #ifdef DEBUG
       Serial.println("Radio Receiving");
+//      digitalWrite(LED, HIGH);
       #endif
       if (radio.available()) {
         // should be reply message
@@ -253,7 +275,7 @@ void loop() {
           // TODO: test ack packet
           if (!radioTxKillSwitch) {  //TODO: double check?
             radio.setTxMode();
-            radio.transmit(radioAckMsg);   
+            radio.transmit(radioAckMsg, ACK_SIZE);   
         }
           radioRxMode = 0;
           digitalWrite(KICKSAT_RADIO_SDN, HIGH);
@@ -262,6 +284,7 @@ void loop() {
     } else {
       // did not receive a message
       #ifdef DEBUG
+//      digitalWrite(LED, HIGH);
       Serial.println("Did not receive Message");
       #endif
       radioRxMode = 0;
@@ -270,7 +293,7 @@ void loop() {
   }
 //  Serial.println(low_power_mode);
   if (!low_power_mode) { /// OR just change radio period
-    if ((now - prev_radio_sent > RADIO_PERIOD)) {
+    if ((now - prev_radio_sent > radio_period)) {
       #ifdef DEBUG
       Serial.println("Radio Transmitting");
        sat_info.seconds = 0x100;
@@ -297,12 +320,14 @@ sat_info.currentOut = 1.02;
       if (radio.powerAndInit()) {  //takes around 3 seconds
         if (!radioTxKillSwitch) {
           radio.setTxMode();
-          radio.transmit("FFF");  //TODO: send and test serialized packet... 
+          radio.transmit(serializedInfo, PACKET_SIZE  );  //TODO: send and test serialized packet... 
+//          radio.transmit("serializedInfo");
         }
-        //send watchdog reset /// TODO: DO WE NEED THIS?
+        //send watchdog reset /// TODO: DO WE NEED THIS? I don't think so
         digitalWrite(WD_PIN, HIGH);
         delay(100);
         digitalWrite(WD_PIN,LOW);
+        /////////////////
   
         // switch to RX mode
         radio.setRxMode();    
@@ -310,8 +335,6 @@ sat_info.currentOut = 1.02;
   //      radioRxStart = now;
         radioRxEnd = now + RADIO_RX_TIME;  // + sleep time?
         #ifdef DEBUG
-        Serial.print("old buffer: ");
-        for (int i=0; i< MAX_LENGTH_FINAL ;i++) Serial.print(RcvSequence[i]);
         Serial.print("now: ");
         Serial.println(now);
         Serial.print("rx end time: ");
@@ -354,20 +377,21 @@ sat_info.currentOut = 1.02;
     Serial.println("GPS on");
     #endif
     gps.update();
-    if (pos_ecef1.tow != gps.get_pos_ecef().tow) {
+    if (position.tow != gps.get_pos_ecef().tow) {
       #ifdef DEBUG
       Serial.println("New ECEF message");
       Serial.print("x: ");
-      Serial.println(pos_ecef1.x);
+      Serial.println(position.x);
       Serial.print("y: "); 
-      Serial.println(pos_ecef1.y);
+      Serial.println(position.y);
       Serial.print("z: ");
-      Serial.println(pos_ecef1.z);
+      Serial.println(position.z);
       #endif
-      pos_ecef1 = gps.get_pos_ecef();
-      sat_info.x_ecef = pos_ecef1.x;
-      sat_info.y_ecef = pos_ecef1.y;
-      sat_info.z_ecef = pos_ecef1.z;
+      /// TODO: make this correct
+      position = gps.get_pos_ecef();
+      sat_info.x_ecef = position.x;
+      sat_info.y_ecef = position.y;
+      sat_info.z_ecef = position.z;
       position_updated = 1;
     }
   
@@ -395,6 +419,8 @@ sat_info.currentOut = 1.02;
       gps_on = 0;
       digitalWrite(GPS_PIN, LOW);
      }
+  } else {
+    gps_on = 0;
   }
 
 
@@ -452,6 +478,11 @@ sat_info.currentOut = 1.02;
   delay(2000);
 }
 
+void conservePwr() {
+  // TODO: implement
+  #undef RADIO_PERIOD
+  #define RADIO_PERIOD 
+}
 void processPacket(char* msg) {
   #ifdef DEBUG
   for (int i=0 ; i < len; i++) Serial.print(msg[i]);
@@ -471,27 +502,30 @@ void processPacket(char* msg) {
     #endif
   } else if (strncmp(ARM_CMD, msg, CMD_LENGTH) == 0) {
     //TODO implement
-    //burn.
+    //burn.burnDB1();
     radioAckMsg = "ack_bw_arm";
     #ifdef DEBUG
     Serial.println("Arm sprites command");
     #endif
   } else if (strncmp(DEPLOY_CMD, msg, CMD_LENGTH) == 0) {
     //TODO implement
+
+    // TODO: check software flag in if?
+    // burn.burnDB2();
     radioAckMsg = "ack_deploy";
     #ifdef DEBUG
     Serial.println("Deploy sprites command");
     #endif
   } else if (strncmp(TX_KILL_ENABLE_CMD, msg, CMD_LENGTH) == 0) {
     radioTxKillSwitch = 1;
-    //TODO implement
+    //TODO test
     radioAckMsg = "ack_tx_off";
     #ifdef DEBUG
     Serial.println("Radio TX kill enable command");
     #endif
   } else if (strncmp(TX_KILL_DISABLE_CMD, msg, CMD_LENGTH) == 0) {
     radioTxKillSwitch = 0;
-    //TODO implement
+    //TODO test
     radioAckMsg = "ack_tx_on1";
     #ifdef DEBUG
     Serial.println("Radio TX kill disabled command");
@@ -506,6 +540,7 @@ void processPacket(char* msg) {
     low_power_mode = 1;
     radioAckMsg = "ack_lowpwr";
     //TODO implement
+    
     #ifdef DEBUG
     Serial.println("low power mode command");
     #endif
