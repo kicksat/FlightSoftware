@@ -2,6 +2,7 @@
 
 #include <EasyTransfer.h>
 #include <Snooze.h>
+#include <EEPROM.h>
 #include <burn.h>
 #include <battery.h>
 #include <ax25.h>
@@ -11,13 +12,13 @@
   #define BEAT_PERIOD    3000   // 3 seconds
   #define DATA_PERIOD    24000  // 1 day
   #define BATTERY_PERIOD 10000 // 10 secs
-  #define RADIO_PERIOD   12000 // 20 secs
+  #define RADIO_PERIOD   20000 // 20 secs
   #define LONG_RADIO_PERIOD 20000
-  #define RADIO_RX_TIME  10000 // 15 seconds
+  #define RADIO_RX_TIME  13000 // 15 seconds
   #define SLEEP_TIME     BEAT_PERIOD - 500
   #define SERIAL_TIMEOUT 2000
   #define LED            13
-  #define CMD_LENGTH     8
+  #define CMD_LENGTH     16
   #define GPS_TIMEOUT    20000
 #else
   #define BEAT_PERIOD    3000   // 3 seconds
@@ -49,11 +50,18 @@
 #define KICKSAT_RADIO_SS        10
 #define GPS_PIN                 17
 
+// EEPROM locations
+#define EEP_FIRST_WAKEUP        0
+#define EEP_ANTENNA_DEPLOYED    1
+#define EEP_BIT_FLAG            2
+#define EEP_ARMED               3
+#define EEP_DEPLOYED            4
+
 
 #define LOW_BATTERY_VOLTAGE   6.8 
 #define PWR_CONSERVE_VOLTAGE  7.1
 #define PACKET_SIZE           sizeof(info)
-#define ACK_SIZE              8
+#define ACK_SIZE              10
 
 
 #define RADIO_TRIES             3
@@ -87,7 +95,7 @@ unsigned long radio_period = RADIO_PERIOD;
 unsigned long prev_beat_sent;
 unsigned long prev_led_sent;
 unsigned long prev_data_sent;
-unsigned long prev_battery;
+unsigned long prev_battery_update;
 unsigned long prev_radio_sent;
 unsigned long radioRxEnd;
 unsigned long gpsEnd;
@@ -136,7 +144,11 @@ void setup() {
   
   #ifdef DEBUG
   Serial.begin(9600);
-//  pinMode(LED, OUTPUT);
+  pinMode(LED, OUTPUT);
+   digitalWrite(LED, HIGH);
+  delay(2000);
+  digitalWrite(LED, LOW);
+  delay(500);
   #endif
   
   pinMode(WD_PIN, OUTPUT);
@@ -147,31 +159,14 @@ void setup() {
   burn.init();  //TODO : test
   battery.init();
   //TODO: add pins init
+  //TODO: add checking eeprom and updating stuff correctly
 
-#ifdef DEBUG
-  digitalWrite(LED, HIGH);
-  delay(500);
-  digitalWrite(LED, LOW);
-  delay(500);
+  #ifdef DEBUG
+ 
 
   Serial.println(sizeof(prev_beat_sent));
   Serial.println(sizeof(sat_info.x_ecef));
   Serial.println(sizeof(sat_info));
-
-  // Test Data
-//  sat_info.seconds = 0xEEEEEEEE;
-//  sat_info.x_ecef = 0xDDDDDDDD;
-//  sat_info.y_ecef = 0xCCCCCCCC;
-//  sat_info.z_ecef = 0xBBBBBBBB;
-//  sat_info.voltage = 0xAAAA;
-//  sat_info.currentIn = 0x9999;
-//  sat_info.currentOut = 0x8888;
-//  sat_info.x_vel = 0x7777;
-//  sat_info.y_vel = 0x6666;
-//  sat_info.z_vel = 0x5555;
-//  sat_info.tow = 0x4444;
-//  sat_info.wn = 0x33;
-//  sat_info.burnwires = 0x2; 
 
 #endif
 
@@ -192,9 +187,14 @@ void loop() {
   sat_info.seconds = seconds;
   #ifdef DEBUG
   Serial.print("Main Seconds: ");
-  Serial.println(uint32_t(sat_info.seconds));
-  Serial.print("Millis() = ");
+  Serial.print(uint32_t(sat_info.seconds));
+  Serial.print("\tMillis() = ");
   Serial.println(millis());
+  Serial.print("EEPROM - first woke: "); Serial.print(EEPROM.read(EEP_FIRST_WAKEUP));
+  Serial.print("\tant dep: "); Serial.print(EEPROM.read(EEP_ANTENNA_DEPLOYED));
+  Serial.print("\tbit flag: "); Serial.print(EEPROM.read(EEP_BIT_FLAG));
+  Serial.print("\tarmed: "); Serial.print(EEPROM.read(EEP_ARMED));
+  Serial.print("\tdeplyed: "); Serial.print(EEPROM.read(EEP_DEPLOYED));
   #endif
 
   //************************************************************
@@ -218,7 +218,7 @@ void loop() {
     }
     
   // Update battery info;
-  if (now - prev_battery > BATTERY_PERIOD) {
+  if (now - prev_battery_update > BATTERY_PERIOD) {
     #ifdef DEBUG
     Serial.println("Battery Update");
     #endif
@@ -226,9 +226,13 @@ void loop() {
     sat_info.voltage = battery.getVoltage();
     sat_info.currentIn = battery.getCurrentIn();
     sat_info.currentOut = battery.getCurrentOut();
+    #ifdef DEBUG
+    Serial.print("Voltage"); Serial.println(sat_info.voltage);
+    Serial.print("Voltage"); Serial.println(sat_info.currentOut);
+    #endif
     if (sat_info.voltage < LOW_BATTERY_VOLTAGE) {
-      low_power_mode = 1;
-      pwr_cnsrv_mode = 0;
+//      low_power_mode = 1;
+//      pwr_cnsrv_mode = 0;
       #ifdef DEBUG
       Serial.println("Low Power Mode");
       #endif
@@ -236,9 +240,9 @@ void loop() {
       #ifdef DEBUG
       Serial.println("Pwr Convserve Mode");
       #endif
-      pwr_cnsrv_mode = 1;
-      low_power_mode = 0;
-      radio_period = LONG_RADIO_PERIOD;
+//      pwr_cnsrv_mode = 1;
+//      low_power_mode = 0;
+//      radio_period = LONG_RADIO_PERIOD;
 //      conservePwr();
       // TODO: function to go into pwr conserve mode
       //TODO: figure out how to get out of low power modes
@@ -251,7 +255,7 @@ void loop() {
       radio_period = RADIO_PERIOD;
       //TODO: to get out of pwrconserve or low power mode
     }
-    prev_battery = now;
+    prev_battery_update = now;
   }
 
   // check radio for messages
@@ -259,14 +263,15 @@ void loop() {
     if (now < radioRxEnd) {
       #ifdef DEBUG
       Serial.println("Radio Receiving");
-//      digitalWrite(LED, HIGH);
       #endif
-      if (radio.available()) {
+      if (radio.available()){
         // should be reply message
+        Serial.println("Available Message");
         if (radio.receive(RcvSequence, &len)) {
           #ifdef DEBUG
+          Serial.print("length = ");Serial.println(len);
           Serial.println("Received Message");
-//          for (int i=0; i< MAX_LENGTH_FINAL ;i++) Serial.print(RcvSequence[i]);
+          for (int i=0; i< len ;i++) {Serial.print(RcvSequence[i]);Serial.print(" ");}
           Serial.println("");
           #endif
           char* tempRx;
@@ -284,7 +289,6 @@ void loop() {
     } else {
       // did not receive a message
       #ifdef DEBUG
-//      digitalWrite(LED, HIGH);
       Serial.println("Did not receive Message");
       #endif
       radioRxMode = 0;
@@ -296,33 +300,36 @@ void loop() {
     if ((now - prev_radio_sent > radio_period)) {
       #ifdef DEBUG
       Serial.println("Radio Transmitting");
-       sat_info.seconds = 0x100;
-//  sat_info.x_ecef = 0xDDDDDDDDDDDDDDDD;
-sat_info.x_ecef = 139240.02;
-  sat_info.y_ecef = 1234.031;
-  sat_info.z_ecef = 0xBBBBBBBBBBBBBBBB;
-  sat_info.voltage = 0xAAAAAAAA;
-  sat_info.currentIn = 0x99999999;
-//  sat_info.currentOut = 0x88888888;
-sat_info.currentOut = 1.02;
-  sat_info.x_vel = 0x77777777;
-  sat_info.y_vel = 0x66666666;
-  sat_info.z_vel = 0x55555555;
-  sat_info.tow = 0x44444444;
-  sat_info.wn = 0x3333;
-  sat_info.burnwires = 0x22; 
+      /////////////
+//       sat_info.seconds = 0x100;
+//       sat_info.x_ecef = 0xDDDDDDDDDDDDDDDD;
+////      sat_info.x_ecef = 139240.02;
+//      sat_info.y_ecef = 1234.031;
+//      sat_info.z_ecef = 0xBBBBBBBBBBBBBBBB;
+//      sat_info.voltage = 0xAAAAAAAA;
+//      sat_info.currentIn = 0x99999999;
+//      //  sat_info.currentOut = 0x88888888;
+//      sat_info.currentOut = 1.02;
+//      sat_info.x_vel = 0x77777777;
+//      sat_info.y_vel = 0x66666666;
+//      sat_info.z_vel = 0x68656c6c;
+//      sat_info.tow = 0x44444444;
+//      sat_info.wn = 0x3333;
+//      sat_info.burnwires = 0x22; 
+      /////////////
       Serial.println(sat_info.x_ecef);
       Serial.println(sat_info.currentOut);
       #endif
-      //TODO: SERIALIZE PACKET
-      serializePacket();
+      //TODO: test serialize
+//      serializePacket();
+      simpleSerialize();
       digitalWrite(KICKSAT_RADIO_SDN, LOW);
       if (radio.powerAndInit()) {  //takes around 3 seconds
         if (!radioTxKillSwitch) {
           radio.setTxMode();
-          radio.transmit(serializedInfo, PACKET_SIZE  );  //TODO: send and test serialized packet... 
-//          radio.transmit("serializedInfo");
+          radio.transmit(serializedInfo, PACKET_SIZE);  //TODO: send and test serialized packet... 
         }
+        
         //send watchdog reset /// TODO: DO WE NEED THIS? I don't think so
         digitalWrite(WD_PIN, HIGH);
         delay(100);
@@ -332,7 +339,6 @@ sat_info.currentOut = 1.02;
         // switch to RX mode
         radio.setRxMode();    
         radioRxMode = 1;
-  //      radioRxStart = now;
         radioRxEnd = now + RADIO_RX_TIME;  // + sleep time?
         #ifdef DEBUG
         Serial.print("now: ");
@@ -342,8 +348,6 @@ sat_info.currentOut = 1.02;
         #endif
       }
       prev_radio_sent = now;
-      
-      
 
 //      radio_tries = 0;
 //      while (radio_tries < RADIO_TRIES) {  //todo: and !rcv_msg??
@@ -405,7 +409,7 @@ sat_info.currentOut = 1.02;
       Serial.print("z vel: ");
       Serial.println(velocity.z);
       #endif
-      velocity = gps.get_vel_ecef();
+      velocity = gps.get_vel_ecef();                          
       sat_info.x_vel = velocity.x;
       sat_info.y_vel = velocity.y;
       sat_info.z_vel = velocity.z;
@@ -418,6 +422,8 @@ sat_info.currentOut = 1.02;
       #endif
       gps_on = 0;
       digitalWrite(GPS_PIN, LOW);
+
+      // TODO: reset position/velocity_updated to 0
      }
   } else {
     gps_on = 0;
@@ -475,7 +481,7 @@ sat_info.currentOut = 1.02;
   } 
   */
 
-  delay(2000);
+  delay(1000);
 }
 
 void conservePwr() {
@@ -483,6 +489,7 @@ void conservePwr() {
   #undef RADIO_PERIOD
   #define RADIO_PERIOD 
 }
+
 void processPacket(char* msg) {
   #ifdef DEBUG
   for (int i=0 ; i < len; i++) Serial.print(msg[i]);
@@ -496,26 +503,32 @@ void processPacket(char* msg) {
     #endif
   } else if (strncmp(SW_FLAG_CMD, msg, CMD_LENGTH) == 0) {
     //TODO implement
+    EEPROM.update(EEP_BIT_FLAG, 1);
     radioAckMsg = "ack_sw_flg";
     #ifdef DEBUG
     Serial.println("Softare bit flag command");
     #endif
   } else if (strncmp(ARM_CMD, msg, CMD_LENGTH) == 0) {
     //TODO implement
-    //burn.burnDB1();
+    burn.burnDB1();
+    EEPROM.update(EEP_ARMED, 1);
     radioAckMsg = "ack_bw_arm";
     #ifdef DEBUG
     Serial.println("Arm sprites command");
     #endif
   } else if (strncmp(DEPLOY_CMD, msg, CMD_LENGTH) == 0) {
     //TODO implement
-
-    // TODO: check software flag in if?
-    // burn.burnDB2();
-    radioAckMsg = "ack_deploy";
+    
+    // TODO: test -- checking bit flag and armed flag
+    //TODO: CHANGE TO == 1
+    if(EEPROM.read(EEP_BIT_FLAG) && EEPROM.read(EEP_ARMED)) {
+      burn.burnDB2();
+      EEPROM.update(EEP_DEPLOYED, 1);
+      radioAckMsg = "ack_deploy";
     #ifdef DEBUG
     Serial.println("Deploy sprites command");
     #endif
+    }
   } else if (strncmp(TX_KILL_ENABLE_CMD, msg, CMD_LENGTH) == 0) {
     radioTxKillSwitch = 1;
     //TODO test
@@ -562,7 +575,17 @@ void serializePacket() {
   Serial.print("serialized pacekt: ");
 //  for (int i=0; i < PACKET_SIZE ; i++) {Serial.print(sat_info[i]); Serial.print(" ");}
   Serial.println(" ");
-  for (int i=0; i < PACKET_SIZE ; i++) {Serial.print(serializedInfo[i], HEX); Serial.print(" ");}
+  for (int i=0; i < PACKET_SIZE ; i++) {Serial.print(serializedInfo[i]); Serial.print(" ");}
+  Serial.println(" ");
+  #endif
+}
+
+void simpleSerialize() {
+  for (int i=0; i < PACKET_SIZE ; i++) serializedInfo[i] = 0x00;
+  sprintf(serializedInfo, "T:%llu, V:%6.2f, CI: %6.2f, CO: %6.2f", sat_info.seconds, sat_info.voltage, sat_info.currentIn, sat_info.currentOut);
+  #ifdef DEBUG
+  Serial.print("serialized pacekt: ");
+  for (int i=0; i < PACKET_SIZE*2 ; i++) {Serial.print(serializedInfo[i]); Serial.print(" ");}
   Serial.println(" ");
   #endif
 }

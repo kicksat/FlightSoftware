@@ -37,7 +37,6 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(strlen(GPS_CMD));
 //  delay(1000);
   if(Serial.available() > 3) {
     Serial.readBytes(command_buffer, 3);
@@ -72,32 +71,33 @@ void loop() {
     {
       Serial.read();
     }
+    
 
   }
+//  radio.transmit(GPS_CMD, CMD_LENGTH);
+//  radio.setRxMode();
+//  Serial.print("RXing");
 
-  radio.setRxMode();
-  Serial.print("RXing");
+  delay(200);
 
-  delay(4000);
-
-  if (radio.available()) {
-    // should be reply message
-    Serial.print("msg available");
-    if (radio.receive(RcvSequence, &len)) {
-      
-      Serial.println("Received Message");
-      Serial.print("len = "); Serial.println(len);
-      char* tempRx;
-      tempRx = radio.demod(RcvSequence,len);
-      for (int i=0; i < len ; i++) {Serial.print(tempRx[i], HEX); Serial.print(" ");}
-//      for (int i=0; i< len ;i++) Serial.print(tempRx[i], DEC); Serial.print(" ");
-      Serial.println("");
-//      processPacket(tempRx);
-    }
-  } else {
-    // did not receive a message
-    Serial.println("Did not receive Message");
-    }
+//  if (radio.available()) {
+//    // should be reply message
+//    Serial.print("msg available");
+//    if (radio.receive(RcvSequence, &len)) {
+//      
+//      Serial.println("Received Message");
+//      Serial.print("len = "); Serial.println(len);
+//      char* tempRx;
+//      tempRx = radio.demod(RcvSequence,len);
+//      for (int i=0; i < len ; i++) {Serial.print(tempRx[i], HEX); Serial.print(" ");}
+////      for (int i=0; i< len ;i++) Serial.print(tempRx[i], DEC); Serial.print(" ");
+//      Serial.println("");
+////      processPacket(tempRx);
+//    }
+//  } else {
+//    // did not receive a message
+//    Serial.println("Did not receive Message");
+//    }
 
 
 }
