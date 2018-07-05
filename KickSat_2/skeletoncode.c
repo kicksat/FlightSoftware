@@ -28,10 +28,10 @@ int num_chirps_until_switch = 0;
 #define uplink_num_chirps 120 //TODO: figure out actual values here and below
 #define no_uplink_num_chirps 100
 #define high_freq_num_chirps 300
+#define sensor_data_delay 300
 
 //pin definitions
 #define LED0 PORT_PA07
-//#define WDT_WDI PORT_PA19
 
 
 int main(void) {
@@ -56,14 +56,14 @@ int main(void) {
 }
 
 void handle_config() {
-	//TODO: read config files and set flags/variables to recover last status
+	//TODO: read config files and set flags/variables to recover last status, possibly use ECC
 }
 
 void initial_mode() {
 	//wait for 15 min, then extend antenna
 	while(current_tick < 900) {}
 	
-	//extend antenna here
+	//TODO: extend antenna here
 }
 
 void init_timers() {
@@ -89,14 +89,16 @@ void chirp_mode() {
 
 	while(time_before_next_chirp > 0) {
 		//wait for timer to go off before chirping
-		//TODO: uplink handling
-
+		
+		//TODO: sensor data / ECC for SD card writing and reading
 		if (time_before_next_sensor_data <= 0) { //could be decremented in this loop or in WDT loop
 			//this is checked directly after the WDT loop has finished executing,
 			//meaning we should have almost an entire second to handle the data
 			gather_sensor_data();
+			time_before_next_sensor_data = sensor_data_delay;
 		}
 
+		//TODO: uplink handling
 		//if (uplink detected) {
 			//handle_uplink_data()
 			high_frequency_mode = false;
