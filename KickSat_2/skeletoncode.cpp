@@ -1,4 +1,3 @@
-//#include <Arduino.h>
 #include <flight_timers.h>
 
 //functions
@@ -31,8 +30,8 @@ int num_chirps_until_switch = 0;
 #define high_freq_num_chirps 300
 
 //pin definitions
-#define LED0 9
-#define WDT_WDI 12
+#define LED0 PORT_PA07
+//#define WDT_WDI PORT_PA19
 
 
 int main(void) {
@@ -99,9 +98,9 @@ void chirp_mode() {
 		}
 
 		//if (uplink detected) {
-		//handle_uplink_data()
-		high_frequency_mode = false;
-		num_chirps_until_switch = uplink_num_chirps;
+			//handle_uplink_data()
+			high_frequency_mode = false;
+			num_chirps_until_switch = uplink_num_chirps;
 		//}
 	}
 
@@ -152,6 +151,7 @@ void TC3_Handler() {
 	if ( TC3->COUNT16.INTFLAG.bit.OVF == 1 ) {
 		//toggles WDT
 		REG_PORT_OUTTGL0 = WDT_WDI;
+		REG_PORT_PMUX0 |= 
 		
 		//increment/decrement any global volatiles here
 		current_tick++;
