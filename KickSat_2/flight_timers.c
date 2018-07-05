@@ -9,8 +9,6 @@
  * Contains all the timers used in the flight code for KickSat mission, Summer 2018
  */ 
 
-#define WDT_WDI 12
-
 //Currently using TC3 as WDT timer
 void init_WDT(void) {
 	SystemInit(); // Initialize the SAM system
