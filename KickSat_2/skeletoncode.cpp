@@ -78,7 +78,9 @@ void chirp_mode() {
 		//TODO: uplink handling
 
 		if (time_before_next_sensor_data <= 0) { //could be decremented in this loop or in WDT loop
-			//gather_sensor_data();
+			//this is checked directly after the WDT loop has finished executing,
+			//meaning we should have almost an entire second to handle the data
+			gather_sensor_data();
 		}
 
 		//if (uplink detected) {
@@ -113,9 +115,9 @@ void chirp_mode() {
 
 void chirp() {
 	//TODO: collect self check data
-	// check battery status
-	// check solar panel status
-	// check current time
+		// check battery status
+		// check solar panel status
+		// check current time
 	//TODO: write to self check data file
 	//TODO: check for file corruption
 }
@@ -126,7 +128,17 @@ void deployment() {
 }
 
 
-//Interrupts and Handlers
+void gather_data() {
+	//TODO:
+		//DMA out to sensors
+		//SPI in to gather data
+		//DMA out to write data to file
+	
+	//potentially turn the sensors on at the beginning and off at the end, if time permits
+}
+
+
+//=================== Interrupts and Handlers ===================//
 
 //WDT Loop
 void TC3_Handler() {
