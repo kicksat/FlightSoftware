@@ -11,6 +11,8 @@
 #ifndef FLIGHT_TIMERS_H_
 #define FLIGHT_TIMERS_H_
 
+#define WDT_WDI PORT_PA19
+
 extern void init_WDT(void);
 
 #endif /* FLIGHT_TIMERS_H_ */
