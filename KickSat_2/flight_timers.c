@@ -9,8 +9,18 @@
  * Contains all the timers used in the flight code for KickSat mission, Summer 2018
  */ 
 
+#define WDT_WDI 12
+
 //Currently using TC3 as WDT timer
-void init_WDT(void) { 
+void init_WDT(void) {
+	SystemInit(); // Initialize the SAM system
+	
+	NVIC_EnableIRQ( TC3_IRQn );
+	
+	
+	REG_PORT_DIRSET0 |= WDT_WDI;
+	
+	
 	// Configure Clocks
 	//                     Enable          Choose a clock generator       Select a generic clock to configure/use
 	REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TCC2_TC3;
