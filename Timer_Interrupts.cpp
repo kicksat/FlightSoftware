@@ -1,96 +1,154 @@
-#include "sam.h"
+#include <Arduino.h>
+#include <flight_timers.h>
 
-//PORT_PAXX: XX = # of port
-#define LED0 PORT_PA07;
-#define WDT_WDI PORT_PA19;
+//functions
+void handle_config();
+void init_timers();
+void initial_mode();
+void chirp_mode();
+void chirp();
+void check_deployment_condition();
+void deployment();
 
-void init_TC3();
-void enable_interrupts();
+//flags
+int deploy_sprites = 0; //deployment flag, indicates when we are ready to deploy (3 month wait)
+int antenna_deployed = 0; //holds antenna status
+int high_chirp_freq = 0; //indicates whether we are using high or low frequency chirping
+int chirp_signal = 0; //flag that goes high when its time to chirp
 
-// Global error flag for TC3
-volatile uint8_t TC3_error = 0;
+volatile int current_tick = 0; //global counter that increments every tick
+volatile int time_before_next_chirp = 0; //decrements every second in WDT loop
+volatile int time_before_next_sensor_data = 20; //TODO: choose good initial value
 
-int main(void)
-{
-	SystemInit(); // Initialize the SAM system
-	enable_interrupts();
-	init_TC3();
+bool high_frequency_mode = false;
+int num_chirps_until_switch = 0;
+
+#define uplink_num_chirps 120 //TODO: figure out actual values here and below
+#define no_uplink_num_chirps 100
+#define high_freq_num_chirps 300
+
+//pin definitions
+#define WDT_WDI 12
+#define LED0 9
+
+
+int main(void) {
+	//once power is on, we begin our initialization sequence
+	init_timers();
+	handle_config();
 	
-	// Configure LED0 and WDT_WDI as output
-	//every bit in DIRSET corresponds to a pin. if set to 1, that pin is configured in output mode.
-	REG_PORT_DIRSET0 = LED0;
-	REG_PORT_DIRSET0 |= WDT_WDI;
-	
-	//this is a weird register that will toggle the state of any pin whose bit is set to 1.
-	//as soon as you set the bit to 1, it toggles that pin, and goes back into its default state
-	REG_PORT_OUTTGL0 = LED0;
-	
-	while (1)
-	{
-		//this is where the main flightcode would be
-		REG_PORT_OUTTGL0 = LED0;
-		volatile int index = 0;
-		while (index < 1000000) {
-			index++;
-		}
+	//check if the antenna is down, if so, go to initial_mode
+	if(!antenna_deployed) {
+		initial_mode(); //fix timers here
+	}
+	while(!deploy_sprites){
+		chirp_mode();
+	}
+	//time to deploy
+	deployment();
+	while(true) { //go back to chirp mode after deploying sprites
+		//could potentially just forever attempt to deploy, to ensure maximum likelihood of all burn wires working
+		chirp_mode();
 	}
 }
 
+void handle_config() {
+	//TODO: read config files and set flags/variables to recover last status
+}
 
-void init_TC3()
-{
-	/* Configure Timer/Counter 3 as a timer to blink LED0 */
-	// Configure Clocks
-	//                     Enable          Choose a clock generator       Select a generic clock to configure/use
-	REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TCC2_TC3;
-	//enabled the bus to TC3, somehow allowing its registers to be programmed
-	REG_PM_APBCMASK |= PM_APBCMASK_TC3; // Enable TC3 bus clock
+void initial_mode() {
+	//wait for 15 min, then extend antenna
+	while(current_tick < 15) {}
 	
-	// Configure TC3 (16 bit counter by default)
-	//sets the prescaler value, which divides the clock frequency in order to provide lower frequency pulses
-	REG_TC3_CTRLA |= TC_CTRLA_PRESCALER_DIV1024;
-	
-	// Enable interrupts
-	//INTENSET register holds the data for which interrupts are enabled
-	//each function of the micro has its own INTENSET register
-	//in this case, we use the Timer/Counter 3 INTENSET to enable both the ERR and OVF interrupts
-	REG_TC3_INTENSET = TC_INTENSET_OVF | TC_INTENSET_ERR;
-	
-	// Enable TC3
-	//looks like the CTRLA register hold generic control items for the Timer/Counter
-	//writing a 1 to the ENABLE bit enables the TC 
-	REG_TC3_CTRLA |= TC_CTRLA_ENABLE;
-	
-	//waits until the synchronization between clocks is complete, then the status bit will be cleared
-	while ( TC3->COUNT16.STATUS.bit.SYNCBUSY == 1 ){} // wait for TC3 to be enabled
+	//extend antenna here
+}
+
+void init_timers() {
+	//TODO: initialize the timers needed
+	//Timers:
+	//WDT - pings every second
+	//init_WDT();
+	//TODO: maybe other timers?
+}
+
+void chirp_mode() {
+
+	while(time_before_next_chirp > 0) {
+		//wait for timer to go off before chirping
+		//TODO: uplink handling
+
+		if (time_before_next_sensor_data <= 0) { //could be decremented in this loop or in WDT loop
+			//gather_sensor_data();
+		}
+
+		//if (uplink detected) {
+		//handle_uplink_data()
+		high_frequency_mode = false;
+		num_chirps_until_switch = uplink_num_chirps;
+		//}
+	}
+
+	chirp();
+	num_chirps_until_switch--;
+
+	if (num_chirps_until_switch == 0) {
+		//if we've chirped enough times, switch modes
+		high_frequency_mode = !high_frequency_mode;
+		if (high_frequency_mode) {
+			//if we just entered HF mode, set the number of chirps to be done in this mode
+			num_chirps_until_switch = high_freq_num_chirps;
+		} else {
+			//we must have just finished HF mode, with no uplink detected
+			num_chirps_until_switch = no_uplink_num_chirps;
+		}
+	}
+
+	//reset volatile counting integer
+	if (high_frequency_mode) {
+		time_before_next_chirp = 60; //1 minute until next chirp
+		} else {
+		time_before_next_chirp = 270; //4.5 minutes
+	}
+}
+
+void chirp() {
+	//TODO: collect self check data
+	// check battery status
+	// check solar panel status
+	// check current time
+	//TODO: write to self check data file
+	//TODO: check for file corruption
 }
 
 
-void TC3_Handler()
-{
+void deployment() {
+	//TODO: access deployment pre-compiled code and run
+}
+
+
+//Interrupts and Handlers
+
+void TC3_Handler() {
 	
 	// Overflow interrupt triggered
-	if ( TC3->COUNT16.INTFLAG.bit.OVF == 1 )
-	{
+	if ( TC3->COUNT16.INTFLAG.bit.OVF == 1 ) {
 		//toggles WDT
 		REG_PORT_OUTTGL0 = WDT_WDI;
+		
+		//increment/decrement any global volatiles here
+		current_tick++;
+		time_before_next_chirp--;
+		time_before_next_sensor_data--;
 		
 		//clears the overflow interrupt flag
 		REG_TC3_INTFLAG = TC_INTFLAG_OVF;
 	}
 	
 	// Error interrupt triggered
-	else if ( TC3->COUNT16.INTFLAG.bit.ERR == 1 )
-	{
-		TC3_error = 1;
+	else if ( TC3->COUNT16.INTFLAG.bit.ERR == 1 ) {
+		//possibly reset the micro if we ever get here
 		
 		//clears the error interrupt flag
 		REG_TC3_INTFLAG = TC_INTFLAG_ERR;
 	}
-}
-
-
-void enable_interrupts()
-{
-	NVIC_EnableIRQ( TC3_IRQn );
 }
