@@ -1,4 +1,4 @@
-#include <Arduino.h>
+//#include <Arduino.h>
 #include <flight_timers.h>
 
 //functions
@@ -18,9 +18,12 @@ int chirp_signal = 0; //flag that goes high when its time to chirp
 
 volatile int current_tick = 0; //global counter that increments every tick
 volatile int time_before_next_chirp = 0; //decrements every second in WDT loop
-volatile int time_before_next_sensor_data = 1200; //TODO: choose good initial value
+volatile int time_before_next_sensor_data = 0; //TODO: choose good initial value
 
-bool high_frequency_mode = false;
+#define true 1
+#define false 0
+
+int high_frequency_mode = false;
 int num_chirps_until_switch = 0;
 
 #define uplink_num_chirps 120 //TODO: figure out actual values here and below
@@ -28,8 +31,8 @@ int num_chirps_until_switch = 0;
 #define high_freq_num_chirps 300
 
 //pin definitions
-#define WDT_WDI 12
 #define LED0 9
+#define WDT_WDI 12
 
 
 int main(void) {
@@ -41,6 +44,7 @@ int main(void) {
 	if(!antenna_deployed) {
 		initial_mode(); //fix timers here
 	}
+	time_before_next_sensor_data = 300; //set here, as if we reboot, we want to skip past 15 minute wait
 	while(!deploy_sprites){
 		chirp_mode();
 	}
@@ -67,9 +71,20 @@ void init_timers() {
 	//TODO: initialize the timers needed
 	//Timers:
 	//WDT - pings every second
-	//init_WDT();
+	init_WDT();
 	//TODO: maybe other timers?
 }
+
+
+void gather_sensor_data() {
+	//TODO:
+	//DMA out to sensors
+	//SPI in to gather data
+	//DMA out to write data to file
+	
+	//potentially turn the sensors on at the beginning and off at the end, if time permits
+}
+
 
 void chirp_mode() {
 
@@ -125,16 +140,6 @@ void chirp() {
 
 void deployment() {
 	//TODO: access deployment pre-compiled code and run
-}
-
-
-void gather_data() {
-	//TODO:
-		//DMA out to sensors
-		//SPI in to gather data
-		//DMA out to write data to file
-	
-	//potentially turn the sensors on at the beginning and off at the end, if time permits
 }
 
 
