@@ -18,7 +18,7 @@ int chirp_signal = 0; //flag that goes high when its time to chirp
 
 volatile int current_tick = 0; //global counter that increments every tick
 volatile int time_before_next_chirp = 0; //decrements every second in WDT loop
-volatile int time_before_next_sensor_data = 20; //TODO: choose good initial value
+volatile int time_before_next_sensor_data = 1200; //TODO: choose good initial value
 
 bool high_frequency_mode = false;
 int num_chirps_until_switch = 0;
@@ -58,7 +58,7 @@ void handle_config() {
 
 void initial_mode() {
 	//wait for 15 min, then extend antenna
-	while(current_tick < 15) {}
+	while(current_tick < 900) {}
 	
 	//extend antenna here
 }
@@ -128,6 +128,7 @@ void deployment() {
 
 //Interrupts and Handlers
 
+//WDT Loop
 void TC3_Handler() {
 	
 	// Overflow interrupt triggered
