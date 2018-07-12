@@ -9,6 +9,8 @@
  * Contains all the timers used in the flight code for KickSat mission, Summer 2018
  */ 
 
+//#define WDT_WDI PORT_PA19
+
 //Currently using TC3 as WDT timer
 void init_WDT(void) {
 	SystemInit(); // Initialize the SAM system
@@ -28,6 +30,8 @@ void init_WDT(void) {
 	// Configure TC3 (16 bit counter by default)
 	//sets the prescaler value, which divides the clock frequency in order to provide lower frequency pulses
 	REG_TC3_CTRLA |= TC_CTRLA_PRESCALER_DIV1024;
+	//sets the clock to run in standby mode, which will be needed for low power operation
+	REG_TC3_CTRLA |= TC_CTRLA_RUNSTDBY;
 		
 	// Enable interrupts
 	//INTENSET register holds the data for which interrupts are enabled
@@ -40,6 +44,9 @@ void init_WDT(void) {
 	//writing a 1 to the ENABLE bit enables the TC
 	REG_TC3_CTRLA |= TC_CTRLA_ENABLE;
 		
+	//prepare micro for STANDBY mode
+	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+	
 	//waits until the synchronization between clocks is complete, then the status bit will be cleared
 	while ( TC3->COUNT16.STATUS.bit.SYNCBUSY == 1 ){} // wait for TC3 to be enabled
 }
