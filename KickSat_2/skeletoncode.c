@@ -1,79 +1,33 @@
-#include <flight_timers.h>
+#include "flight_timers.h"
 
-//functions
-void handle_config();
-void init_timers();
-void initial_mode();
-void chirp_mode();
-void chirp();
-void check_deployment_condition();
-void deployment();
-
-//flags
-int deploy_sprites = 0; //deployment flag, indicates when we are ready to deploy (3 month wait)
-int antenna_deployed = 0; //holds antenna status
-int high_chirp_freq = 0; //indicates whether we are using high or low frequency chirping
-int chirp_signal = 0; //flag that goes high when its time to chirp
+//config flags
+int deployment_conditions_met = 0; //deployment flag, indicates when we are ready to deploy (3 month wait)
+int antenna_extended = 0; //holds antenna status
+int initial_delay_completed = 0; //whether or not we have done our initial delay
 
 volatile int current_tick = 0; //global counter that increments every tick
 volatile int time_before_next_chirp = 0; //decrements every second in WDT loop
 volatile int time_before_next_sensor_data = 0; //TODO: choose good initial value
 
-#define true 1
-#define false 0
-
-int high_frequency_mode = false;
-int num_chirps_until_switch = 0;
-
-#define uplink_num_chirps 120 //TODO: figure out actual values here and below
-#define no_uplink_num_chirps 100
-#define high_freq_num_chirps 300
-#define sensor_data_delay 300
-
 //pin definitions
 #define LED0 PORT_PA07
+#define WDT_WDI PORT_PA19
 
+//constants
+#define chirp_battery_threshold 10 // TODO: pick a good battery value for chirping
 
-int main(void) {
-	//once power is on, we begin our initialization sequence
-	init_timers();
-	handle_config();
-	
-	//check if the antenna is down, if so, go to initial_mode
-	if(!antenna_deployed) {
-		initial_mode(); //fix timers here
-	}
-	time_before_next_sensor_data = 300; //set here, as if we reboot, we want to skip past 15 minute wait
-	while(!deploy_sprites){
-		chirp_mode();
-	}
-	//time to deploy
-	deployment();
-	while(true) { //go back to chirp mode after deploying sprites
-		//could potentially just forever attempt to deploy, to ensure maximum likelihood of all burn wires working
-		chirp_mode();
-	}
-}
-
+// =================================== UTILITIES =================================== //
 void handle_config() {
-	//TODO: read config files and set flags/variables to recover last status, possibly use ECC
+	//TODO: read config files and set flags/variables to recover last status
 }
 
-void initial_mode() {
-	//wait for 15 min, then extend antenna
-	while(current_tick < 900) {}
-	
-	//TODO: extend antenna here
+void extend_antenna() {
+	//extend antenna here
 }
 
 void init_timers() {
-	//TODO: initialize the timers needed
-	//Timers:
-	//WDT - pings every second
-	init_WDT();
-	//TODO: maybe other timers?
+	
 }
-
 
 void gather_sensor_data() {
 	//TODO:
@@ -84,76 +38,118 @@ void gather_sensor_data() {
 	//potentially turn the sensors on at the beginning and off at the end, if time permits
 }
 
+int get_battery_level() {
+	//TODO: check battery level
+}
 
-void chirp_mode() {
+void listen_for_uplink() {
+	//TODO: use radio library to check radio buffer
+	
+	//if (uplink detected) {
+		//handle the uplink;
+		//return;
+	//}
+}
+
+int check_burnwire_uplink() {
+	//check radio buffer for burnwire commands
+	//returns a 0 if no commands found,
+	//or a 1, 2, or 3 depending on which burnwire had been commanded to burn
+}
+
+void enter_sleep_mode() {
+	//put the micro into sleep mode until the next interrupt
+	__WFI(); //Wait For Interrupt instruction, enters STANDBY mode
+}
+
+// =========================== CRITICAL MODES AND FUNCTIONS =========================== //
+void standby_mode() {
 
 	while(time_before_next_chirp > 0) {
 		//wait for timer to go off before chirping
-		
-		//TODO: sensor data / ECC for SD card writing and reading
+
 		if (time_before_next_sensor_data <= 0) { //could be decremented in this loop or in WDT loop
 			//this is checked directly after the WDT loop has finished executing,
 			//meaning we should have almost an entire second to handle the data
 			gather_sensor_data();
-			time_before_next_sensor_data = sensor_data_delay;
 		}
-
-		//TODO: uplink handling
-		//if (uplink detected) {
-			//handle_uplink_data()
-			high_frequency_mode = false;
-			num_chirps_until_switch = uplink_num_chirps;
-		//}
+		enter_sleep_mode();
 	}
-
-	chirp();
-	num_chirps_until_switch--;
-
-	if (num_chirps_until_switch == 0) {
-		//if we've chirped enough times, switch modes
-		high_frequency_mode = !high_frequency_mode;
-		if (high_frequency_mode) {
-			//if we just entered HF mode, set the number of chirps to be done in this mode
-			num_chirps_until_switch = high_freq_num_chirps;
-		} else {
-			//we must have just finished HF mode, with no uplink detected
-			num_chirps_until_switch = no_uplink_num_chirps;
-		}
-	}
-
-	//reset volatile counting integer
-	if (high_frequency_mode) {
-		time_before_next_chirp = 60; //1 minute until next chirp
-		} else {
+	
+	if (get_battery_level() > chirp_battery_threshold) {
+		chirp();
+		//reset volatile counting integer
 		time_before_next_chirp = 270; //4.5 minutes
+		
+		//listen for a small amount of time for an uplink signal
+		listen_for_uplink();
+	}
+}
+
+void arming_mode() {
+	int arming_timeout = current_tick + 300; //set timeout to 5 minutes in the future 
+	while (current_tick < arming_timeout) {
+		int w = check_burnwire_uplink();
+		if (w == 1) {
+			//burn wire 1
+		} else if (w == 2) {
+			//burn wire 2
+		} else if (w == 3) {
+			//burn wire 3
+		}
+		enter_sleep_mode();
 	}
 }
 
 void chirp() {
 	//TODO: collect self check data
-		// check battery status
-		// check solar panel status
-		// check current time
+	// check battery status
+	// check solar panel status
+	// check current time
 	//TODO: write to self check data file
 	//TODO: check for file corruption
 }
 
-
-void deployment() {
+void deploy_sprites() {
 	//TODO: access deployment pre-compiled code and run
 }
 
+// =================================== MAIN CODE =================================== //
+void setup() {
+	//once power is on, we begin our initialization sequence
+	init_timers();
+	handle_config();
+	if (!initial_delay_completed) {
+		//hold for n minutes
+	}
+	
+	//check if the antenna is down, if not, extend it
+	if(!antenna_extended) {
+		extend_antenna();
+	}
+	time_before_next_sensor_data = 300; //set here, as if we reboot, we want to skip past 15 minute wait
+}
 
-//=================== Interrupts and Handlers ===================//
+void loop() {
+	while(!deployment_conditions_met){
+		standby_mode();
+	}
+	//time to deploy
+	deploy_sprites();
+	while(true) { //go back to standby mode after deploying sprites
+		standby_mode();
+	}
+}
 
+// ============================== INTERRUPTS AND HANDLERS ============================== //
 //WDT Loop
 void TC3_Handler() {
+	//TODO: check to see if this will automatically exit micro low power mode
 	
 	// Overflow interrupt triggered
 	if ( TC3->COUNT16.INTFLAG.bit.OVF == 1 ) {
 		//toggles WDT
 		REG_PORT_OUTTGL0 = WDT_WDI;
-		REG_PORT_PMUX0 |= 
 		
 		//increment/decrement any global volatiles here
 		current_tick++;
