@@ -15,12 +15,12 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  digitalWrite(TEENSY_LED, HIGH);
+  digitalWrite(TEENSY_LED, LOW);
   Serial.println("sending");
   radio.powerAndInit();
   char* payload = "FFF";
   radio.transmit(payload, 12);
-  digitalWrite(TEENSY_LED, LOW);
+  digitalWrite(TEENSY_LED, HIGH);
 
   delay(1000);
 
