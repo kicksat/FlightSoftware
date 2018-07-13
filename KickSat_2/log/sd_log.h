@@ -25,6 +25,8 @@ class sd_log
     void set_deploying_mode(bool flag);
     void set_deployed_flag(bool flag);
     void set_varChanged_flag(bool flag); //error checking must be set same time stamp that flag is changed
+    // takes in a byte of information and counts the number of ones --> returns a bool
+    bool byte_to_bool(byte inBool);
 
     // member variables
     bool antenna_flag;
