@@ -6,8 +6,10 @@ int antenna_extended = 0; //holds antenna status
 int initial_delay_completed = 0; //whether or not we have done our initial delay
 
 volatile int current_tick = 0; //global counter that increments every tick
-volatile int time_before_next_chirp = 0; //decrements every second in WDT loop
-volatile int time_before_next_sensor_data = 0; //TODO: choose good initial value
+//tickers
+int next_chirp_tick = 0;
+int sensor_1_tick = 0;
+int listen_uplink_tick = 0;
 
 //pin definitions
 #define LED0 PORT_PA07
@@ -42,13 +44,17 @@ int get_battery_level() {
 	//TODO: check battery level
 }
 
-void listen_for_uplink() {
+int check_for_uplink() {
 	//TODO: use radio library to check radio buffer
 	
 	//if (uplink detected) {
-		//handle the uplink;
-		//return;
+		//return 1
 	//}
+	return 0;
+}
+
+void handle_uplink() {
+	//TODO: use radio library to read buffer and handle recieved data
 }
 
 int check_burnwire_uplink() {
@@ -64,31 +70,40 @@ void enter_sleep_mode() {
 
 // =========================== CRITICAL MODES AND FUNCTIONS =========================== //
 void standby_mode() {
-
-	while(time_before_next_chirp > 0) {
-		//wait for timer to go off before chirping
-
-		if (time_before_next_sensor_data <= 0) { //could be decremented in this loop or in WDT loop
-			//this is checked directly after the WDT loop has finished executing,
-			//meaning we should have almost an entire second to handle the data
+    while (current_tick < next_chirp_tick) {
+		
+		//these tasks are checked directly after the WDT loop has finished executing, meaning we should have almost an entire second to handle them
+		//all of these are in if/else loops so that we never execute more than one per standby loop
+		//tasks are ordered by priority
+		//if a task is not executed in this loop when it normally would be, it will just wait until the next loop
+		if (current_tick < listen_uplink_tick && check_for_uplink()) {
+			handle_uplink():
+		} else if (current_tick >= sensor_1_tick) {
+			
 			gather_sensor_data();
+			sensor_1_tick += 100; //TODO choose value
+			//do we want to do a simple sensor_1_tick += value, preserving the timing even if a tick is missed?
+			//or do we want to do current_tick + value, in case current_tick is corrupted and ends up misaligned with sensor_1_tick?
 		}
+		//add entries for all 4-5 sensors
+		
+		//power down the micro, woken up by timer interrupt
 		enter_sleep_mode();
 	}
 	
 	if (get_battery_level() > chirp_battery_threshold) {
 		chirp();
 		//reset volatile counting integer
-		time_before_next_chirp = 270; //4.5 minutes
+		next_chirp_tick = 270 + current_tick; //4.5 minutes
 		
 		//listen for a small amount of time for an uplink signal
-		listen_for_uplink();
+		listen_uplink_tick = 15 + current_tick;
 	}
 }
 
 void arming_mode() {
-	int arming_timeout = current_tick + 300; //set timeout to 5 minutes in the future 
-	while (current_tick < arming_timeout) {
+	int arming_timeout_tick = current_tick + 300; //set timeout to 5 minutes in the future 
+	while (current_tick < arming_timeout_tick) {
 		int w = check_burnwire_uplink();
 		if (w == 1) {
 			//burn wire 1
@@ -153,8 +168,6 @@ void TC3_Handler() {
 		
 		//increment/decrement any global volatiles here
 		current_tick++;
-		time_before_next_chirp--;
-		time_before_next_sensor_data--;
 		
 		//clears the overflow interrupt flag
 		REG_TC3_INTFLAG = TC_INTFLAG_OVF;
