@@ -1,10 +1,13 @@
+
 // sd_log.h - Library for reading from and writing to the log on the SD card
 
 #ifndef SD_LOG_h
 #define SD_LOG_h
 
-#include "Arduino.h"
-#include "spi_io.h" // https://github.com/1nv1/ulibSD
+//#include "Arduino.h"
+#include <integer.h>
+#include <sd_io.h>
+#include <spi_io.h>
 
 
 class sd_log 
@@ -12,8 +15,8 @@ class sd_log
   public:
     void write_log(); //takes all data and logs it
     //void writeLogWithSensor(bool sensor1, bool sensor2, bool sensor3, bool sensor4, bool sensor5); //allows specific sensors to be set on or off
-    string read_entry(int entryIndex);  //reads a specific entry indexed from current entry
-    string[] data_dump(int numEntries); //reads the last numEntries logs and outputs in string array
+    char* read_entry(int entryIndex);  //reads a specific entry indexed from current entry
+    char* data_dump(int numEntries); //reads the last numEntries logs and outputs in string array
     
     /* Functions to update flag status */ 
     void set_antenna_flag(bool flag); 
@@ -26,7 +29,7 @@ class sd_log
     void set_deployed_flag(bool flag);
     void set_varChanged_flag(bool flag); //error checking must be set same time stamp that flag is changed
     // takes in a byte of information and counts the number of ones --> returns a bool
-    bool byte_to_bool(byte inBool);
+    bool byte_to_bool(uint8_t inBool);
 
     // member variables
     bool antenna_flag;
