@@ -72,6 +72,28 @@ int check_for_uplink() {
 
 void handle_uplink() {
 	//TODO: use radio library to read buffer and handle recieved data
+	
+	char command_buffer[4]; //TODO: fill these with radio data
+	char command_metadata[30]; //this will store metadata for each command
+	//such as which wire to burn or which sensor to change
+	
+	if (strcmp(command_buffer, "BRN") == 0) {
+		//burn wire
+		//METADATA: which wire
+	} else if (strcmp(command_buffer, "DAT") == 0) {
+		//send sensor data
+		//METADATA: which sensor, number of data points
+	} else if (strcmp(command_buffer, "LOG") == 0) {
+		//send log data
+		//METADATA: number of entries
+	} else if (strcmp(command_buffer, "REG") == 0) {
+		//write sensor data register configs
+		//METADATA: which sensor, what config settings
+	} else if (strcmp(command_buffer, "ARM") == 0) {
+		//enter arming mode
+	} else if (strcmp(command_buffer, "EOL") == 0) {
+		//enter end of life mode
+	}
 }
 
 int check_burnwire_uplink() {
@@ -159,7 +181,7 @@ void setup() {
 	if(!antenna_extended) {
 		extend_antenna();
 	}
-	time_before_next_sensor_data = 300; //set here, as if we reboot, we want to skip past 15 minute wait
+	sensor_1_tick = current_tick + 300; //set here, as if we reboot, we want to skip past 15 minute wait
 }
 
 void loop() {
