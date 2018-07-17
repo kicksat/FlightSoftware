@@ -33,11 +33,28 @@ void init_timers() {
 
 void gather_sensor_data() {
 	//TODO:
-	//DMA out to sensors
-	//SPI in to gather data
-	//DMA out to write data to file
+	//SPI out to sensor to read in 3 bytes of data
+	//do a better job of storing constants
 	
-	//potentially turn the sensors on at the beginning and off at the end, if time permits
+	const float refV = 2.5; //reference voltage for the ADC. Usually use internal 2.5V by setting the registers below
+	const float pgaGain = 1;
+	const float FSR = (refV*2)/pgaGain;
+	const float LSBsize = FSR/pow(2,24);
+	
+	byte inByte1, inByte2, inByte3; //TODO: make these actually store data from sensor
+	
+	int rawData = 0; //create an empty 24 bit integer for the data
+	rawData |= inByte1; //shift the data in one byte at a time
+	rawData = (rawData << 8) | inByte2;
+	rawData = (rawData << 8) | inByte3;
+	
+	float decVal = 0;
+	if (((1 << 23) & rawData) != 0){ //If the rawData has bit 24 on, then it's a negative value
+		decVal = float(rawData-(1 << 23))*-1*LSBsize; //if it's negative, then subtract 2^23 from it and multiple by LSB
+	}
+	else{ //if it's not negative
+		decVal = float(rawData)*LSBsize; //then just multiply by LSBsize
+	}
 }
 
 int get_battery_level() {
