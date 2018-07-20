@@ -106,18 +106,18 @@ static const uint8_t DAC0 = PIN_DAC0;
 #define ADC_RESOLUTION		12
 
 // Other pins
-#define PIN_ATN              (38ul)
-static const uint8_t ATN = PIN_ATN;
-// #define PIN_CS_SD			(31ul) //added instead of ATN above
-// #define PIN_CS_RFM			(27ul) //new
-// #define PIN_XTB_START		(47ul) //new
-// #define PIN_NIRQ			(3ul)  //new
-// #define PIN_SDN				(4ul)  //new
-// static const uint8_t CS_SD = PIN_CS_SD; //new
-// static const uint8_t CS_RFM = PIN_CS_RFM; //new
-// static const uint8_t XTB_START = PIN_XTB_START; //new
-// static const uint8_t NIRQ = PIN_NIRQ; //new
-// static const uint8_t SDN = PIN_SDN;  //new
+//#define PIN_ATN              (38ul)
+//static const uint8_t ATN = PIN_ATN;
+ #define PIN_CS_SD			(31ul) //added instead of ATN above
+ #define PIN_CS_RFM			(27ul) //new
+ #define PIN_XTB_START		(47ul) //new
+ #define PIN_NIRQ			(3ul)  //new
+ #define PIN_SDN				(4ul)  //new
+ static const uint8_t CS_SD = PIN_CS_SD; //new
+ static const uint8_t CS_RFM = PIN_CS_RFM; //new
+ static const uint8_t XTB_START = PIN_XTB_START; //new
+ static const uint8_t NIRQ = PIN_NIRQ; //new
+ static const uint8_t SDN = PIN_SDN;  //new
 
 /*
  * Serial interfaces
@@ -160,10 +160,10 @@ static const uint8_t SCK  = PIN_SPI_SCK;
  */
 #define WIRE_INTERFACES_COUNT 1
 
-#define PIN_WIRE_SDA         (20u) //orig 20u
-#define PIN_WIRE_SCL         (21u) //orig 21u
-#define PERIPH_WIRE          sercom3 //orig sercom3
-#define WIRE_IT_HANDLER      SERCOM3_Handler //orig sercom3_handler
+#define PIN_WIRE_SDA         (11u) //orig 20u
+#define PIN_WIRE_SCL         (12u) //orig 21u
+#define PERIPH_WIRE          sercom1 //orig sercom3
+#define WIRE_IT_HANDLER      SERCOM1_Handler //orig sercom3_handler
 
 static const uint8_t SDA = PIN_WIRE_SDA;
 static const uint8_t SCL = PIN_WIRE_SCL;
