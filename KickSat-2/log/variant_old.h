@@ -130,15 +130,15 @@ static const uint8_t ATN = PIN_ATN;
 #define SPI_INTERFACES_COUNT 1
 // Instead of using SERCOM4, and the SPI-header pins, the Mini Breakout
 // uses pins 10-13 for SPI, on the unused sercom1
-#define PIN_SPI_MISO         (20u)
-#define PIN_SPI_MOSI         (7u)
-#define PIN_SPI_SCK          (21u)
+#define PIN_SPI_MISO         (12u)
+#define PIN_SPI_MOSI         (11u)
+#define PIN_SPI_SCK          (13u)
 #define PIN_SPI_SS           (10u)
-#define PERIPH_SPI           sercom3
+#define PERIPH_SPI           sercom1
 // Pad Map:     0       1   2     3
 //          MOSI (TX)  SCK  SS  MOSI (RX)
-#define PAD_SPI_TX           SPI_PAD_3_SCK_1
-#define PAD_SPI_RX           SERCOM_RX_PAD_0
+#define PAD_SPI_TX           SPI_PAD_0_SCK_1
+#define PAD_SPI_RX           SERCOM_RX_PAD_3
 
 static const uint8_t SS	  = PIN_SPI_SS;
 static const uint8_t MOSI = PIN_SPI_MOSI;
@@ -150,8 +150,8 @@ static const uint8_t SCK  = PIN_SPI_SCK;
  */
 #define WIRE_INTERFACES_COUNT 1
 
-#define PIN_WIRE_SDA         (12u)
-#define PIN_WIRE_SCL         (13u)
+#define PIN_WIRE_SDA         (20u)
+#define PIN_WIRE_SCL         (21u)
 #define PERIPH_WIRE          sercom3
 #define WIRE_IT_HANDLER      SERCOM3_Handler
 
