@@ -106,8 +106,8 @@ static const uint8_t DAC0 = PIN_DAC0;
 #define ADC_RESOLUTION		12
 
 // Other pins
-//#define PIN_ATN              (38ul)
-//static const uint8_t ATN = PIN_ATN;
+//#define PIN_ATN              (38ul) //old, removed
+//static const uint8_t ATN = PIN_ATN; //old, removed
  #define PIN_CS_SD			(31ul) //added instead of ATN above
  #define PIN_CS_RFM			(27ul) //new
  #define PIN_XTB_START		(47ul) //new
