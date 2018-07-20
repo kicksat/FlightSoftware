@@ -1,1 +1,1 @@
-This directory holds the flight code for the KickSat mothership
+This directory is the home of the flight software for the KickSat mothership
