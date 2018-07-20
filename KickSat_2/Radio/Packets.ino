@@ -1,5 +1,3 @@
-
-
 #define CHIRP_PACKET_SIZE 160
 #define NUMERICAL_PACKET_SIZE 30000
 
@@ -28,7 +26,7 @@ void numericalPacket(byte* arr, int numBytes) {
 void fullChirp(byte* packet, int len, int logNum, byte stat,
 byte vBatt, byte iBatt, byte iSolar, byte* data) {
   union_t uni;
-  
+    
   uni.int16val = logNum;
   packet[0] = uni.data[1];
   packet[1] = uni.data[0];
@@ -46,6 +44,21 @@ byte vBatt, byte iBatt, byte iSolar, byte* data) {
   }
 }
 
+//converts packet into a command packet, to be sent from the ground station to the satellite
+void commandPacket(byte* packet, int len, byte* cmd, byte* metadata, int metadata_len) {
+  for (int i = 0; i < 3; i++) {
+    packet[i] = cmd[i];
+  }
+
+  for (int i = 0; i < metadata_len; i++) {
+    packet[i + 3] = metadata[i];
+  }
+  
+  for (int i = metadata_len + 3; i < len; i++) {
+    packet[i] = 0x0;
+  }
+}
+
 //helper function that prints the packet
 void printPacket(byte* packet, int len) {
   Serial.println("====== Packet =======");
@@ -56,14 +69,31 @@ void printPacket(byte* packet, int len) {
   }
 }
 
+void printPacketRaw(byte* packet, int len) {
+  Serial.println("====== Packet Raw Data =======");
+
+  //fencepost
+  Serial.print("0x");
+  Serial.print(packet[0], HEX);
+  
+  for (int i = 1; i < len; i++) {
+    Serial.print(", ");
+    Serial.print("0x");
+    Serial.print(packet[i], HEX);
+  }
+  Serial.println();
+}
+
+
 //creates and sets up all the packets, for all your packety needs!
 void setup() {
   delay(2000);
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial.println("Start");
 
   //creates a very large (30KB) numerical packet for test 1
-  byte bigPacket[NUMERICAL_PACKET_SIZE];
-  numericalPacket(bigPacket, NUMERICAL_PACKET_SIZE);
+  //byte bigPacket[NUMERICAL_PACKET_SIZE];
+  //numericalPacket(bigPacket, NUMERICAL_PACKET_SIZE);
 
   //creates a packet representing a single chirp
   //includes testing values
@@ -80,7 +110,22 @@ void setup() {
   fullChirp(chirpPacket, CHIRP_PACKET_SIZE, logNum, stat, vBatt, iBatt, iSolar, chirpData);
   //printPacket(chirpPacket, CHIRP_PACKET_SIZE);
 
-  //at this point, chirpPacket is a fully formed chirp, and bigPacket is a 30KB numerical packet
+  //creates a command packet to be sent from ground to sat
+  byte cmdPacket[20];
+  byte cmd[3];
+  cmd[0] = 'A';
+  cmd[1] = 'R';
+  cmd[2] = 'M';
+  byte meta[17];
+  numericalPacket(meta, 17);
+  commandPacket(cmdPacket, 20, cmd, meta, 17);
+  printPacketRaw(cmdPacket, 20);
+
+  //at this point, chirpPacket is a fully formed chirp, bigPacket is a 30KB numerical packet,
+  //and cmdPacket is a command packet commanding the sat to go into arming mode, with numerical testing metadata
   //use as you please
   
+}
+
+void loop() {
 }
