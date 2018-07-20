@@ -105,9 +105,34 @@ static const uint8_t A5  = PIN_A5;
 static const uint8_t DAC0 = PIN_DAC0;
 #define ADC_RESOLUTION		12
 
+/* Our newly defined pins */
+
+// make this PB 23 (SPI_CS_SD)
 // Other pins
-#define PIN_ATN              (38ul)
-static const uint8_t ATN = PIN_ATN;
+// changed from PIN_ATN
+#define PIN_CS_SD            (38ul)
+// #define PIN_CS_RFM			 (27ul)
+#define PIN_XTB_START		 (47ul)
+#define PIN_NIRQ		 	 (3ul)
+#define PIN_SDN				 (4ul)
+// static const uint8_t CS_RFM = PIN_CS_RFM;
+static const uint8_t XTB_START = PIN_XTB_START;
+static const uint8_t NIRQ = PIN_NIRQ;
+static const uint8_t SDN = PIN_SDN;
+
+// good serial monitor output :) 
+/*I'm alive
+alt setup
+alt setup done
+check 1
+check 2
+check 3
+8
+check 4
+RH_PLATFORM: 1
+Sending to rf22_server
+
+*/
 
 /*
  * Serial interfaces
@@ -117,8 +142,10 @@ static const uint8_t ATN = PIN_ATN;
 #define PIN_SERIAL_TX       (30ul)
 #define PAD_SERIAL_TX       (UART_TX_PAD_2)
 #define PAD_SERIAL_RX       (SERCOM_RX_PAD_3)
+static const uint8_t CS_SD = PIN_SERIAL_RX;
 
 // Serial1
+
 #define PIN_SERIAL1_RX       (0ul)
 #define PIN_SERIAL1_TX       (1ul)
 #define PAD_SERIAL1_TX       (UART_TX_PAD_2)
@@ -164,7 +191,7 @@ static const uint8_t SCL = PIN_WIRE_SCL;
 #define PIN_USB_HOST_ENABLE (27ul)
 #define PIN_USB_DM          (28ul)
 #define PIN_USB_DP          (29ul)
-
+static const uint8_t RF_CS = PIN_USB_HOST_ENABLE;
 /*
  * I2S Interfaces
  */
@@ -177,7 +204,7 @@ static const uint8_t SCL = PIN_WIRE_SCL;
 #define PIN_I2S_FS          (0u)
 
 #ifdef __cplusplus
-}
+
 #endif
 
 /*----------------------------------------------------------------------------
