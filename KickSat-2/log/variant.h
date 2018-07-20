@@ -16,6 +16,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+//https://cdn.sparkfun.com/assets/learn_tutorials/4/5/4/graphicalDatasheet-Mini.pdf
+
 #ifndef _VARIANT_ARDUINO_ZERO_
 #define _VARIANT_ARDUINO_ZERO_
 
@@ -77,13 +79,16 @@ extern "C"
 // #define digitalPinToTimer(P)
 
 // LEDs
-#define PIN_LED_13           (13u)
-#define PIN_LED_RXL          (25u)
-#define PIN_LED_TXL          (26u)
-#define PIN_LED              PIN_LED_13
-#define PIN_LED2             PIN_LED_RXL
-#define PIN_LED3             PIN_LED_TXL
-#define LED_BUILTIN          PIN_LED_13
+// #define PIN_LED_13           (13u)
+// #define PIN_LED_RXL          (25u)
+// #define PIN_LED_TXL          (26u)
+// #define PIN_LED              PIN_LED_13
+// #define PIN_LED2             PIN_LED_RXL
+// #define PIN_LED3             PIN_LED_TXL
+// #define LED_BUILTIN          PIN_LED_13
+#define PIN_LED_9			 (9u) //new
+#define PIN_LED 			 PIN_LED_9 //new
+#define LED_BUILTIN          PIN_LED_9 //new
 
 /*
  * Analog pins
@@ -112,7 +117,7 @@ static const uint8_t DAC0 = PIN_DAC0;
  #define PIN_CS_RFM			(27ul) //new
  #define PIN_XTB_START		(47ul) //new
  #define PIN_NIRQ			(3ul)  //new
- #define PIN_SDN				(4ul)  //new
+ #define PIN_SDN			(4ul)  //new
  static const uint8_t CS_SD = PIN_CS_SD; //new
  static const uint8_t CS_RFM = PIN_CS_RFM; //new
  static const uint8_t XTB_START = PIN_XTB_START; //new
@@ -182,7 +187,7 @@ static const uint8_t SCL = PIN_WIRE_SCL;
 
 #define I2S_DEVICE          0
 #define I2S_CLOCK_GENERATOR 3
-#define PIN_I2S_SD          (9u)
+//#define PIN_I2S_SD          (9u) //removed 
 #define PIN_I2S_SCK         (1u)
 #define PIN_I2S_FS          (0u)
 
