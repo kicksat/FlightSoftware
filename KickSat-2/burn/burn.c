@@ -3,107 +3,118 @@
 //**********************************************************
 
 
+// TODO: ADD IN EEPROM STUFF
+
 #include "burn.h"
-#include <time.h>
-#include <stdio.h>
-#include "sam.h"
- 
-void init() {
-    REG_PORT_DIRSET0 |= ANTENNA_BURN_1;	//Set as output
-    REG_PORT_OUTCLR0 |= ANTENNA_BURN_1; //initialize to zero
-    
-    REG_PORT_DIRSET0 |= ANTENNA_BURN_2;
-    REG_PORT_OUTCLR0 |= ANTENNA_BURN_2;
-    
-    REG_PORT_DIRSET1 |= DEPLOY_BURN_1;
-    REG_PORT_OUTCLR1 |= DEPLOY_BURN_1;
-    
-    REG_PORT_DIRSET0 |= DEPLOY_BURN_2;
-    REG_PORT_OUTCLR0 |= DEPLOY_BURN_2;
-	
-	REG_PORT_DIRSET0 |= BURN_RELAY_A;
-	REG_PORT_OUTCLR0 |= BURN_RELAY_A;
-	
-	REG_PORT_DIRSET0 |= BURN_RELAY_B;
-	REG_PORT_OUTCLR0 |= BURN_RELAY_B;
+
+void burn::init() {
+    pinMode(ANTENNA_BURN_1, OUTPUT);
+    digitalWrite(ANTENNA_BURN_1, LOW);
+
+    pinMode(ANTENNA_BURN_2, OUTPUT);
+    digitalWrite(ANTENNA_BURN_2, LOW);
+
+    pinMode(DEPLOY_BURN_1, OUTPUT);
+    digitalWrite(DEPLOY_BURN_1, LOW);
+
+    pinMode(DEPLOY_BURN_2, OUTPUT);
+    digitalWrite(DEPLOY_BURN_2, LOW);
+
+    pinMode(BURN_RELAY_A, OUTPUT);
+    digitalWrite(BURN_RELAY_A, LOW);
+
+    pinMode(BURN_RELAY_B, OUTPUT);
+    digitalWrite(BURN_RELAY_B, LOW);
+
 }
 
-void burnAntennas() {
+void burn::burnAntennas() {
     burnAB1();
     burnAB2();
 }
 
-void burnAB1() {
-	REG_PORT_OUTSET0 |= BURN_RELAY_A;
+void burn::burnAB1() {
+    digitalWrite(BURN_RELAY_A, HIGH);
     for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
         // PWM with 10% duty cycle
-        REG_PORT_OUTSET0 |= ANTENNA_BURN_1;
+        digitalWrite(ANTENNA_BURN_1, HIGH);
         delay(5);
-        REG_PORT_OUTCLR0 |= ANTENNA_BURN_1;
+        digitalWrite(ANTENNA_BURN_1, LOW);
         delay(45);
-        REG_PORT_OUTSET0 |= ANTENNA_BURN_1;
+        digitalWrite(ANTENNA_BURN_1, HIGH);
         delay(5);
-        REG_PORT_OUTCLR0 |= ANTENNA_BURN_1;
+        digitalWrite(ANTENNA_BURN_1, LOW);
         delay(45);
     }
-	REG_PORT_OUTCLR0 |= BURN_RELAY_A;
-    //antenna1_deployed = 1;
+    digitalWrite(BURN_RELAY_A, LOW);
+    antenna1_deployed = 1;    //change to write to config file
 }
 
-void burnAB2() {
-	REG_PORT_OUTSET0 |= BURN_RELAY_B;
+void burn::burnAB2() {
+    digitalWrite(BURN_RELAY_B, HIGH);
     for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
         // PWM with 10% duty cycle
-        REG_PORT_OUTSET0 |= ANTENNA_BURN_2;
+        digitalWrite(ANTENNA_BURN_2, HIGH);
         delay(5);
-        REG_PORT_OUTCLR0 |= ANTENNA_BURN_2;
+        digitalWrite(ANTENNA_BURN_2, LOW);
         delay(45);
-        REG_PORT_OUTSET0 |= ANTENNA_BURN_2;
+        digitalWrite(ANTENNA_BURN_2, HIGH);
         delay(5);
-        REG_PORT_OUTCLR0 |= ANTENNA_BURN_2;
+        digitalWrite(ANTENNA_BURN_2, LOW);
         delay(45);
     }
-	REG_PORT_OUTCLR0 |= BURN_RELAY_B;
-   // antenna2_deployed = 1;
+    digitalWrite(BURN_RELAY_B, LOW);
+    antenna2_deployed = 1;    //write to config file
 }
 
-void burnDB1(){
-	REG_PORT_OUTSET0 |= BURN_RELAY_A;
+void burn::burnDB1() {
+    digitalWrite(BURN_RELAY_A, HIGH);
     for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
         // PWM with 10% duty cycle
-        REG_PORT_OUTSET1 |= DEPLOY_BURN_1;
+        digitalWrite(DEPLOY_BURN_1, HIGH);
         delay(5);
-        REG_PORT_OUTCLR1 |= DEPLOY_BURN_1;
+        digitalWrite(DEPLOY_BURN_1, LOW);
         delay(45);
-        REG_PORT_OUTSET1 |= DEPLOY_BURN_1;
+        digitalWrite(DEPLOY_BURN_1, HIGH);
         delay(5);
-        REG_PORT_OUTCLR1 |= DEPLOY_BURN_1;
+        digitalWrite(DEPLOY_BURN_1, LOW);
         delay(45);
     }
-	REG_PORT_OUTCLR0 |= BURN_RELAY_A;
-    //sprites_armed = 1;
+    digitalWrite(BURN_RELAY_A, LOW);
+    db1_burned = 1;   //write to config file
 }
 
-void burnDB2() {
-	REG_PORT_OUTSET0 |= BURN_RELAY_B;
+void burn::burnDB2() {
+    digitalWrite(BURN_RELAY_B, HIGH);
     for (unsigned int k = 0; k < SPRITE_BURN_TIME/100; ++k) {
         // PWM with 30% duty cycle
-        REG_PORT_OUTSET0 |= DEPLOY_BURN_2;
+        digitalWrite(DEPLOY_BURN_2, HIGH);
         delay(15);
-        REG_PORT_OUTCLR0 |= DEPLOY_BURN_2;
+        digitalWrite(DEPLOY_BURN_2, LOW);
         delay(35);
-        REG_PORT_OUTSET0 |= DEPLOY_BURN_2;
+        digitalWrite(DEPLOY_BURN_2, HIGH);
         delay(15);
-        REG_PORT_OUTCLR0 |= DEPLOY_BURN_2;
+        digitalWrite(DEPLOY_BURN_2, LOW);
         delay(35);
       }
-	  REG_PORT_OUTCLR0 |= BURN_RELAY_B;
-     // sprites_deployed = 1;
+      digitalWrite(BURN_RELAY_B, LOW);
+      db2_burned = 1;   //write to config file
 }
 
-void delay(int milliseconds){
-	time_t currentClock = clock();
-	int currentTime = 1000 * (currentClock/CLOCKS_PER_SEC);
-	while(clock()*1000/CLOCKS_PER_SEC < currentTime + milliseconds){
-	}
+
+
+bool burn::AB1deployed() {
+    return antenna1_deployed; //read from config
+}
+
+bool burn::AB2deployed() {
+    return antenna2_deployed; //read from config
+}
+
+bool burn::DB1burned() {
+    return db1_burned;  //read from config
+}
+
+bool burn::DB2burned() {
+    return db2_burned;  //read from config
 }
