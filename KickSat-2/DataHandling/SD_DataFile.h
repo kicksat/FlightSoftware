@@ -1,24 +1,23 @@
-// SD_DataFile.h - Library for storing and reading structured sensor/log data
+// sd_log.h - Library for reading from and writing to the log on the SD card
 
 #ifndef SD_DATAFILE_h
 #define SD_DATAFILE_h
 
-//#include "Arduino.h"
-#include <integer.h>
-#include <sd_io.h>
-#include <spi_io.h>
 #include <SD.h>
-
 
 class SD_DataFile 
 {
   public:
-    SD_DataFile(uint16_t dw);
+    SD_DataFile(uint16_t dw, String fn);
     bool writeDataEntry(byte* data);
-    bool readDataEntry();
+    bool readDataEntry(int index, byte* buf);
+    void refresh();
 
     // member variables
     uint16_t _dataWidth;
+    uint16_t _numEntries;
+    String _fileName;
+    File _dataFile;
 };
 
 #endif
