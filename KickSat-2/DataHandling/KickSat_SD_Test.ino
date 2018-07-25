@@ -60,7 +60,7 @@ void handleCommand() {
   if (argv[0] == "r") {
     Serial.print(" === Reading line ");
     Serial.println(argv[1]);
-    byte out[3];
+    byte out[dataFile._dataWidth];
     dataFile.readDataEntry(argv[1].toInt(), out);
     for (int i = 0; i < dataFile._dataWidth; i++) {
       Serial.print((char)out[i]);
@@ -76,7 +76,7 @@ void handleCommand() {
   } else if (argv[0] == "ra") {
     Serial.println(" === Reading entire file");
     for (int n = 0; n < dataFile._numEntries; n++) {
-      byte out[3];
+      byte out[dataFile._dataWidth];
       dataFile.readDataEntry(n, out);
       Serial.print(n);Serial.print(": ");
       for (int i = 0; i < dataFile._dataWidth; i++) {
@@ -84,6 +84,16 @@ void handleCommand() {
       }
       Serial.println();
     }
+  } else if (argv[0] == "rb") {
+    Serial.print(" === Reading bytes from line ");
+    Serial.println(argv[1]);
+    byte out[dataFile._dataWidth];
+    dataFile.readDataEntry(argv[1].toInt(), out);
+    for (int i = 0; i < dataFile._dataWidth; i++) {
+      Serial.print(out[i]);
+      Serial.print(" ");
+    }
+    Serial.println();
   }
 }
 
