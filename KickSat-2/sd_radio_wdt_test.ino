@@ -108,6 +108,7 @@ void loop() {
     dataFile.println(dataString);
     dataFile.close();
     // print to the serial port too:
+    SerialUSB.print("SD data string: ");
     SerialUSB.println(dataString);
   }
   // if the file isn't open, pop up an error:
@@ -159,7 +160,7 @@ void init_TC5()
 
 void TC5_Handler()
 {
-  
+  SerialUSB.println("ping");
   // Overflow interrupt triggered
   if ( TC5->COUNT16.INTFLAG.bit.OVF == 1 )
   {
