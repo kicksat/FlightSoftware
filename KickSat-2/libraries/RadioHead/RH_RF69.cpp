@@ -1,7 +1,7 @@
 // RH_RF69.cpp
 //
 // Copyright (C) 2011 Mike McCauley
-// $Id: RH_RF69.cpp,v 1.26 2015/12/11 01:10:24 mikem Exp $
+// $Id: RH_RF69.cpp,v 1.30 2017/11/06 00:04:08 mikem Exp $
 
 #include <RH_RF69.h>
 
@@ -109,6 +109,9 @@ bool RH_RF69::init()
 #ifdef RH_ATTACHINTERRUPT_TAKES_PIN_NUMBER
     interruptNumber = _interruptPin;
 #endif
+
+    // Tell the low level SPI interface we will use SPI within this interrupt
+    spiUsingInterrupt(interruptNumber);
 
     // Get the device type and check it
     // This also tests whether we are really connected to a device
@@ -228,6 +231,7 @@ void RH_RF69::readFifo()
 {
     ATOMIC_BLOCK_START;
     digitalWrite(_slaveSelectPin, LOW);
+    _spi.beginTransaction();
     _spi.transfer(RH_RF69_REG_00_FIFO); // Send the start address with the write mask off
     uint8_t payloadlen = _spi.transfer(0); // First byte is payload len (counting the headers)
     if (payloadlen <= RH_RF69_MAX_ENCRYPTABLE_PAYLOAD_LEN &&
@@ -251,6 +255,7 @@ void RH_RF69::readFifo()
 	}
     }
     digitalWrite(_slaveSelectPin, HIGH);
+    _spi.endTransaction();
     ATOMIC_BLOCK_END;
     // Any junk remaining in the FIFO will be cleared next time we go to receive mode.
 }
@@ -293,6 +298,7 @@ bool RH_RF69::setFrequency(float centre, float afcPullInRange)
     spiWrite(RH_RF69_REG_09_FRFLSB, frf & 0xff);
 
     // afcPullInRange is not used
+    (void)afcPullInRange;
     return true;
 }
 
@@ -378,35 +384,48 @@ void RH_RF69::setModeTx()
     }
 }
 
-void RH_RF69::setTxPower(int8_t power)
+void RH_RF69::setTxPower(int8_t power, bool ishighpowermodule)
 {
-    _power = power;
-
-    uint8_t palevel;
-    if (_power < -18)
-	_power = -18;
-
-    // See http://www.hoperf.com/upload/rfchip/RF69-V1.2.pdf section 3.3.6
-    // for power formulas
+  _power = power;
+  uint8_t palevel;
+  
+  if (ishighpowermodule)
+  {
+    if (_power < -2)
+      _power = -2; //RFM69HW only works down to -2. 
     if (_power <= 13)
     {
-	// -18dBm to +13dBm
-	palevel = RH_RF69_PALEVEL_PA0ON | ((_power + 18) & RH_RF69_PALEVEL_OUTPUTPOWER);
+      // -2dBm to +13dBm
+      //Need PA1 exclusivelly on RFM69HW
+      palevel = RH_RF69_PALEVEL_PA1ON | ((_power + 18) & 
+      RH_RF69_PALEVEL_OUTPUTPOWER);
     }
     else if (_power >= 18)
     {
-	// +18dBm to +20dBm
-	// Need PA1+PA2
-	// Also need PA boost settings change when tx is turned on and off, see setModeTx()
-	palevel = RH_RF69_PALEVEL_PA1ON | RH_RF69_PALEVEL_PA2ON | ((_power + 11) & RH_RF69_PALEVEL_OUTPUTPOWER);
+      // +18dBm to +20dBm
+      // Need PA1+PA2
+      // Also need PA boost settings change when tx is turned on and off, see setModeTx()
+      palevel = RH_RF69_PALEVEL_PA1ON
+	| RH_RF69_PALEVEL_PA2ON
+	| ((_power + 11) & RH_RF69_PALEVEL_OUTPUTPOWER);
     }
     else
     {
-	// +14dBm to +17dBm
-	// Need PA1+PA2
-	palevel = RH_RF69_PALEVEL_PA1ON | RH_RF69_PALEVEL_PA2ON | ((_power + 14) & RH_RF69_PALEVEL_OUTPUTPOWER);
+      // +14dBm to +17dBm
+      // Need PA1+PA2
+      palevel = RH_RF69_PALEVEL_PA1ON
+	| RH_RF69_PALEVEL_PA2ON
+	| ((_power + 14) & RH_RF69_PALEVEL_OUTPUTPOWER);
     }
-    spiWrite(RH_RF69_REG_11_PALEVEL, palevel);
+  }
+  else
+  {
+    if (_power < -18) _power = -18;
+    if (_power > 13) _power = 13; //limit for RFM69W
+    palevel = RH_RF69_PALEVEL_PA0ON
+      | ((_power + 18) & RH_RF69_PALEVEL_OUTPUTPOWER);
+  }
+  spiWrite(RH_RF69_REG_11_PALEVEL, palevel);
 }
 
 // Sets registers from a canned modem configuration structure
@@ -498,6 +517,9 @@ bool RH_RF69::send(const uint8_t* data, uint8_t len)
 
     waitPacketSent(); // Make sure we dont interrupt an outgoing message
     setModeIdle(); // Prevent RX while filling the fifo
+
+    if (!waitCAD()) 
+	return false;  // Check channel activity
 
     ATOMIC_BLOCK_START;
     digitalWrite(_slaveSelectPin, LOW);

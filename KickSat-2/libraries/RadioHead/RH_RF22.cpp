@@ -1,7 +1,7 @@
 // RH_RF22.cpp
 //
 // Copyright (C) 2011 Mike McCauley
-// $Id: RH_RF22.cpp,v 1.26 2016/04/04 01:40:12 mikem Exp mikem $
+// $Id: RH_RF22.cpp,v 1.28 2017/11/06 00:04:08 mikem Exp $
 
 #include <RH_RF22.h>
 
@@ -72,35 +72,41 @@ void RH_RF22::setIdleMode(uint8_t idleMode)
 }
 
 bool RH_RF22::init()
-{
+{ 
+	SerialUSB.println("check1");
     if (!RHSPIDriver::init())
 	return false;
-
+	SerialUSB.println("check2");
     // Determine the interrupt number that corresponds to the interruptPin
     int interruptNumber = digitalPinToInterrupt(_interruptPin);
     if (interruptNumber == NOT_AN_INTERRUPT)
 	return false;
+	SerialUSB.println("check3");
 #ifdef RH_ATTACHINTERRUPT_TAKES_PIN_NUMBER
     interruptNumber = _interruptPin;
 #endif
-
+	SerialUSB.println("check4");
+    // Tell the low level SPI interface we will use SPI within this interrupt
+    spiUsingInterrupt(interruptNumber);
     // Software reset the device
     reset();
-
+	
     // Get the device type and check it
     // This also tests whether we are really connected to a device
     _deviceType = spiRead(RH_RF22_REG_00_DEVICE_TYPE);
     if (   _deviceType != RH_RF22_DEVICE_TYPE_RX_TRX
         && _deviceType != RH_RF22_DEVICE_TYPE_TX)
     {
+//	Serial.println("unknown device type");
+//	Serial.println(_deviceType);
 	return false;
     }
-
+	SerialUSB.println("check5");
     // Add by Adrien van den Bossche <vandenbo@univ-tlse2.fr> for Teensy
     // ARM M4 requires the below. else pin interrupt doesn't work properly.
     // On all other platforms, its innocuous, belt and braces
     pinMode(_interruptPin, INPUT); 
-
+    
     // Enable interrupt output on the radio. Interrupt line will now go high until
     // an interrupt occurs
     spiWrite(RH_RF22_REG_05_INTERRUPT_ENABLE1, RH_RF22_ENTXFFAEM | RH_RF22_ENRXFFAFULL | RH_RF22_ENPKSENT | RH_RF22_ENPKVALID | RH_RF22_ENCRCERROR | RH_RF22_ENFFERR);
@@ -120,6 +126,7 @@ bool RH_RF22::init()
 	else
 	    return false; // Too many devices, not enough interrupt vectors
     }
+    SerialUSB.println("check6");
     _deviceForInterrupt[_myInterruptIndex] = this;
     if (_myInterruptIndex == 0)
 	attachInterrupt(interruptNumber, isr0, FALLING);
@@ -129,7 +136,7 @@ bool RH_RF22::init()
 	attachInterrupt(interruptNumber, isr2, FALLING);
     else
 	return false; // Too many devices, not enough interrupt vectors
-
+	SerialUSB.println("check7");
     setModeIdle();
 
     clearTxBuf();
@@ -161,7 +168,7 @@ bool RH_RF22::init()
     uint8_t syncwords[] = { 0x2d, 0xd4 };
     setSyncWords(syncwords, sizeof(syncwords));
     setPromiscuous(false); 
-
+	
     // Set some defaults. An innocuous ISM frequency, and reasonable pull-in
     setFrequency(434.0, 0.05);
 //    setFrequency(900.0);
@@ -587,6 +594,10 @@ bool RH_RF22::send(const uint8_t* data, uint8_t len)
 {
     bool ret = true;
     waitPacketSent();
+
+    if (!waitCAD()) 
+	return false;  // Check channel activity
+
     ATOMIC_BLOCK_START;
     spiWrite(RH_RF22_REG_3A_TRANSMIT_HEADER3, _txHeaderTo);
     spiWrite(RH_RF22_REG_3B_TRANSMIT_HEADER2, _txHeaderFrom);
@@ -732,4 +743,3 @@ void RH_RF22::setGpioReversed(bool gpioReversed)
 	spiWrite(RH_RF22_REG_0C_GPIO_CONFIGURATION1, 0x15) ; // RX state
     }
 }
-

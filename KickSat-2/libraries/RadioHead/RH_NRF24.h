@@ -1,7 +1,7 @@
 // RH_NRF24.h
 // Author: Mike McCauley
 // Copyright (C) 2012 Mike McCauley
-// $Id: RH_NRF24.h,v 1.18 2016/04/04 01:40:12 mikem Exp mikem $
+// $Id: RH_NRF24.h,v 1.20 2017/07/25 05:26:50 mikem Exp $
 //
 
 #ifndef RH_NRF24_h
@@ -154,7 +154,7 @@
 
 /////////////////////////////////////////////////////////////////////
 /// \class RH_NRF24 RH_NRF24.h <RH_NRF24.h>
-/// \brief Send and receive addressed, reliable, acknowledged datagrams by nRF24L01 and compatible transceivers.
+/// \brief Send and receive unaddressed, unreliable datagrams by nRF24L01 and compatible transceivers.
 ///
 /// Supported transceivers include:
 /// - Nordic nRF24 based 2.4GHz radio modules, such as nRF24L01 http://www.nordicsemi.com/eng/Products/2.4GHz-RF/nRF24L01
@@ -247,7 +247,7 @@
 /// NRF24 nrf24(8, 10);
 ///
 /// For an Arduino Due (the SPI pins do not come out on the Digital pins as for normal Arduino, but only
-/// appear on the SPI header)
+/// appear on the SPI header). Use the same connections for Yun with 5V or 3.3V.
 /// \code
 ///                Due      Sparkfun WRL-00691
 ///               3.3V-----------VCC   (3.3V to 7V in)
@@ -632,6 +632,8 @@ private:
 
 /// @example nrf24_client.pde
 /// @example nrf24_server.pde
+/// @example nrf24_encrypted_client.pde
+/// @example nrf24_encrypted_server.pde
 /// @example nrf24_reliable_datagram_client.pde
 /// @example nrf24_reliable_datagram_server.pde
 /// @example RasPiRH.cpp

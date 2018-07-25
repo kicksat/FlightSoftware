@@ -14,7 +14,7 @@
 
 // Singleton instance of the radio driver
 RH_RF95 driver;
-//RH_RF95 rf95(5, 2); // Rocket Scream Mini Ultra Pro with the RFM95W
+//RH_RF95 driver(5, 2); // Rocket Scream Mini Ultra Pro with the RFM95W
 
 // Class to manage message delivery and receipt, using the driver declared above
 RHReliableDatagram manager(driver, CLIENT_ADDRESS);
@@ -44,6 +44,10 @@ void setup()
   // then you can configure the power transmitter power for -1 to 14 dBm and with useRFO true. 
   // Failure to do that will result in extremely low transmit powers.
 //  driver.setTxPower(14, true);
+  // You can optionally require this module to wait until Channel Activity
+  // Detection shows no activity on the channel before transmitting by setting
+  // the CAD timeout to non-zero:
+//  driver.setCADTimeout(10000);
 }
 
 uint8_t data[] = "Hello World!";
