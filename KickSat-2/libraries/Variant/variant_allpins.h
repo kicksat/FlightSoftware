@@ -173,7 +173,7 @@ static const uint8_t WDT_WDI = PIN_WDT_WDI; //new
 #define PIN_SPI_MISO         (20u) //orig 12
 #define PIN_SPI_MOSI         (7u) //orig 11
 #define PIN_SPI_SCK          (21u) //orig 13
-#define PIN_SPI_SS           (5u) //orig 10
+#define PIN_SPI_SS           (19u) //orig 10
 #define PERIPH_SPI           sercom3 //original sercom 1
 // Pad Map:     0       1   2     3
 //          MOSI (TX)  SCK  SS  MOSI (RX)
@@ -201,7 +201,7 @@ static const uint8_t SCL = PIN_WIRE_SCL;
 /*
  * USB
  */
-#define PIN_USB_HOST_ENABLE (27ul)
+//#define PIN_USB_HOST_ENABLE (27ul) //originally commented in
 #define PIN_USB_DM          (28ul) //USB_D-
 #define PIN_USB_DP          (29ul) //USB_D+
 
@@ -264,4 +264,3 @@ extern Uart Serial1;
 #define SERIAL_PORT_HARDWARE_OPEN   Serial1
 
 #endif /* _VARIANT_ARDUINO_ZERO_ */
-
