@@ -73,24 +73,23 @@ void RH_RF22::setIdleMode(uint8_t idleMode)
 
 bool RH_RF22::init()
 { 
-	SerialUSB.println("check1");
     if (!RHSPIDriver::init())
 	return false;
-	SerialUSB.println("check2");
+
     // Determine the interrupt number that corresponds to the interruptPin
     int interruptNumber = digitalPinToInterrupt(_interruptPin);
     if (interruptNumber == NOT_AN_INTERRUPT)
 	return false;
-	SerialUSB.println("check3");
 #ifdef RH_ATTACHINTERRUPT_TAKES_PIN_NUMBER
     interruptNumber = _interruptPin;
 #endif
-	SerialUSB.println("check4");
+
     // Tell the low level SPI interface we will use SPI within this interrupt
     spiUsingInterrupt(interruptNumber);
+
     // Software reset the device
     reset();
-	
+
     // Get the device type and check it
     // This also tests whether we are really connected to a device
     _deviceType = spiRead(RH_RF22_REG_00_DEVICE_TYPE);
@@ -101,7 +100,7 @@ bool RH_RF22::init()
 //	Serial.println(_deviceType);
 	return false;
     }
-	SerialUSB.println("check5");
+
     // Add by Adrien van den Bossche <vandenbo@univ-tlse2.fr> for Teensy
     // ARM M4 requires the below. else pin interrupt doesn't work properly.
     // On all other platforms, its innocuous, belt and braces
@@ -126,7 +125,6 @@ bool RH_RF22::init()
 	else
 	    return false; // Too many devices, not enough interrupt vectors
     }
-    SerialUSB.println("check6");
     _deviceForInterrupt[_myInterruptIndex] = this;
     if (_myInterruptIndex == 0)
 	attachInterrupt(interruptNumber, isr0, FALLING);
@@ -136,7 +134,7 @@ bool RH_RF22::init()
 	attachInterrupt(interruptNumber, isr2, FALLING);
     else
 	return false; // Too many devices, not enough interrupt vectors
-	SerialUSB.println("check7");
+
     setModeIdle();
 
     clearTxBuf();
@@ -168,7 +166,7 @@ bool RH_RF22::init()
     uint8_t syncwords[] = { 0x2d, 0xd4 };
     setSyncWords(syncwords, sizeof(syncwords));
     setPromiscuous(false); 
-	
+
     // Set some defaults. An innocuous ISM frequency, and reasonable pull-in
     setFrequency(434.0, 0.05);
 //    setFrequency(900.0);
@@ -743,3 +741,4 @@ void RH_RF22::setGpioReversed(bool gpioReversed)
 	spiWrite(RH_RF22_REG_0C_GPIO_CONFIGURATION1, 0x15) ; // RX state
     }
 }
+

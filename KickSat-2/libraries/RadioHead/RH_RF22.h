@@ -23,9 +23,9 @@
 // 64 octets. We use interrupts to refill the Tx FIFO during transmission and to empty the
 // Rx FIFO during reception
 // Can be pre-defined to a smaller size (to save SRAM) prior to including this header
-#ifndef RH_RF22_MAX_MESSAGE_LEN
-//#define RH_RF22_MAX_MESSAGE_LEN 255
-#define RH_RF22_MAX_MESSAGE_LEN 255
+#ifndef RH_RF22_MAX_MESSAGE_LEN 
+//#defines RH_RF22_MAX_MESSAGE_LEN to be 280
+#define RH_RF22_MAX_MESSAGE_LEN 280
 #endif
 
 // Max number of octets the RF22 Rx and Tx FIFOs can hold
