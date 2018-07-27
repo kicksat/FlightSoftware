@@ -46,3 +46,17 @@ bool SD_DataFile::readDataEntry(int index, byte* buf) {
   }
   return false;
 }
+
+bool SD_DataFile::readLineIndex(int lineNum, int index, int len, byte* buf){
+  if (index < _numEntries) {
+    _dataFile = SD.open(_fileName, FILE_READ);
+    if (_dataFile) {
+      _dataFile.seek(lineNum * _dataWidth + index);
+      _dataFile.read(buf, len);
+      _dataFile.close();
+      return true;
+    }
+  }
+  return false;
+}
+

@@ -7,17 +7,17 @@
 SD_DataFile dataFile(6, "data.txt");
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial) {}
+  SerialUSB.begin(115200);
+  while (!SerialUSB) {}
 
-  Serial.print("Initializing SD card...");
+  SerialUSB.print("Initializing SD card...");
   
 
   if (!SD.begin(CS_pin)) {
-    Serial.println("initialization failed!");
+    SerialUSB.println("initialization failed!");
     return;
   }
-  Serial.println("initialization done.");
+  SerialUSB.println("initialization done.");
   dataFile.refresh();
 }
 
@@ -30,8 +30,8 @@ void parseMessage(String msg, String arg[]) {
   while (index < msg.length()) {
     if (msg.charAt(index) == ' ') {
       arg[wordIndex] = msg.substring(wordStart, index);
-      //Serial.println(arg[wordIndex]);
-      //Serial.println(arg[wordIndex]);
+      //SerialUSB.println(arg[wordIndex]);
+      //SerialUSB.println(arg[wordIndex]);
       wordStart = index + 1;
       wordIndex++;
     }
@@ -41,16 +41,17 @@ void parseMessage(String msg, String arg[]) {
 }
 
 //debugging function
-//allows the user to push commands to the micro through the serial monitor
+//allows the user to push commands to the micro through the SerialUSB monitor
 //in this case, we have 3 commands
 //
 //r <value> - reads the data entry specified by value
+//ri <lineNum index len> - reads at an index in a line
 //w <data> - writes the bytes in data to the next entry of the file
 //ra - reads out the entire file
 void handleCommand() {
   String message = "";
-  while (Serial.available() > 0) {
-    byte inByte = Serial.read();
+  while (SerialUSB.available() > 0) {
+    byte inByte = SerialUSB.read();
     message += (char)inByte;
     delay(1);
   }
@@ -58,47 +59,56 @@ void handleCommand() {
   parseMessage(message, argv);
 
   if (argv[0] == "r") {
-    Serial.print(" === Reading line ");
-    Serial.println(argv[1]);
+    SerialUSB.print(" === Reading line ");
+    SerialUSB.println(argv[1]);
     byte out[dataFile._dataWidth];
     dataFile.readDataEntry(argv[1].toInt(), out);
     for (int i = 0; i < dataFile._dataWidth; i++) {
-      Serial.print((char)out[i]);
+      SerialUSB.print((char)out[i]);
     }
-    Serial.println();
+    SerialUSB.println();
   } else if (argv[0] == "w") {
-    Serial.println(" === Writing data");
+    SerialUSB.println(" === Writing data");
     byte data[dataFile._dataWidth];
     for (int i = 0; i < dataFile._dataWidth; i++) {
       data[i] = argv[1][i];
     }
     dataFile.writeDataEntry(data);
   } else if (argv[0] == "ra") {
-    Serial.println(" === Reading entire file");
+    SerialUSB.println(" === Reading entire file");
     for (int n = 0; n < dataFile._numEntries; n++) {
       byte out[dataFile._dataWidth];
       dataFile.readDataEntry(n, out);
-      Serial.print(n);Serial.print(": ");
+      SerialUSB.print(n);SerialUSB.print(": ");
       for (int i = 0; i < dataFile._dataWidth; i++) {
-        Serial.print((char)out[i]);
+        SerialUSB.print((char)out[i]);
       }
-      Serial.println();
+      SerialUSB.println();
     }
   } else if (argv[0] == "rb") {
-    Serial.print(" === Reading bytes from line ");
-    Serial.println(argv[1]);
+    SerialUSB.print(" === Reading bytes from line ");
+    SerialUSB.println(argv[1]);
     byte out[dataFile._dataWidth];
     dataFile.readDataEntry(argv[1].toInt(), out);
     for (int i = 0; i < dataFile._dataWidth; i++) {
-      Serial.print(out[i]);
-      Serial.print(" ");
+      SerialUSB.print(out[i]);
+      SerialUSB.print(" ");
     }
-    Serial.println();
+    SerialUSB.println();
+  }else if (argv[0] == "ri"){
+    SerialUSB.print("reading index ");
+    byte out[argv[3].toInt()];
+    dataFile.readLineIndex(argv[1].toInt(), argv[2].toInt(), argv[3].toInt(), out);
+    for (int i = 0; i < argv[3].toInt(); i++) {
+      SerialUSB.print((char)out[i]);
+      SerialUSB.print(" ");
+    }
+    SerialUSB.println();
   }
 }
 
 void loop() {
-  if (Serial.available() > 0) {
+  if (SerialUSB.available() > 0) {
     handleCommand();
   }
 }
