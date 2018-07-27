@@ -9,7 +9,8 @@ AX25::AX25(uint8_t slaveSelectPin, uint8_t interruptPin, uint8_t _shutdownPin)
 }
 
 // Power cycles the radio, then initalizes the radio
-bool AX25::powerAndInit() {
+bool AX25::powerAndInit() 
+{
   // Need a delay before turning on radio
   // so that power supply can stabilize
   digitalWrite(shutdownPin, HIGH);
@@ -17,14 +18,25 @@ bool AX25::powerAndInit() {
   digitalWrite(shutdownPin, LOW);
   delay(500);
 
+  // CHANGED: added spi.begin()
+  spi.begin();
+  delay(400);
+  
   if (!radio.init()) {
     return false;
     Serial.println("init failed");
+	while(1)
+	{
+		// stay here
+	}
   } else {
     return true;
+	
+	// CHANGED: added spi.attachInterrupt();
+	spi.attachInterrupt();
+	
     Serial.println("init success");
   }
-
 }
 
 
@@ -33,15 +45,18 @@ void AX25::transmit(char* message1, uint16_t size) {
   Index = 0;
   arrayInit();
   setCallsignAndSsid();
-  // Serial.println(message);
+  SerialUSB.println(message);
   // strcpy(message, message1);
 
   memcpy(message, message1, size);
   // Serial.print("messge size: "); Serial.println(sizeof(message));
   // Serial.print("messge: "); Serial.println(message);
   formatPacket(size);
+  
   sendPacket();
+  SerialUSB.println("waiting...");
   radio.waitPacketSent();
+  SerialUSB.println("sent...");
   radio.sleep();
 }
 
@@ -56,7 +71,7 @@ void AX25::setRxMode() {
   arrayInit();
   setCallsignAndSsid();
   radio.setModeIdle();
-  radio.setFrequency(437.505);  //TODO: FIX
+  radio.setFrequency(434.000);  //TODO: FIX
   radio.setModemRegisters(&FSK1k2);
 }
 
@@ -66,9 +81,9 @@ void AX25::setTxMode() {
 
 void AX25::sendPacket() {
   radio.setModeIdle();
-  radio.setFrequency(437.505);  //TODO: FIX
+  radio.setFrequency(434.000);  //TODO: FIX
   radio.setModemRegisters(&FSK1k2);
-  radio.setTxPower(RH_RF22_RF23BP_TXPOW_29DBM); //TODO FIX
+  // radio.setTxPower(RH_RF22_RF23BP_TXPOW_29DBM); //TODO FIX
   // radio.setTxPower(0x02); //TODO FIX
   radio.send(finalSequence, Index);  
 }
@@ -555,8 +570,8 @@ void AX25::arrayInit() {
 }
 
 void AX25::setCallsignAndSsid() {
-  setFromCallsign("KD2BHC"); //TODO replace
-  setToCallsign("CQ    ");
+  setFromCallsign("AD6SFR"); //TODO replace
+  setToCallsign("KM4EOS");
   setSSIDdest(AX25_SSID_DESTINATION);
   setSSIDsource(AX25_SSID_SOURCE);
 }

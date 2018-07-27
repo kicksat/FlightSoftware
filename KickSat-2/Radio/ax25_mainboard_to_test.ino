@@ -8,11 +8,12 @@
 
 AX25 radio = AX25(SPI_CS_RFM, RF_NIRQ, RF_SDN);
 
-void setup() 
+
+void setup()
 {
   SerialUSB.begin(115200);
   delay(500);
-  
+
   // declare MOSI as alternate
   pinPeripheral(7, PIO_SERCOM_ALT);
   radio.powerAndInit();
@@ -20,7 +21,7 @@ void setup()
   SerialUSB.println("Testing 123");
 }
 char data[] = "BAT:55% STATUS:GOOD";
-void loop() 
+void loop()
 {
   // put your main code here, to run repeatedly:
   SerialUSB.println("sending");

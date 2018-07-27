@@ -77,13 +77,13 @@ extern "C"
 // #define digitalPinToTimer(P)
 
 // LEDs
-#define PIN_LED_13           (13u)
+#define PIN_LED_9			 (9u) //orig 13 instead of 9
 #define PIN_LED_RXL          (25u)
 #define PIN_LED_TXL          (26u)
-#define PIN_LED              PIN_LED_13
+#define PIN_LED              PIN_LED_9 //orig 13
 #define PIN_LED2             PIN_LED_RXL
 #define PIN_LED3             PIN_LED_TXL
-#define LED_BUILTIN          PIN_LED_13
+#define LED_BUILTIN          PIN_LED_9 //orig 13
 
 /*
  * Analog pins
@@ -106,18 +106,48 @@ static const uint8_t DAC0 = PIN_DAC0;
 #define ADC_RESOLUTION		12
 
 // Other pins
-//#define PIN_ATN              (38ul) //old, removed
-//static const uint8_t ATN = PIN_ATN; //old, removed
- #define PIN_CS_SD			(31ul) //added instead of ATN above
- #define PIN_CS_RFM			(27ul) //new
- #define PIN_XTB_START		(47ul) //new
- #define PIN_NIRQ			(3ul)  //new
- #define PIN_SDN				(4ul)  //new
- static const uint8_t CS_SD = PIN_CS_SD; //new
- static const uint8_t CS_RFM = PIN_CS_RFM; //new
- static const uint8_t XTB_START = PIN_XTB_START; //new
- static const uint8_t NIRQ = PIN_NIRQ; //new
- static const uint8_t SDN = PIN_SDN;  //new
+//#define PIN_ATN              (38ul)
+//static const uint8_t ATN = PIN_ATN;
+#define PIN_SPI_CS_SD		(31ul) //added instead of ATN above
+#define PIN_SPI_CS_RFM		(27ul) //new
+#define PIN_SPI_CS_XTB1		(26ul) //new
+#define PIN_SPI_CS_XTB2		(16ul) //new
+#define PIN_XTB_START		(19ul) //new
+#define PIN_XTB_RESET		(30ul) //new
+#define PIN_RF_NIRQ			(14ul) //new
+#define PIN_RF_SDN			(42ul) //new
+#define PIN_I_BATT			(18ul) //new
+#define PIN_ENAB_GPS		(8ul)  //new
+#define PIN_ENAB_BURN1		(25ul) //new
+#define PIN_ENAB_BURN2		(2ul)  //new
+#define PIN_ENAB_BURN3		(3ul)  //new
+#define PIN_ENAB_BURN4		(4ul)  //new
+#define PIN_GPS_1PPS		(15ul) //new
+#define PIN_BURN_RELAY_A	(5ul)  //new
+#define PIN_BURN_RELAY_B	(1ul)  //new
+#define PIN_UART1_TX		(13ul) //new
+#define PIN_UART1_RX		(10ul) //new
+#define PIN_WDT_WDI			(12ul) //new
+static const uint8_t SPI_CS_SD = PIN_SPI_CS_SD; //new
+static const uint8_t SPI_CS_RFM = PIN_SPI_CS_RFM; //new
+static const uint8_t SPI_CS_XTB1 = PIN_SPI_CS_XTB1; //new
+static const uint8_t SPI_CS_XTB2 = PIN_SPI_CS_XTB2; //new
+static const uint8_t XTB_START = PIN_XTB_START; //new
+static const uint8_t XTB_RESET = PIN_XTB_RESET; //new
+static const uint8_t RF_NIRQ = PIN_RF_NIRQ; //new
+static const uint8_t RF_SDN = PIN_RF_SDN;  //new
+static const uint8_t I_BATT = PIN_I_BATT;  //new
+static const uint8_t ENAB_GPS = PIN_ENAB_GPS; //new
+static const uint8_t ENAB_BURN1 = PIN_ENAB_BURN1; //new
+static const uint8_t ENAB_BURN2 = PIN_ENAB_BURN2; //new
+static const uint8_t ENAB_BURN3 = PIN_ENAB_BURN3; //new
+static const uint8_t ENAB_BURN4 = PIN_ENAB_BURN4; //new
+static const uint8_t GPS_1PPS = PIN_GPS_1PPS; //new
+static const uint8_t BURN_RELAY_A = PIN_BURN_RELAY_A; //new
+static const uint8_t BURN_RELAY_B = PIN_BURN_RELAY_B; //new
+static const uint8_t UART1_TX = PIN_UART1_TX; //new
+static const uint8_t UART1_RX = PIN_UART1_RX; //new
+static const uint8_t WDT_WDI = PIN_WDT_WDI; //new
 
 /*
  * Serial interfaces
@@ -143,7 +173,7 @@ static const uint8_t DAC0 = PIN_DAC0;
 #define PIN_SPI_MISO         (20u) //orig 12
 #define PIN_SPI_MOSI         (7u) //orig 11
 #define PIN_SPI_SCK          (21u) //orig 13
-#define PIN_SPI_SS           (5u) //orig 10
+#define PIN_SPI_SS           (19u) //orig 10
 #define PERIPH_SPI           sercom3 //original sercom 1
 // Pad Map:     0       1   2     3
 //          MOSI (TX)  SCK  SS  MOSI (RX)
@@ -160,10 +190,10 @@ static const uint8_t SCK  = PIN_SPI_SCK;
  */
 #define WIRE_INTERFACES_COUNT 1
 
-#define PIN_WIRE_SDA         (11u) //orig 20u
-#define PIN_WIRE_SCL         (12u) //orig 21u
-#define PERIPH_WIRE          sercom1 //orig sercom3
-#define WIRE_IT_HANDLER      SERCOM1_Handler //orig sercom3_handler
+#define PIN_WIRE_SDA         (22u) //orig 20u
+#define PIN_WIRE_SCL         (38u) //orig 21u
+#define PERIPH_WIRE          sercom2 //orig sercom3
+#define WIRE_IT_HANDLER      SERCOM2_Handler //orig sercom3_handler
 
 static const uint8_t SDA = PIN_WIRE_SDA;
 static const uint8_t SCL = PIN_WIRE_SCL;
@@ -171,9 +201,9 @@ static const uint8_t SCL = PIN_WIRE_SCL;
 /*
  * USB
  */
-#define PIN_USB_HOST_ENABLE (27ul)
-#define PIN_USB_DM          (28ul)
-#define PIN_USB_DP          (29ul)
+//#define PIN_USB_HOST_ENABLE (27ul) //originally commented in
+#define PIN_USB_DM          (28ul) //USB_D-
+#define PIN_USB_DP          (29ul) //USB_D+
 
 /*
  * I2S Interfaces
