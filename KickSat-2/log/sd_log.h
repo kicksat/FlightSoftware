@@ -1,46 +1,38 @@
-
 // sd_log.h - Library for reading from and writing to the log on the SD card
 
 #ifndef SD_LOG_h
 #define SD_LOG_h
 
-//#include "Arduino.h"
-#include <integer.h>
-#include <sd_io.h>
-#include <spi_io.h>
+#include "Arduino.h"
+#include "SD_DataFile.h"
 
-
-class sd_log 
-{
+class sd_log{
   public:
-    void write_log(); //takes all data and logs it
-    //void writeLogWithSensor(bool sensor1, bool sensor2, bool sensor3, bool sensor4, bool sensor5); //allows specific sensors to be set on or off
-    char* read_entry(int entryIndex);  //reads a specific entry indexed from current entry
-    char* data_dump(int numEntries); //reads the last numEntries logs and outputs in string array
-    
-    /* Functions to update flag status */ 
-    void set_antenna_flag(bool flag); 
-    void set_bw1_flag(bool flag); 
-    void set_bw2_flag(bool flag);
-    void set_bw3_flag(bool flag);
-    void set_early_mode(bool flag);
-    void set_standby_mode(bool flag);
-    void set_deploying_mode(bool flag);
-    void set_deployed_flag(bool flag);
-    void set_varChanged_flag(bool flag); //error checking must be set same time stamp that flag is changed
-    // takes in a byte of information and counts the number of ones --> returns a bool
-    bool byte_to_bool(uint8_t inBool);
 
-    // member variables
-    bool antenna_flag;
-    bool bw1_flag;
-    bool bw2_flag;
-    bool bw3_flag;
-    bool mode_isEarly;
-    bool mode_isStandby;
-    bool mode_isDeploying;
-    bool didDeploy_flag;
-    bool varChanged_flag;
+    struct Log_Data{
+      int log_num;
+      byte status_byte;
+      byte power_data[3];
+      float GPS_data[3];
+      float IMU_data[9];
+      byte command_data[8];
+    }logData;
+
+    sd_log();
+    void write_log(Log_Data data); //takes all data and logs it
+    String read_entry(int entryIndex);  //reads a specific entry indexed from current entry
+    char* data_dump(int numEntries); //reads the last numEntries logs and outputs in string array
+
+    //member variables
+    SD_DataFile dataLog = SD_DataFile(126, "L");
+
+  private:
+    String encode_int(int value);
+    String encode_float(float value);
+    void add_String_Entry(String input, int entry_num, byte array1[]);
+    float decode_float(byte* data);
+    int decode_int(byte* data);
+    String log_to_String();
 };
 
 #endif
