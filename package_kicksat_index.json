@@ -16,7 +16,7 @@
           "name": "KickSat SAMD Boards",
           "architecture": "samd",
           "category": "KickSat",
-          "version": "0.1",
+          "version": "0.1.2",
           "archiveFileName": "kicksat-samd-0.1.2.tar.gz",
           "url": "https://kicksat.github.io/FlightSoftware/releases/kicksat-samd-0.1.2.tar.gz",
           "checksum": "SHA-256:6704f598ea9d47ec8df98eff7060e485730006b1e14f4b9eb13bd94c9d5de97e",
