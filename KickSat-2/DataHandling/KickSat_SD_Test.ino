@@ -4,11 +4,12 @@
 
 #define CS_pin 10
 
-SD_DataFile dataFile(6, "data.txt");
+SD_DataFile dataFile(126, "dipple.txt");
 
 void setup() {
   SerialUSB.begin(115200);
-  while (!SerialUSB) {}
+  while (!Serial) {}
+  
 
   SerialUSB.print("Initializing SD card...");
   
@@ -41,11 +42,10 @@ void parseMessage(String msg, String arg[]) {
 }
 
 //debugging function
-//allows the user to push commands to the micro through the SerialUSB monitor
+//allows the user to push commands to the micro through the serial monitor
 //in this case, we have 3 commands
 //
 //r <value> - reads the data entry specified by value
-//ri <lineNum index len> - reads at an index in a line
 //w <data> - writes the bytes in data to the next entry of the file
 //ra - reads out the entire file
 void handleCommand() {
@@ -95,13 +95,17 @@ void handleCommand() {
       SerialUSB.print(" ");
     }
     SerialUSB.println();
-  }else if (argv[0] == "ri"){
-    SerialUSB.print("reading index ");
+  } else if (argv[0] == "ri"){
+    SerialUSB.print(" === Reading ");
+    SerialUSB.print(argv[3].toInt());
+    SerialUSB.print(" bytes from line ");
+    SerialUSB.print(argv[1].toInt());
+    SerialUSB.print(" at index ");
+    SerialUSB.println(argv[2].toInt());
     byte out[argv[3].toInt()];
     dataFile.readLineIndex(argv[1].toInt(), argv[2].toInt(), argv[3].toInt(), out);
     for (int i = 0; i < argv[3].toInt(); i++) {
       SerialUSB.print((char)out[i]);
-      SerialUSB.print(" ");
     }
     SerialUSB.println();
   }
