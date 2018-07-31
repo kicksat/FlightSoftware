@@ -17,10 +17,10 @@
           "architecture": "samd",
           "category": "KickSat",
           "version": "0.1",
-          "archiveFileName": "kicksat-samd-0.1.1.tar.gz",
-          "url": "https://kicksat.github.io/FlightSoftware/releases/kicksat-samd-0.1.1.tar.gz",
-          "checksum": "SHA-256:3ef404c5dfb7af69c1062fe23bdb85daea4e55d95abfcef32b2379a8715a469c",
-          "size": "11796117",
+          "archiveFileName": "kicksat-samd-0.1.2.tar.gz",
+          "url": "https://kicksat.github.io/FlightSoftware/releases/kicksat-samd-0.1.2.tar.gz",
+          "checksum": "SHA-256:6704f598ea9d47ec8df98eff7060e485730006b1e14f4b9eb13bd94c9d5de97e",
+          "size": "11796773",
           "help":
           {
             "online": "http://kicksat.io"
