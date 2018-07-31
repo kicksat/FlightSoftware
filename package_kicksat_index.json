@@ -1,5 +1,6 @@
 {
-  "packages": [
+  "packages":
+  [
     {
       "name": "kicksat",
       "maintainer": "KickSat",
@@ -9,26 +10,29 @@
       {
         "online": "http://kicksat.io"
       },
-      
       "platforms":
       [
         {
-          "boards": [
-            {
-              "name": "KickSat Flight Computer"
-            }
-          ],
+          "name": "KickSat SAMD Boards",
           "architecture": "samd",
-          "checksum": "SHA-256:fb94d3c3b17c9fef9f678d234b28f24d5b01b93703434185f3c5ee753ad0b487",
           "category": "KickSat",
           "version": "0.1",
           "archiveFileName": "kicksat-samd-0.1.tar.gz",
           "url": "https://kicksat.github.io/FlightSoftware/releases/kicksat-samd-0.1.tar.gz",
-          "help": {
+          "checksum": "SHA-256:fb94d3c3b17c9fef9f678d234b28f24d5b01b93703434185f3c5ee753ad0b487",
+          "size": "11540290",
+          "help":
+          {
             "online": "http://kicksat.io"
           },
-          "name": "KickSat SAMD Boards",
-          "toolsDependencies": [
+          "boards":
+          [
+            {
+              "name": "KickSat Flight Computer"
+            }
+          ],
+          "toolsDependencies":
+          [
             {
               "name": "arm-none-eabi-gcc",
               "packager": "arduino",
@@ -54,11 +58,9 @@
               "packager": "arduino",
               "version": "1.2.0"
             }
-          ],
-          "size": "11540290"
+          ]
         }
       ]
     }
-
   ]
 }
