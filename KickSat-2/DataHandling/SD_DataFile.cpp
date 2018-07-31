@@ -34,11 +34,11 @@ bool SD_DataFile::writeDataEntry(byte* data) {
 
 //reads the data file entry specified by the int index into the buffer buf
 //returns true if success, false otherwise
-bool SD_DataFile::readDataEntry(int index, byte* buf) {
-  if (index < _numEntries) {
+bool SD_DataFile::readDataEntry(int lineNum, byte* buf) {
+  if (lineNum < _numEntries) {
     _dataFile = SD.open(_fileName, FILE_READ);
     if (_dataFile) {
-      _dataFile.seek(index * _dataWidth);
+      _dataFile.seek(lineNum * _dataWidth);
       _dataFile.read(buf, _dataWidth);
       _dataFile.close();
       return true;
@@ -47,8 +47,9 @@ bool SD_DataFile::readDataEntry(int index, byte* buf) {
   return false;
 }
 
+
 bool SD_DataFile::readLineIndex(int lineNum, int index, int len, byte* buf){
-  if (index < _numEntries) {
+  if (lineNum < _numEntries) {
     _dataFile = SD.open(_fileName, FILE_READ);
     if (_dataFile) {
       _dataFile.seek(lineNum * _dataWidth + index);
@@ -59,4 +60,3 @@ bool SD_DataFile::readLineIndex(int lineNum, int index, int len, byte* buf){
   }
   return false;
 }
-
