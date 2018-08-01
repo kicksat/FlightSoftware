@@ -209,7 +209,7 @@ static const uint8_t SCL = PIN_WIRE_SCL;
 /*
  * USB
  */
-//#define PIN_USB_HOST_ENABLE (27ul) //originally commented in
+#define PIN_USB_HOST_ENABLE (27ul) //originally commented in
 #define PIN_USB_DM          (28ul) //USB_D-
 #define PIN_USB_DP          (29ul) //USB_D+
 
