@@ -13,12 +13,12 @@ void sd_log :: write_log(Log_Data data){
   byte output[ENTRY_LEN];
   add_String_Entry("[LN", 0, output);
   add_String_Entry(encode_int(data.log_num), LOG_NUM_INDEX, output);
-  add_String_Entry(",SB", LOG_NUM_INDEX +LOG_NUM_LEN, output);
-  output[STATUS_BYTE_INDEX ] = data.status_byte;
+  add_String_Entry(",SB", LOG_NUM_INDEX + INT_LEN, output);
+  output[STATUS_BYTE_INDEX] = data.status_byte;
   add_String_Entry(",IB", STATUS_BYTE_INDEX  + BYTE_LEN, output);
-  output[I_BATT_INDEX ] = data.power_data[0];
-  add_String_Entry(",VB", I_BATT_INDEX  + BYTE_LEN, output);
-  output[V_BATT_INDEX ] = data.power_data[1];
+  output[I_BATT_INDEX] = data.power_data[0];
+  add_String_Entry(",VB", I_BATT_INDEX + BYTE_LEN, output);
+  output[V_BATT_INDEX] = data.power_data[1];
   add_String_Entry(",IS", V_BATT_INDEX + BYTE_LEN, output);
   output[I_SOLAR_INDEX] = data.power_data[2];
   add_String_Entry(",D&T", I_SOLAR_INDEX + BYTE_LEN , output);
@@ -54,7 +54,6 @@ void sd_log :: write_log(Log_Data data){
   output[COM_INDEX + COM_LEN] = ']';
 
   dataLog.writeDataEntry((byte*)output);
- // dataLog.writeDataEntry((byte*)output);
 
   SerialUSB.println("log entry");
   for(int i = 0; i < ENTRY_LEN; i++){
@@ -67,8 +66,8 @@ String sd_log :: read_entry(int entryIndex){
   byte buf[ENTRY_LEN];
   String output = "";
   dataLog.readDataEntry(entryIndex, buf);
-  byte lNum[LOG_NUM_LEN] = {buf[LOG_NUM_INDEX], buf[LOG_NUM_INDEX + 1], buf[LOG_NUM_INDEX + 2]};
-  logData.log_num = decode_int(lNum);
+
+  logData.log_num = read_int(buf, LOG_NUM_INDEX);
   logData.status_byte = buf[STATUS_BYTE_INDEX];
   logData.power_data[0] = buf[I_BATT_INDEX];
   logData.power_data[1] = buf[V_BATT_INDEX];
@@ -102,8 +101,20 @@ String sd_log :: read_entry(int entryIndex){
 }
 
 float sd_log :: read_float(byte buf[], int index){
-  byte floatInput[FLOAT_LEN] = {buf[index], buf[index + 1], buf[index + 2], buf[index + 2]};
+  byte floatInput[FLOAT_LEN];
+  for(int i = 0; i < FLOAT_LEN; i++){
+    floatInput[i] = buf[index + i];
+  }
   float output = decode_float(floatInput);
+  return output;
+}
+
+int sd_log :: read_int(byte buf[], int index){
+  byte intInput[INT_LEN];
+  for(int i = 0; i < INT_LEN; i++){
+    intInput[i] = buf[index + i];
+  }
+  int output = decode_int(intInput);
   return output;
 }
 
@@ -146,10 +157,102 @@ String sd_log::read_GPS(int entryIndex){
 }
 
 String sd_log::read_IMU(int entryIndex){
+  String output = "";
+  byte gyrX[FLOAT_LEN];
+  byte gyrY[FLOAT_LEN];
+  byte gyrZ[FLOAT_LEN];
+  byte accX[FLOAT_LEN];
+  byte accY[FLOAT_LEN];
+  byte accZ[FLOAT_LEN];
+  byte cmpX[FLOAT_LEN];
+  byte cmpY[FLOAT_LEN];
+  byte cmpZ[FLOAT_LEN];
+  dataLog.readLineIndex(entryIndex, GYR_X_INDEX, FLOAT_LEN, gyrX);
+  dataLog.readLineIndex(entryIndex, GYR_Y_INDEX, FLOAT_LEN, gyrY);
+  dataLog.readLineIndex(entryIndex, GYR_Z_INDEX, FLOAT_LEN, gyrZ);
+  dataLog.readLineIndex(entryIndex, ACC_X_INDEX, FLOAT_LEN, accX);
+  dataLog.readLineIndex(entryIndex, ACC_Y_INDEX, FLOAT_LEN, accY);
+  dataLog.readLineIndex(entryIndex, ACC_Z_INDEX, FLOAT_LEN, accZ);
+  dataLog.readLineIndex(entryIndex, CMP_X_INDEX, FLOAT_LEN, cmpX);
+  dataLog.readLineIndex(entryIndex, CMP_Y_INDEX, FLOAT_LEN, cmpY);
+  dataLog.readLineIndex(entryIndex, CMP_Z_INDEX, FLOAT_LEN, cmpZ);
+
+  logData.IMU_data[0] = decode_float(gyrX);
+  logData.IMU_data[1] = decode_float(gyrY);
+  logData.IMU_data[2] = decode_float(gyrZ);
+  logData.IMU_data[3] = decode_float(accX);
+  logData.IMU_data[4] = decode_float(accY);
+  logData.IMU_data[5] = decode_float(accZ);
+  logData.IMU_data[6] = decode_float(cmpX);
+  logData.IMU_data[7] = decode_float(cmpY);
+  logData.IMU_data[8] = decode_float(cmpZ);
+
+  output+= "GYR[";
+  output += String(logData.IMU_data[0], NUM_DEC_IN_FLOAT);
+  output += ",";
+  output += String(logData.IMU_data[1], NUM_DEC_IN_FLOAT);
+  output += ",";
+  output += String(logData.IMU_data[2], NUM_DEC_IN_FLOAT);
+  output +=  "],ACC[";
+  output+= String(logData.IMU_data[3], NUM_DEC_IN_FLOAT);
+  output+= ",";
+  output+= String(logData.IMU_data[4], NUM_DEC_IN_FLOAT);
+  output+= ",";
+  output+= String(logData.IMU_data[5], NUM_DEC_IN_FLOAT);
+  output+= "],CMP[";
+  output+= String(logData.IMU_data[6], NUM_DEC_IN_FLOAT);
+  output+= ",";
+  output+= String(logData.IMU_data[7], NUM_DEC_IN_FLOAT);
+  output+=  ",";
+  output+= String(logData.IMU_data[8], NUM_DEC_IN_FLOAT);
+  output+=  "]";
+
+  SerialUSB.print("IMU data line:");
+  SerialUSB.println(entryIndex);
+  SerialUSB.println(output);
+
+  return output;
 
 }
 
-char* sd_log::read_header(int entryIndex){
+String sd_log::read_header(int entryIndex, byte bytes[]){
+   String output = "";
+   byte ln[INT_LEN];
+   byte sb[BYTE_LEN];
+   byte ib[BYTE_LEN];
+   byte vb[BYTE_LEN];
+   byte is[BYTE_LEN];
+   dataLog.readLineIndex(entryIndex, LOG_NUM_INDEX, INT_LEN, ln);
+   dataLog.readLineIndex(entryIndex, STATUS_BYTE_INDEX, BYTE_LEN, sb);
+   dataLog.readLineIndex(entryIndex, I_BATT_INDEX, BYTE_LEN, ib);
+   dataLog.readLineIndex(entryIndex, V_BATT_INDEX, BYTE_LEN, vb);
+   dataLog.readLineIndex(entryIndex, I_SOLAR_INDEX, BYTE_LEN, is);
+   bytes[0] = ln[0];
+   bytes[1] = ln[1];
+   bytes[2] = sb[0];
+   bytes[3] = ib[0];
+   bytes[4] = vb[0];
+   bytes[5] = is[0];
+   logData.log_num = decode_int(ln);
+   logData.status_byte = sb[0];
+   logData.power_data[0] = ib[0];
+   logData.power_data[1] = vb[0];
+   logData.power_data[2] = is[0];
+  output += "LN";
+  output+= logData.log_num;
+  output+= ",SB";
+  output+= (char)logData.status_byte;
+  output += ",IB";
+  output+= (char)logData.power_data[0];
+  output+= ",VB";
+  output += (char)logData.power_data[1];
+  output+= ",IS";
+  output+= (char)logData.power_data[2];
+
+  SerialUSB.print("IMU data line:");
+  SerialUSB.println(entryIndex);
+  SerialUSB.println(output);
+
 
 }
 
