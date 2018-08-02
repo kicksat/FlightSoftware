@@ -1,14 +1,10 @@
-/* Example main function 
+/* Example main function
  *  1) wake up after some pre-set amount of time (randomized number)
  *  2) chirp down some prerequested data
  *  3) listen for next instruction
 */
 
-#include "beacon.h"
-#include <stdio.h>
-#include <string.h>
-
-#define MAX_OUT_CHARS 16 // max downlink message length
+#include "kicksat.h"
 
 // variables
 int sensor_number;
@@ -21,7 +17,7 @@ int log_number;
 // create the beacon object
 beacon myBeacon = beacon();
 
-void setup() 
+void setup()
 {
   // put your setup code here, to run once:
   SerialUSB.begin(115200);
@@ -33,21 +29,21 @@ void setup()
   next_beacon = 0;  // first message will communicate that the beacon is alive!!
 }
 
-void loop() 
+void loop()
 {
   // put your main code here, to run repeatedly: DONT TELL ME WHAT TO DO, ARDUINO!!
   // TODO: enter sleep mode
   // loop of sleep --> wake up --> check battery level until you are charged above threshold level
   while(1)
   {
-    // Enter Sleep Mode... 
+    // Enter Sleep Mode...
     delay(60*1000); // sleep for one minute
     // TODO: use arduino low power library for a timed wake up every minute
     // TODO: analog read to find battery level
     // if (battery_level > threshold)
     break;
   }
-  
+
   // Gather data
   // TODO: read the sensors, write to SD card memory
   // TODO: implement sensor reading scheme... we need to read different sensors at different intervals of time
@@ -59,10 +55,10 @@ void loop()
   myBeacon.listen();
 
   // parse through myBeacon's member variable "uplink_message" which is a char*
-  // parse through and figure out what command was received 
+  // parse through and figure out what command was received
   next_beacon = uplink_to_command_num();
-  
-  // send a beacon!! 
+
+  // send a beacon!!
   switch (next_beacon)
   {
     // initialize
@@ -86,15 +82,15 @@ void loop()
       char buff[MAX_OUT_CHARS + 1];
       sprintf(buff,"S%d: %.2f", sensor_number, sensor_data);   // TODO: verify that we want 2 decimal places of accuracy
       myBeacon.set_message(buff);
-      
+
       myBeacon.send_beacon();
-    
+
     // Downlink Logs
     case 2:
       // TODO: read logs into strings
 
       // send down the logs... maybe more than one downlink is required here
-      
+
     // Sensor Config rewrite
     case 3:
       // TODO: rewrite the sensor config file based on uplink
@@ -113,7 +109,7 @@ void loop()
 
     // Enter End of Life Mode
     case 7:
-      // TODO: enter end of life mode... 
+      // TODO: enter end of life mode...
 
     // any other commands that we need??
     case 8:
@@ -125,7 +121,7 @@ void loop()
 }
 
 
-// this will send the basic chirp that is sent every minute or so after waking up... 
+// this will send the basic chirp that is sent every minute or so after waking up...
 void basic_chirp()
 {
   char buff[MAX_OUT_CHARS + 1];
@@ -174,7 +170,6 @@ int uplink_to_command_num()
   else
   {
     SerialUSB.println("Uplink Error");
-    return 75; 
+    return 75;
   }
 }
-
