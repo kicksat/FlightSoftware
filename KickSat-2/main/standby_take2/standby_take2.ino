@@ -7,13 +7,6 @@
 // included BEFORE including the 9DS1 library.
 #include <kicksat.h>
 
-////////////////////////////
-// Sketch Output Settings //
-////////////////////////////
-#define PRINT_CALCULATED
-//#define PRINT_RAW
-#define PRINT_SPEED 250 // 250 ms between prints
-
 /////////////////////////////////
 // GLOBAL VARIABLE DEFINITIONS //
 /////////////////////////////////
@@ -45,7 +38,15 @@ void setup()
   ////////////////////////
   // IMU Initialization //
   ////////////////////////
-  init_imu();
+  if (!imu.begin())
+  {
+    SerialUSB.println("Failed to communicate with LSM9DS1.");
+    SerialUSB.println("Double-check wiring.");
+    SerialUSB.println("Default settings in this sketch will " \
+                  "work for an out of the box LSM9DS1 " \
+                  "Breakout, but may need to be modified " \
+                  "if the board jumpers are.");
+  }
   ////////////////////////////
   // End IMU Initialization //
   ////////////////////////////
@@ -56,18 +57,18 @@ void loop()
 {
 
   SerialUSB.print("Gyro:");
-  SerialUSB.print(return_gx());
+  SerialUSB.print(imu.gx);
   SerialUSB.print(",");
-  SerialUSB.print(return_gy());
+  SerialUSB.print(imu.gy);
   SerialUSB.print(",");
-  SerialUSB.print(return_gz());
+  SerialUSB.print(imu.gz);
   SerialUSB.println();
   SerialUSB.print("Accel:");
-  SerialUSB.print(return_ax());
+  SerialUSB.print(imu.ax);
   SerialUSB.print(",");
-  SerialUSB.print(return_ay());
+  SerialUSB.print(imu.ay);
   SerialUSB.print(",");
-  SerialUSB.print(return_az());
+  SerialUSB.print(imu.az);
   SerialUSB.println();
 
   delay(4000);

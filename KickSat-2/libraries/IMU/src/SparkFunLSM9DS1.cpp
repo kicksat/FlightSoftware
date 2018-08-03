@@ -91,7 +91,7 @@ void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr)
 	// 2 = 50 Hz    5 = 476 Hz
 	// 3 = 119 Hz   6 = 952 Hz
 	settings.accel.sampleRate = 6;
-	// Accel cutoff freqeuncy can be any value between -1 - 3. 
+	// Accel cutoff freqeuncy can be any value between -1 - 3.
 	// -1 = bandwidth determined by sample rate
 	// 0 = 408 Hz   2 = 105 Hz
 	// 1 = 211 Hz   3 = 50 Hz
@@ -141,38 +141,38 @@ void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr)
 
 uint16_t LSM9DS1::begin()
 {
-	//! Todo: don't use _xgAddress or _mAddress, duplicating memory
-	_xgAddress = settings.device.agAddress;
-	_mAddress = settings.device.mAddress;
-	
+  // Before initializing the IMU, there are a few settings
+  // we may need to adjust. Use the settings struct to set
+  // the device's communication mode and addresses:
+  imu.settings.device.commInterface = IMU_MODE_I2C;
+  imu.settings.device.mAddress = LSM9DS1_M;
+  imu.settings.device.agAddress = LSM9DS1_AG;
+
 	constrainScales();
 	// Once we have the scale values, we can calculate the resolution
 	// of each sensor. That's what these functions are for. One for each sensor
 	calcgRes(); // Calculate DPS / ADC tick, stored in gRes variable
 	calcmRes(); // Calculate Gs / ADC tick, stored in mRes variable
 	calcaRes(); // Calculate g / ADC tick, stored in aRes variable
-	
+
 	// Now, initialize our hardware interface.
-	if (settings.device.commInterface == IMU_MODE_I2C)	// If we're using I2C
-		initI2C();	// Initialize I2C
-	else if (settings.device.commInterface == IMU_MODE_SPI) 	// else, if we're using SPI
-		initSPI();	// Initialize SPI
-		
+	initI2C();	// Initialize I2C
+
 	// To verify communication, we can read from the WHO_AM_I register of
 	// each device. Store those in a variable so we can return them.
 	uint8_t mTest = mReadByte(WHO_AM_I_M);		// Read the gyro WHO_AM_I
 	uint8_t xgTest = xgReadByte(WHO_AM_I_XG);	// Read the accel/mag WHO_AM_I
 	uint16_t whoAmICombined = (xgTest << 8) | mTest;
-	
+
 	if (whoAmICombined != ((WHO_AM_I_AG_RSP << 8) | WHO_AM_I_M_RSP))
 		return 0;
-	
+
 	// Gyro initialization stuff:
 	initGyro();	// This will "turn on" the gyro. Setting up interrupts, etc.
-	
+
 	// Accelerometer initialization stuff:
 	initAccel(); // "Turn on" all axes of the accel. Set up interrupts, etc.
-	
+
 	// Magnetometer initialization stuff:
 	initMag(); // "Turn on" all axes of the mag. Set up interrupts, etc.
 
@@ -183,13 +183,13 @@ uint16_t LSM9DS1::begin()
 void LSM9DS1::initGyro()
 {
 	uint8_t tempRegValue = 0;
-	
+
 	// CTRL_REG1_G (Default value: 0x00)
 	// [ODR_G2][ODR_G1][ODR_G0][FS_G1][FS_G0][0][BW_G1][BW_G0]
 	// ODR_G[2:0] - Output data rate selection
 	// FS_G[1:0] - Gyroscope full-scale selection
 	// BW_G[1:0] - Gyroscope bandwidth selection
-	
+
 	// To disable gyro, set sample rate bits to 0. We'll only set sample
 	// rate if the gyro is enabled.
 	if (settings.gyro.enabled)
@@ -208,13 +208,13 @@ void LSM9DS1::initGyro()
 	}
 	tempRegValue |= (settings.gyro.bandwidth & 0x3);
 	xgWriteByte(CTRL_REG1_G, tempRegValue);
-	
+
 	// CTRL_REG2_G (Default value: 0x00)
 	// [0][0][0][0][INT_SEL1][INT_SEL0][OUT_SEL1][OUT_SEL0]
 	// INT_SEL[1:0] - INT selection configuration
 	// OUT_SEL[1:0] - Out selection configuration
-	xgWriteByte(CTRL_REG2_G, 0x00);	
-	
+	xgWriteByte(CTRL_REG2_G, 0x00);
+
 	// CTRL_REG3_G (Default value: 0x00)
 	// [LP_mode][HP_EN][0][0][HPCF3_G][HPCF2_G][HPCF1_G][HPCF0_G]
 	// LP_mode - Low-power mode enable (0: disabled, 1: enabled)
@@ -226,7 +226,7 @@ void LSM9DS1::initGyro()
 		tempRegValue |= (1<<6) | (settings.gyro.HPFCutoff & 0x0F);
 	}
 	xgWriteByte(CTRL_REG3_G, tempRegValue);
-	
+
 	// CTRL_REG4 (Default value: 0x38)
 	// [0][0][Zen_G][Yen_G][Xen_G][0][LIR_XL1][4D_XL1]
 	// Zen_G - Z-axis output enable (0:disable, 1:enable)
@@ -240,7 +240,7 @@ void LSM9DS1::initGyro()
 	if (settings.gyro.enableX) tempRegValue |= (1<<3);
 	if (settings.gyro.latchInterrupt) tempRegValue |= (1<<1);
 	xgWriteByte(CTRL_REG4, tempRegValue);
-	
+
 	// ORIENT_CFG_G (Default value: 0x00)
 	// [0][0][SignX_G][SignY_G][SignZ_G][Orient_2][Orient_1][Orient_0]
 	// SignX_G - Pitch axis (X) angular rate sign (0: positive, 1: negative)
@@ -255,7 +255,7 @@ void LSM9DS1::initGyro()
 void LSM9DS1::initAccel()
 {
 	uint8_t tempRegValue = 0;
-	
+
 	//	CTRL_REG5_XL (0x1F) (Default value: 0x38)
 	//	[DEC_1][DEC_0][Zen_XL][Yen_XL][Zen_XL][0][0][0]
 	//	DEC[0:1] - Decimation of accel data on OUT REG and FIFO.
@@ -266,9 +266,9 @@ void LSM9DS1::initAccel()
 	if (settings.accel.enableZ) tempRegValue |= (1<<5);
 	if (settings.accel.enableY) tempRegValue |= (1<<4);
 	if (settings.accel.enableX) tempRegValue |= (1<<3);
-	
+
 	xgWriteByte(CTRL_REG5_XL, tempRegValue);
-	
+
 	// CTRL_REG6_XL (0x20) (Default value: 0x00)
 	// [ODR_XL2][ODR_XL1][ODR_XL0][FS1_XL][FS0_XL][BW_SCAL_ODR][BW_XL1][BW_XL0]
 	// ODR_XL[2:0] - Output data rate & power mode selection
@@ -300,7 +300,7 @@ void LSM9DS1::initAccel()
 		tempRegValue |= (settings.accel.bandwidth & 0x03);
 	}
 	xgWriteByte(CTRL_REG6_XL, tempRegValue);
-	
+
 	// CTRL_REG7_XL (0x21) (Default value: 0x00)
 	// [HR][DCF1][DCF0][0][0][FDS][0][HPIS1]
 	// HR - High resolution mode (0: disable, 1: enable)
@@ -324,13 +324,13 @@ void LSM9DS1::initAccel()
 // remove errors due to imprecise or varying initial placement. Calibration of sensor data in this manner
 // is good practice.
 void LSM9DS1::calibrate(bool autoCalc)
-{  
+{
 	uint8_t data[6] = {0, 0, 0, 0, 0, 0};
 	uint8_t samples = 0;
 	int ii;
 	int32_t aBiasRawTemp[3] = {0, 0, 0};
 	int32_t gBiasRawTemp[3] = {0, 0, 0};
-	
+
 	// Turn on FIFO and set threshold to 32 samples
 	enableFIFO(true);
 	setFIFO(FIFO_THS, 0x1F);
@@ -338,7 +338,7 @@ void LSM9DS1::calibrate(bool autoCalc)
 	{
 		samples = (xgReadByte(FIFO_SRC) & 0x3F); // Read number of stored samples
 	}
-	for(ii = 0; ii < samples ; ii++) 
+	for(ii = 0; ii < samples ; ii++)
 	{	// Read the gyro data stored in the FIFO
 		readGyro();
 		gBiasRawTemp[0] += gx;
@@ -348,7 +348,7 @@ void LSM9DS1::calibrate(bool autoCalc)
 		aBiasRawTemp[0] += ax;
 		aBiasRawTemp[1] += ay;
 		aBiasRawTemp[2] += az - (int16_t)(1./aRes); // Assumes sensor facing up!
-	}  
+	}
 	for (ii = 0; ii < 3; ii++)
 	{
 		gBiasRaw[ii] = gBiasRawTemp[ii] / samples;
@@ -356,10 +356,10 @@ void LSM9DS1::calibrate(bool autoCalc)
 		aBiasRaw[ii] = aBiasRawTemp[ii] / samples;
 		aBias[ii] = calcAccel(aBiasRaw[ii]);
 	}
-	
+
 	enableFIFO(false);
 	setFIFO(FIFO_OFF, 0x00);
-	
+
 	if (autoCalc) _autoCalc = true;
 }
 
@@ -368,14 +368,14 @@ void LSM9DS1::calibrateMag(bool loadIn)
 	int i, j;
 	int16_t magMin[3] = {0, 0, 0};
 	int16_t magMax[3] = {0, 0, 0}; // The road warrior
-	
+
 	for (i=0; i<128; i++)
 	{
 		while (!magAvailable())
 			;
 		readMag();
 		int16_t magTemp[3] = {0, 0, 0};
-		magTemp[0] = mx;		
+		magTemp[0] = mx;
 		magTemp[1] = my;
 		magTemp[2] = mz;
 		for (j = 0; j < 3; j++)
@@ -391,7 +391,7 @@ void LSM9DS1::calibrateMag(bool loadIn)
 		if (loadIn)
 			magOffset(j, mBiasRaw[j]);
 	}
-	
+
 }
 void LSM9DS1::magOffset(uint8_t axis, int16_t offset)
 {
@@ -407,7 +407,7 @@ void LSM9DS1::magOffset(uint8_t axis, int16_t offset)
 void LSM9DS1::initMag()
 {
 	uint8_t tempRegValue = 0;
-	
+
 	// CTRL_REG1_M (Default value: 0x10)
 	// [TEMP_COMP][OM1][OM0][DO2][DO1][DO0][0][ST]
 	// TEMP_COMP - Temperature compensation
@@ -420,7 +420,7 @@ void LSM9DS1::initMag()
 	tempRegValue |= (settings.mag.XYPerformance & 0x3) << 5;
 	tempRegValue |= (settings.mag.sampleRate & 0x7) << 2;
 	mWriteByte(CTRL_REG1_M, tempRegValue);
-	
+
 	// CTRL_REG2_M (Default value 0x00)
 	// [0][FS1][FS0][0][REBOOT][SOFT_RST][0][0]
 	// FS[1:0] - Full-scale configuration
@@ -441,7 +441,7 @@ void LSM9DS1::initMag()
 	// Otherwise we'll default to 4 gauss (00)
 	}
 	mWriteByte(CTRL_REG2_M, tempRegValue); // +/-4Gauss
-	
+
 	// CTRL_REG3_M (Default value: 0x03)
 	// [I2C_DISABLE][0][LP][0][0][SIM][MD1][MD0]
 	// I2C_DISABLE - Disable I2C interace (0:enable, 1:disable)
@@ -454,7 +454,7 @@ void LSM9DS1::initMag()
 	if (settings.mag.lowPowerEnable) tempRegValue |= (1<<5);
 	tempRegValue |= (settings.mag.operatingMode & 0x3);
 	mWriteByte(CTRL_REG3_M, tempRegValue); // Continuous conversion mode
-	
+
 	// CTRL_REG4_M (Default value: 0x00)
 	// [0][0][0][0][OMZ1][OMZ0][BLE][0]
 	// OMZ[1:0] - Z-axis operative mode selection
@@ -464,7 +464,7 @@ void LSM9DS1::initMag()
 	tempRegValue = 0;
 	tempRegValue = (settings.mag.ZPerformance & 0x3) << 2;
 	mWriteByte(CTRL_REG4_M, tempRegValue);
-	
+
 	// CTRL_REG5_M (Default value: 0x00)
 	// [0][BDU][0][0][0][0][0][0]
 	// BDU - Block data update for magnetic data
@@ -476,21 +476,21 @@ void LSM9DS1::initMag()
 uint8_t LSM9DS1::accelAvailable()
 {
 	uint8_t status = xgReadByte(STATUS_REG_1);
-	
+
 	return (status & (1<<0));
 }
 
 uint8_t LSM9DS1::gyroAvailable()
 {
 	uint8_t status = xgReadByte(STATUS_REG_1);
-	
+
 	return ((status & (1<<1)) >> 1);
 }
 
 uint8_t LSM9DS1::tempAvailable()
 {
 	uint8_t status = xgReadByte(STATUS_REG_1);
-	
+
 	return ((status & (1<<2)) >> 2);
 }
 
@@ -498,13 +498,12 @@ uint8_t LSM9DS1::magAvailable(lsm9ds1_axis axis)
 {
 	uint8_t status;
 	status = mReadByte(STATUS_REG_M);
-	
+
 	return ((status & (1<<axis)) >> axis);
 }
 
-void LSM9DS1::readAccel()
-{
-	uint8_t temp[6]; // We'll read six bytes from the accelerometer into temp	
+void LSM9DS1::readAccel() {
+	uint8_t temp[6]; // We'll read six bytes from the accelerometer into temp
 	xgReadBytes(OUT_X_L_XL, temp, 6); // Read 6 bytes, beginning at OUT_X_L_XL
 	ax = (temp[1] << 8) | temp[0]; // Store x-axis values into ax
 	ay = (temp[3] << 8) | temp[2]; // Store y-axis values into ay
@@ -515,6 +514,33 @@ void LSM9DS1::readAccel()
 		ay -= aBiasRaw[Y_AXIS];
 		az -= aBiasRaw[Z_AXIS];
 	}
+
+  // Calculate roll in radians
+  roll = atan2(imu.ay(), imu.az());
+
+  // Calculate pitch in radians
+  pitch = atan2(-imu.ax(), sqrt(imu.ay() * imu.ay() + imu.az() * imu.az()));
+
+  // Calculate yaw in radians
+  if (my1 == 0) {
+    yaw = (mx1 < 0) ? 180.0 : 0;
+  } else {
+    yaw = atan2(mx1, my1);
+    yaw -= DECLINATION * PI / 180;
+  }
+  if (yaw > PI) {
+    yaw -= (2 * PI);
+  } else if (yaw < -PI) {
+    yaw += (2 * PI);
+  } else if (yaw < 0) {
+    yaw += 2 * PI;
+  }
+
+  // Convert everything from radians to degrees:
+  roll *= 180.0 / PI;
+  pitch *= 180.0 / PI;
+  yaw *= 180.0 / PI;
+
 }
 
 int16_t LSM9DS1::readAccel(lsm9ds1_axis axis)
@@ -523,16 +549,16 @@ int16_t LSM9DS1::readAccel(lsm9ds1_axis axis)
 	int16_t value;
 	xgReadBytes(OUT_X_L_XL + (2 * axis), temp, 2);
 	value = (temp[1] << 8) | temp[0];
-	
+
 	if (_autoCalc)
 		value -= aBiasRaw[axis];
-	
+
 	return value;
 }
 
 void LSM9DS1::readMag()
 {
-	uint8_t temp[6]; // We'll read six bytes from the mag into temp	
+	uint8_t temp[6]; // We'll read six bytes from the mag into temp
 	mReadBytes(OUT_X_L_M, temp, 6); // Read 6 bytes, beginning at OUT_X_L_M
 	mx = (temp[1] << 8) | temp[0]; // Store x-axis values into mx
 	my = (temp[3] << 8) | temp[2]; // Store y-axis values into my
@@ -548,7 +574,7 @@ int16_t LSM9DS1::readMag(lsm9ds1_axis axis)
 
 void LSM9DS1::readTemp()
 {
-	uint8_t temp[2]; // We'll read two bytes from the temperature sensor into temp	
+	uint8_t temp[2]; // We'll read two bytes from the temperature sensor into temp
 	xgReadBytes(OUT_TEMP_L, temp, 2); // Read 2 bytes, beginning at OUT_TEMP_L
 	temperature = ((int16_t)temp[1] << 8) | temp[0];
 }
@@ -572,21 +598,21 @@ int16_t LSM9DS1::readGyro(lsm9ds1_axis axis)
 {
 	uint8_t temp[2];
 	int16_t value;
-	
+
 	xgReadBytes(OUT_X_L_G + (2 * axis), temp, 2);
-	
+
 	value = (temp[1] << 8) | temp[0];
-	
+
 	if (_autoCalc)
 		value -= gBiasRaw[axis];
-	
+
 	return value;
 }
 
 float LSM9DS1::calcGyro(int16_t gyro)
 {
 	// Return the gyro raw reading times our pre-calculated DPS / (ADC tick):
-	return gRes * gyro; 
+	return gRes * gyro;
 }
 
 float LSM9DS1::calcAccel(int16_t accel)
@@ -622,8 +648,8 @@ void LSM9DS1::setGyroScale(uint16_t gScl)
 			break;
 	}
 	xgWriteByte(CTRL_REG1_G, ctrl1RegValue);
-	
-	calcgRes();	
+
+	calcgRes();
 }
 
 void LSM9DS1::setAccelScale(uint8_t aScl)
@@ -632,7 +658,7 @@ void LSM9DS1::setAccelScale(uint8_t aScl)
 	uint8_t tempRegValue = xgReadByte(CTRL_REG6_XL);
 	// Mask out accel scale bits:
 	tempRegValue &= 0xE7;
-	
+
 	switch (aScl)
 	{
 		case 4:
@@ -652,7 +678,7 @@ void LSM9DS1::setAccelScale(uint8_t aScl)
 			break;
 	}
 	xgWriteByte(CTRL_REG6_XL, tempRegValue);
-	
+
 	// Then calculate a new aRes, which relies on aScale being set correctly:
 	calcaRes();
 }
@@ -663,7 +689,7 @@ void LSM9DS1::setMagScale(uint8_t mScl)
 	uint8_t temp = mReadByte(CTRL_REG2_M);
 	// Then mask out the mag scale bits:
 	temp &= 0xFF^(0x3 << 5);
-	
+
 	switch (mScl)
 	{
 	case 8:
@@ -681,11 +707,11 @@ void LSM9DS1::setMagScale(uint8_t mScl)
 	default: // Otherwise we'll default to 4 gauss (00)
 		settings.mag.scale = 4;
 		break;
-	}	
-	
+	}
+
 	// And write the new register value back into CTRL_REG6_XM:
 	mWriteByte(CTRL_REG2_M, temp);
-	
+
 	// We've updated the sensor, but we also need to update our class variables
 	// First update mScale:
 	//mScale = mScl;
@@ -768,7 +794,7 @@ void LSM9DS1::calcmRes()
 		mRes = magSensitivity[3];
 		break;
 	}
-	
+
 }
 
 void LSM9DS1::configInt(interrupt_select interrupt, uint8_t generator,
@@ -778,28 +804,28 @@ void LSM9DS1::configInt(interrupt_select interrupt, uint8_t generator,
 	// those two values.
 	// [generator] should be an OR'd list of values from the interrupt_generators enum
 	xgWriteByte(interrupt, generator);
-	
+
 	// Configure CTRL_REG8
 	uint8_t temp;
 	temp = xgReadByte(CTRL_REG8);
-	
+
 	if (activeLow) temp |= (1<<5);
 	else temp &= ~(1<<5);
-	
+
 	if (pushPull) temp &= ~(1<<4);
 	else temp |= (1<<4);
-	
+
 	xgWriteByte(CTRL_REG8, temp);
 }
 
 void LSM9DS1::configInactivity(uint8_t duration, uint8_t threshold, bool sleepOn)
 {
 	uint8_t temp = 0;
-	
+
 	temp = threshold & 0x7F;
 	if (sleepOn) temp |= (1<<7);
 	xgWriteByte(ACT_THS, temp);
-	
+
 	xgWriteByte(ACT_DUR, duration);
 }
 
@@ -824,7 +850,7 @@ void LSM9DS1::configAccelThs(uint8_t threshold, lsm9ds1_axis axis, uint8_t durat
 	// Write threshold value to INT_GEN_THS_?_XL.
 	// axis will be 0, 1, or 2 (x, y, z respectively)
 	xgWriteByte(INT_GEN_THS_X_XL + axis, threshold);
-	
+
 	// Write duration and wait to INT_GEN_DUR_XL
 	uint8_t temp;
 	temp = (duration & 0x7F);
@@ -835,13 +861,13 @@ void LSM9DS1::configAccelThs(uint8_t threshold, lsm9ds1_axis axis, uint8_t durat
 uint8_t LSM9DS1::getAccelIntSrc()
 {
 	uint8_t intSrc = xgReadByte(INT_GEN_SRC_XL);
-	
+
 	// Check if the IA_XL (interrupt active) bit is set
 	if (intSrc & (1<<6))
 	{
 		return (intSrc & 0x3F);
 	}
-	
+
 	return 0;
 }
 
@@ -864,7 +890,7 @@ void LSM9DS1::configGyroThs(int16_t threshold, lsm9ds1_axis axis, uint8_t durati
 	// axis will be 0, 1, or 2 (x, y, z respectively)
 	xgWriteByte(INT_GEN_THS_XH_G + (axis * 2), buffer[0]);
 	xgWriteByte(INT_GEN_THS_XH_G + 1 + (axis * 2), buffer[1]);
-	
+
 	// Write duration and wait to INT_GEN_DUR_XL
 	uint8_t temp;
 	temp = (duration & 0x7F);
@@ -875,27 +901,27 @@ void LSM9DS1::configGyroThs(int16_t threshold, lsm9ds1_axis axis, uint8_t durati
 uint8_t LSM9DS1::getGyroIntSrc()
 {
 	uint8_t intSrc = xgReadByte(INT_GEN_SRC_G);
-	
+
 	// Check if the IA_G (interrupt active) bit is set
 	if (intSrc & (1<<6))
 	{
 		return (intSrc & 0x3F);
 	}
-	
+
 	return 0;
 }
 
 void LSM9DS1::configMagInt(uint8_t generator, h_lactive activeLow, bool latch)
 {
 	// Mask out non-generator bits (0-4)
-	uint8_t config = (generator & 0xE0);	
+	uint8_t config = (generator & 0xE0);
 	// IEA bit is 0 for active-low, 1 for active-high.
 	if (activeLow == INT_ACTIVE_HIGH) config |= (1<<2);
 	// IEL bit is 0 for latched, 1 for not-latched
 	if (!latch) config |= (1<<1);
 	// As long as we have at least 1 generator, enable the interrupt
 	if (generator != 0) config |= (1<<0);
-	
+
 	mWriteByte(INT_CFG_M, config);
 }
 
@@ -910,13 +936,13 @@ void LSM9DS1::configMagThs(uint16_t threshold)
 uint8_t LSM9DS1::getMagIntSrc()
 {
 	uint8_t intSrc = mReadByte(INT_SRC_M);
-	
+
 	// Check if the INT (interrupt active) bit is set
 	if (intSrc & (1<<0))
 	{
 		return (intSrc & 0xFE);
 	}
-	
+
 	return 0;
 }
 
@@ -951,18 +977,18 @@ uint8_t LSM9DS1::getFIFOSamples()
 
 void LSM9DS1::constrainScales()
 {
-	if ((settings.gyro.scale != 245) && (settings.gyro.scale != 500) && 
+	if ((settings.gyro.scale != 245) && (settings.gyro.scale != 500) &&
 		(settings.gyro.scale != 2000))
 	{
 		settings.gyro.scale = 245;
 	}
-		
+
 	if ((settings.accel.scale != 2) && (settings.accel.scale != 4) &&
 		(settings.accel.scale != 8) && (settings.accel.scale != 16))
 	{
 		settings.accel.scale = 2;
 	}
-		
+
 	if ((settings.mag.scale != 4) && (settings.mag.scale != 8) &&
 		(settings.mag.scale != 12) && (settings.mag.scale != 16))
 	{
@@ -974,118 +1000,37 @@ void LSM9DS1::xgWriteByte(uint8_t subAddress, uint8_t data)
 {
 	// Whether we're using I2C or SPI, write a byte using the
 	// gyro-specific I2C address or SPI CS pin.
-	if (settings.device.commInterface == IMU_MODE_I2C)
-		I2CwriteByte(_xgAddress, subAddress, data);
-	else if (settings.device.commInterface == IMU_MODE_SPI)
-		SPIwriteByte(_xgAddress, subAddress, data);
-}
+		I2CwriteByte(settings.device.agAddress, subAddress, data);
 
 void LSM9DS1::mWriteByte(uint8_t subAddress, uint8_t data)
 {
 	// Whether we're using I2C or SPI, write a byte using the
 	// accelerometer-specific I2C address or SPI CS pin.
-	if (settings.device.commInterface == IMU_MODE_I2C)
-		return I2CwriteByte(_mAddress, subAddress, data);
-	else if (settings.device.commInterface == IMU_MODE_SPI)
-		return SPIwriteByte(_mAddress, subAddress, data);
-}
+		return I2CwriteByte(settings.device.mAddress, subAddress, data);
 
 uint8_t LSM9DS1::xgReadByte(uint8_t subAddress)
 {
 	// Whether we're using I2C or SPI, read a byte using the
 	// gyro-specific I2C address or SPI CS pin.
-	if (settings.device.commInterface == IMU_MODE_I2C)
-		return I2CreadByte(_xgAddress, subAddress);
-	else if (settings.device.commInterface == IMU_MODE_SPI)
-		return SPIreadByte(_xgAddress, subAddress);
-}
+		return I2CreadByte(settings.device.agAddress, subAddress);
 
 void LSM9DS1::xgReadBytes(uint8_t subAddress, uint8_t * dest, uint8_t count)
 {
 	// Whether we're using I2C or SPI, read multiple bytes using the
 	// gyro-specific I2C address or SPI CS pin.
-	if (settings.device.commInterface == IMU_MODE_I2C)
-		I2CreadBytes(_xgAddress, subAddress, dest, count);
-	else if (settings.device.commInterface == IMU_MODE_SPI)
-		SPIreadBytes(_xgAddress, subAddress, dest, count);
-}
+		I2CreadBytes(settings.device.agAddress, subAddress, dest, count);
 
 uint8_t LSM9DS1::mReadByte(uint8_t subAddress)
 {
 	// Whether we're using I2C or SPI, read a byte using the
 	// accelerometer-specific I2C address or SPI CS pin.
-	if (settings.device.commInterface == IMU_MODE_I2C)
-		return I2CreadByte(_mAddress, subAddress);
-	else if (settings.device.commInterface == IMU_MODE_SPI)
-		return SPIreadByte(_mAddress, subAddress);
-}
+		return I2CreadByte(settings.device.mAddress, subAddress);
 
 void LSM9DS1::mReadBytes(uint8_t subAddress, uint8_t * dest, uint8_t count)
 {
 	// Whether we're using I2C or SPI, read multiple bytes using the
 	// accelerometer-specific I2C address or SPI CS pin.
-	if (settings.device.commInterface == IMU_MODE_I2C)
-		I2CreadBytes(_mAddress, subAddress, dest, count);
-	else if (settings.device.commInterface == IMU_MODE_SPI)
-		SPIreadBytes(_mAddress, subAddress, dest, count);
-}
-
-void LSM9DS1::initSPI()
-{
-	pinMode(_xgAddress, OUTPUT);
-	digitalWrite(_xgAddress, HIGH);
-	pinMode(_mAddress, OUTPUT);
-	digitalWrite(_mAddress, HIGH);
-	
-	SPI.begin();
-	// Maximum SPI frequency is 10MHz, could divide by 2 here:
-	SPI.setClockDivider(SPI_CLOCK_DIV2);
-	// Data is read and written MSb first.
-	SPI.setBitOrder(MSBFIRST);
-	// Data is captured on rising edge of clock (CPHA = 0)
-	// Base value of the clock is HIGH (CPOL = 1)
-	SPI.setDataMode(SPI_MODE0);
-}
-
-void LSM9DS1::SPIwriteByte(uint8_t csPin, uint8_t subAddress, uint8_t data)
-{
-	digitalWrite(csPin, LOW); // Initiate communication
-	
-	// If write, bit 0 (MSB) should be 0
-	// If single write, bit 1 should be 0
-	SPI.transfer(subAddress & 0x3F); // Send Address
-	SPI.transfer(data); // Send data
-	
-	digitalWrite(csPin, HIGH); // Close communication
-}
-
-uint8_t LSM9DS1::SPIreadByte(uint8_t csPin, uint8_t subAddress)
-{
-	uint8_t temp;
-	// Use the multiple read function to read 1 byte. 
-	// Value is returned to `temp`.
-	SPIreadBytes(csPin, subAddress, &temp, 1);
-	return temp;
-}
-
-void LSM9DS1::SPIreadBytes(uint8_t csPin, uint8_t subAddress,
-							uint8_t * dest, uint8_t count)
-{
-	// To indicate a read, set bit 0 (msb) of first byte to 1
-	uint8_t rAddress = 0x80 | (subAddress & 0x3F);
-	// Mag SPI port is different. If we're reading multiple bytes, 
-	// set bit 1 to 1. The remaining six bytes are the address to be read
-	if ((csPin == _mAddress) && count > 1)
-		rAddress |= 0x40;
-	
-	digitalWrite(csPin, LOW); // Initiate communication
-	SPI.transfer(rAddress);
-	for (int i=0; i<count; i++)
-	{
-		dest[i] = SPI.transfer(0x00); // Read into destination array
-	}
-	digitalWrite(csPin, HIGH); // Close communication
-}
+		I2CreadBytes(settings.device.mAddress, subAddress, dest, count);
 
 void LSM9DS1::initI2C()
 {
@@ -1104,24 +1049,24 @@ void LSM9DS1::I2CwriteByte(uint8_t address, uint8_t subAddress, uint8_t data)
 uint8_t LSM9DS1::I2CreadByte(uint8_t address, uint8_t subAddress)
 {
 	int timeout = LSM9DS1_COMMUNICATION_TIMEOUT;
-	uint8_t data; // `data` will store the register data	
-	
+	uint8_t data; // `data` will store the register data
+
 	Wire.beginTransmission(address);         // Initialize the Tx buffer
 	Wire.write(subAddress);	                 // Put slave register address in Tx buffer
 	Wire.endTransmission(true);             // Send the Tx buffer, but send a restart to keep connection alive
-	Wire.requestFrom(address, (uint8_t) 1);  // Read one byte from slave register address 
+	Wire.requestFrom(address, (uint8_t) 1);  // Read one byte from slave register address
 	while ((Wire.available() < 1) && (timeout-- > 0))
 		delay(1);
-	
+
 	if (timeout <= 0)
 		return 255;	//! Bad! 255 will be misinterpreted as a good value.
-	
+
 	data = Wire.read();                      // Fill Rx buffer with result
 	return data;                             // Return data read from slave register
 }
 
 uint8_t LSM9DS1::I2CreadBytes(uint8_t address, uint8_t subAddress, uint8_t * dest, uint8_t count)
-{  
+{
 	int timeout = LSM9DS1_COMMUNICATION_TIMEOUT;
 	Wire.beginTransmission(address);   // Initialize the Tx buffer
 	// Next send the register to be read. OR with 0x80 to indicate multi-read.
@@ -1129,12 +1074,12 @@ uint8_t LSM9DS1::I2CreadBytes(uint8_t address, uint8_t subAddress, uint8_t * des
 
 	Wire.endTransmission(true);             // Send the Tx buffer, but send a restart to keep connection alive
 	uint8_t i = 0;
-	Wire.requestFrom(address, count);  // Read bytes from slave register address 
+	Wire.requestFrom(address, count);  // Read bytes from slave register address
 	while ((Wire.available() < count) && (timeout-- > 0))
 		delay(1);
 	if (timeout <= 0)
 		return -1;
-	
+
 	for (int i=0; i<count;)
 	{
 		if (Wire.available())
