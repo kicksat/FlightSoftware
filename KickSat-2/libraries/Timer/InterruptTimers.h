@@ -1,12 +1,13 @@
 /**
-    SAMD Timer Lib, InterruptTimers.h
-    Purpose: Creates timers for the SAMD micro
+SAMD Timer Lib, InterruptTimers.h
+Purpose: Creates timers for the SAMD micro
 
-    @author Ralen Toledo
-    @version 1.0 08/03/18
+@author Ralen Toledo
+@version 1.0 08/03/18
 */
 
-#include "Arduino.h"
+#include <Arduino.h>
+#include <string.h>
 
 #ifndef TIMER_H
 #define TIMER_H

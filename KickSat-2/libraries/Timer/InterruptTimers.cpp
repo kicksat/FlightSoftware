@@ -1,9 +1,9 @@
 /**
-    SAMD Timer Lib, InterruptTimers.cpp
-    Purpose: Creates timers for the SAMD micro
+SAMD Timer Lib, InterruptTimers.cpp
+Purpose: Creates timers for the SAMD micro
 
-    @author Ralen Toledo
-    @version 1.0 08/03/18 
+@author Ralen Toledo
+@version 1.0 08/03/18
 */
 
 #include <Arduino.h>
@@ -24,6 +24,7 @@ int numberOfTimers = 0; // Iterates number of timers initialized
 
 
 void timer::init(int requestedTimerDelay) { // Initializes timer
+
   if (!sysTimerState) { // If the system timer is not already started
     startSysTimer(); // Starts system millisecond timer
     SerialUSB.println("System timer started");
@@ -124,24 +125,31 @@ void startSysTimer() {
 // Function that is used to check if TC5 is done syncing
 // returns true when it is done syncing
 bool tcIsSyncing() {
+
   return TC5->COUNT16.STATUS.reg & TC_STATUS_SYNCBUSY;
+
 }
 
 // This function enables TC5 and waits for it to be ready
 void tcStartCounter() {
+
   TC5->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE; //set the CTRLA register
   while (tcIsSyncing()); //wait until snyc'd
+
 }
 
 // Reset TC5
 void tcReset() {
+
   TC5->COUNT16.CTRLA.reg = TC_CTRLA_SWRST;
   while (tcIsSyncing());
   while (TC5->COUNT16.CTRLA.bit.SWRST);
+
 }
 
 // Disable TC5
 void tcDisable() {
+
   TC5->COUNT16.CTRLA.reg &= ~TC_CTRLA_ENABLE;
   while (tcIsSyncing());
 
@@ -201,4 +209,5 @@ void TC5_Handler() {
   ///////////////////////////
 
   TC5->COUNT16.INTFLAG.bit.MC0 = 1; //don't change this, it's part of the timer code
+
 }
