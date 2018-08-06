@@ -129,7 +129,7 @@ bool sd_log :: data_dump(int startEntry, int numEntries, String buf[]){
   for(int i = 0; i < numEntries; i++){
     buf[i] = read_entry(i + startEntry);
   }
- return true; //make error case
+  return true; //make error case
 }
 
 //parses gps data specifically, updates struct and outputs a string
@@ -226,28 +226,28 @@ String sd_log::read_IMU(int entryIndex){
 
 //parses header data specifically, updates struct and outputs a human readable string and byte array
 String sd_log::read_header(int entryIndex, byte bytes[]){
-   String output = "";
-   byte ln[INT_LEN];
-   byte sb[BYTE_LEN];
-   byte ib[BYTE_LEN];
-   byte vb[BYTE_LEN];
-   byte is[BYTE_LEN];
-   dataLog.readLineIndex(entryIndex, LOG_NUM_INDEX, INT_LEN, ln);
-   dataLog.readLineIndex(entryIndex, STATUS_BYTE_INDEX, BYTE_LEN, sb);
-   dataLog.readLineIndex(entryIndex, I_BATT_INDEX, BYTE_LEN, ib);
-   dataLog.readLineIndex(entryIndex, V_BATT_INDEX, BYTE_LEN, vb);
-   dataLog.readLineIndex(entryIndex, I_SOLAR_INDEX, BYTE_LEN, is);
-   bytes[0] = ln[0];
-   bytes[1] = ln[1];
-   bytes[2] = sb[0];
-   bytes[3] = ib[0];
-   bytes[4] = vb[0];
-   bytes[5] = is[0];
-   logData.log_num = decode_int(ln);
-   logData.status_byte = sb[0];
-   logData.power_data[0] = ib[0];
-   logData.power_data[1] = vb[0];
-   logData.power_data[2] = is[0];
+  String output = "";
+  byte ln[INT_LEN];
+  byte sb[BYTE_LEN];
+  byte ib[BYTE_LEN];
+  byte vb[BYTE_LEN];
+  byte is[BYTE_LEN];
+  dataLog.readLineIndex(entryIndex, LOG_NUM_INDEX, INT_LEN, ln);
+  dataLog.readLineIndex(entryIndex, STATUS_BYTE_INDEX, BYTE_LEN, sb);
+  dataLog.readLineIndex(entryIndex, I_BATT_INDEX, BYTE_LEN, ib);
+  dataLog.readLineIndex(entryIndex, V_BATT_INDEX, BYTE_LEN, vb);
+  dataLog.readLineIndex(entryIndex, I_SOLAR_INDEX, BYTE_LEN, is);
+  bytes[0] = ln[0];
+  bytes[1] = ln[1];
+  bytes[2] = sb[0];
+  bytes[3] = ib[0];
+  bytes[4] = vb[0];
+  bytes[5] = is[0];
+  logData.log_num = decode_int(ln);
+  logData.status_byte = sb[0];
+  logData.power_data[0] = ib[0];
+  logData.power_data[1] = vb[0];
+  logData.power_data[2] = is[0];
   output += "LN";
   output+= logData.log_num;
   output+= ",SB";
@@ -341,8 +341,8 @@ bool sd_log :: sd_end(){
 
 //====INTS
 typedef union {
-   int val;
-   uint8_t bytes[2];
+  int val;
+  uint8_t bytes[2];
 } intunion_t;
 
 String sd_log :: encode_int(int value) {
@@ -360,8 +360,8 @@ String sd_log :: encode_int(int value) {
 
 //====FLOATS
 typedef union {
-   float val;
-   uint8_t bytes[4];
+  float val;
+  uint8_t bytes[4];
 } floatunion_t;
 
 String sd_log :: encode_float(float value) {
