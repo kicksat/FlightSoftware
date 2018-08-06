@@ -38,38 +38,38 @@
 #define LOG_NAME "TestLog0.txt"
 
 class sd_log{
-  public:
+public:
 
-    struct Log_Data{
-      int log_num;
-      byte status_byte;
-      byte power_data[3];
-      float GPS_data[3];
-      float IMU_data[9];
-      byte command_data[8];
-    }logData;
+  struct Log_Data{
+    int log_num;
+    byte status_byte;
+    byte power_data[3];
+    float GPS_data[3];
+    float IMU_data[9];
+    byte command_data[8];
+  }logData;
 
-    sd_log();
-    bool sd_init();
-    bool sd_end();
-    void write_log(Log_Data data); //takes all data and logs it
-    String read_entry(int entryIndex);  //reads a specific entry indexed from current entry
-    bool data_dump(int startEntry, int numEntries, String buf[]); //reads the last numEntries logs and outputs in string array
-    String read_GPS(int entryIndex);
-    String read_IMU(int entryIndex);
-    String read_header(int entryIndex, byte bytes[]);
-    //member variables
-    SD_DataFile dataLog = SD_DataFile(ENTRY_LEN, LOG_NAME);
+  sd_log();
+  bool sd_init();
+  bool sd_end();
+  void write_log(Log_Data data); //takes all data and logs it
+  String read_entry(int entryIndex);  //reads a specific entry indexed from current entry
+  bool data_dump(int startEntry, int numEntries, String buf[]); //reads the last numEntries logs and outputs in string array
+  String read_GPS(int entryIndex);
+  String read_IMU(int entryIndex);
+  String read_header(int entryIndex, byte bytes[]);
+  //member variables
+  SD_DataFile dataLog = SD_DataFile(ENTRY_LEN, LOG_NAME);
 
-  private:
-    String encode_int(int value);
-    String encode_float(float value);
-    void add_String_Entry(String input, int entry_num, byte array1[]);
-    float decode_float(byte* data);
-    int decode_int(byte* data);
-    String log_to_String();
-    float read_float(byte buf[], int index);
-    int read_int(byte buf[], int index);
+private:
+  String encode_int(int value);
+  String encode_float(float value);
+  void add_String_Entry(String input, int entry_num, byte array1[]);
+  float decode_float(byte* data);
+  int decode_int(byte* data);
+  String log_to_String();
+  float read_float(byte buf[], int index);
+  int read_int(byte buf[], int index);
 };
 
 #endif
