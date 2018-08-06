@@ -1,10 +1,12 @@
 // sd_log.h - Library for reading from and writing to the log on the SD card
 
+#include "Arduino.h"
+#include "SD_DataFile.h"
+
 #ifndef SD_LOG_h
 #define SD_LOG_h
 
-#include "Arduino.h"
-#include "SD_DataFile.h"
+#define LOG_NAME "TestLog0.txt"
 
 #define CS SPI_CS_SD
 
@@ -35,12 +37,10 @@
 #define BYTE_LEN 1
 #define NUM_DEC_IN_FLOAT 6
 
-#define LOG_NAME "TestLog0.txt"
-
-class sd_log{
+class sd_log {
 public:
 
-  struct Log_Data{
+  struct Log_Data {
     int log_num;
     byte status_byte;
     byte power_data[3];
@@ -58,7 +58,6 @@ public:
   String read_GPS(int entryIndex);
   String read_IMU(int entryIndex);
   String read_header(int entryIndex, byte bytes[]);
-  //member variables
   SD_DataFile dataLog = SD_DataFile(ENTRY_LEN, LOG_NAME);
 
 private:
