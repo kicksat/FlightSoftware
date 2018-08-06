@@ -9,6 +9,7 @@ sd_log :: sd_log(){
 }
 
 
+//Formats the log entry from data in the logData struct and encodes floats and ints then writes to sd
 void sd_log :: write_log(Log_Data data){
   byte output[ENTRY_LEN];
   add_String_Entry("[LN", 0, output);
@@ -56,12 +57,14 @@ void sd_log :: write_log(Log_Data data){
   dataLog.writeDataEntry((byte*)output);
 
   //SerialUSB.println("log entry");
-  for(int i = 0; i < ENTRY_LEN; i++){
+  //for(int i = 0; i < ENTRY_LEN; i++){
     //SerialUSB.print((char)output[i]);
-  }
+  //}
   //SerialUSB.println(" ");
 }
 
+//reads a specified entry and outputs a human readable string
+//also writes to the logData struct and updates to that data
 String sd_log :: read_entry(int entryIndex){
   byte buf[ENTRY_LEN];
   String output = "";
@@ -100,6 +103,7 @@ String sd_log :: read_entry(int entryIndex){
   return converted;
 }
 
+//reads and decodes a float
 float sd_log :: read_float(byte buf[], int index){
   byte floatInput[FLOAT_LEN];
   for(int i = 0; i < FLOAT_LEN; i++){
@@ -109,6 +113,7 @@ float sd_log :: read_float(byte buf[], int index){
   return output;
 }
 
+//reads and decodes an int
 int sd_log :: read_int(byte buf[], int index){
   byte intInput[INT_LEN];
   for(int i = 0; i < INT_LEN; i++){
@@ -118,6 +123,8 @@ int sd_log :: read_int(byte buf[], int index){
   return output;
 }
 
+//outputs an array of human readable string entries
+//first entry is startEntry and it continues for numEntries
 bool sd_log :: data_dump(int startEntry, int numEntries, String buf[]){
   for(int i = 0; i < numEntries; i++){
     buf[i] = read_entry(i + startEntry);
@@ -125,6 +132,7 @@ bool sd_log :: data_dump(int startEntry, int numEntries, String buf[]){
  return true; //make error case
 }
 
+//parses gps data specifically, updates struct and outputs a string
 String sd_log::read_GPS(int entryIndex){
   String output = "";
   byte dt[FLOAT_LEN];
@@ -156,6 +164,7 @@ String sd_log::read_GPS(int entryIndex){
 
 }
 
+//parses imu data specifically, updates struct and outputs a string
 String sd_log::read_IMU(int entryIndex){
   String output = "";
   byte gyrX[FLOAT_LEN];
@@ -215,6 +224,7 @@ String sd_log::read_IMU(int entryIndex){
 
 }
 
+//parses header data specifically, updates struct and outputs a human readable string and byte array
 String sd_log::read_header(int entryIndex, byte bytes[]){
    String output = "";
    byte ln[INT_LEN];
@@ -256,12 +266,14 @@ String sd_log::read_header(int entryIndex, byte bytes[]){
 
 }
 
+//adds a string to a specific location in a byte array
 void sd_log :: add_String_Entry(String input, int entry_num, byte array1[]){
   for(int i = 0; i < input.length(); i++){
     array1[entry_num + i] = input.charAt(i);
   }
 }
 
+//converts the logData struct to a human readable string
 String sd_log :: log_to_String(){
   String output = "";
   output+= "[LN";
@@ -313,15 +325,17 @@ String sd_log :: log_to_String(){
   return output;
 }
 
+//initializes to make spi friendly
 bool sd_log :: sd_init(){
-  digitalWrite(SPI_CS_SD, LOW);
+  digitalWrite(CS, LOW);
   dataLog.refresh();
   return true;
 
 }
 
+//ends sd to make spi friendly
 bool sd_log :: sd_end(){
-  digitalWrite(SPI_CS_SD, HIGH);
+  digitalWrite(CS, HIGH);
   return true;
 }
 
