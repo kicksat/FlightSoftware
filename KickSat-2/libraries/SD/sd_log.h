@@ -6,12 +6,14 @@
 #include "Arduino.h"
 #include "SD_DataFile.h"
 
+#define CS SPI_CS_SD
+
 #define ENTRY_LEN 126
 #define LOG_NUM_INDEX 3
-#define STATUS_BYTE_INDEX 8
-#define I_BATT_INDEX 12
-#define V_BATT_INDEX 16
-#define I_SOLAR_INDEX 20
+#define STATUS_BYTE_INDEX 8 + 20
+#define I_BATT_INDEX 12 + 20
+#define V_BATT_INDEX 16 + 20
+#define I_SOLAR_INDEX 20 + 20
 #define DT_INDEX 25
 #define LAT_INDEX 33
 #define LON_INDEX 41
@@ -33,7 +35,7 @@
 #define BYTE_LEN 1
 #define NUM_DEC_IN_FLOAT 6
 
-
+#define LOG_NAME "TestLog0.txt"
 
 class sd_log{
   public:
@@ -48,15 +50,16 @@ class sd_log{
     }logData;
 
     sd_log();
+    bool sd_init();
+    bool sd_end();
     void write_log(Log_Data data); //takes all data and logs it
     String read_entry(int entryIndex);  //reads a specific entry indexed from current entry
     bool data_dump(int startEntry, int numEntries, String buf[]); //reads the last numEntries logs and outputs in string array
     String read_GPS(int entryIndex);
     String read_IMU(int entryIndex);
     String read_header(int entryIndex, byte bytes[]);
-
     //member variables
-    SD_DataFile dataLog = SD_DataFile(ENTRY_LEN, "Loggo");
+    SD_DataFile dataLog = SD_DataFile(ENTRY_LEN, LOG_NAME);
 
   private:
     String encode_int(int value);

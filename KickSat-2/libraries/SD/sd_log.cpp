@@ -5,7 +5,7 @@
 
 
 sd_log :: sd_log(){
-  dataLog.refresh();
+
 }
 
 
@@ -55,11 +55,11 @@ void sd_log :: write_log(Log_Data data){
 
   dataLog.writeDataEntry((byte*)output);
 
-  SerialUSB.println("log entry");
+  //SerialUSB.println("log entry");
   for(int i = 0; i < ENTRY_LEN; i++){
-    SerialUSB.print((char)output[i]);
+    //SerialUSB.print((char)output[i]);
   }
-  SerialUSB.println(" ");
+  //SerialUSB.println(" ");
 }
 
 String sd_log :: read_entry(int entryIndex){
@@ -89,14 +89,14 @@ String sd_log :: read_entry(int entryIndex){
     logData.command_data[i] = buf[COM_INDEX + i];
   }
 
-  SerialUSB.println("read result:");
+  //SerialUSB.println("read result:");
   for(int i = 0; i < ENTRY_LEN; i++){
-    SerialUSB.print((char)buf[i]);
+    //SerialUSB.print((char)buf[i]);
   }
-  SerialUSB.println(" ");
+  //SerialUSB.println(" ");
   String converted = log_to_String();
-  SerialUSB.println("converted ");
-  SerialUSB.println(converted);
+  //SerialUSB.println("converted ");
+  //SerialUSB.println(converted);
   return converted;
 }
 
@@ -148,9 +148,9 @@ String sd_log::read_GPS(int entryIndex){
   output += ",ALT";
   output += String(logData.GPS_data[3], NUM_DEC_IN_FLOAT);
 
-  SerialUSB.print("GPS data line:");
-  SerialUSB.println(entryIndex);
-  SerialUSB.println(output);
+  //SerialUSB.print("GPS data line:");
+  //SerialUSB.println(entryIndex);
+  //SerialUSB.println(output);
 
   return output;
 
@@ -207,9 +207,9 @@ String sd_log::read_IMU(int entryIndex){
   output+= String(logData.IMU_data[8], NUM_DEC_IN_FLOAT);
   output+=  "]";
 
-  SerialUSB.print("IMU data line:");
-  SerialUSB.println(entryIndex);
-  SerialUSB.println(output);
+  //SerialUSB.print("IMU data line:");
+  //SerialUSB.println(entryIndex);
+  //SerialUSB.println(output);
 
   return output;
 
@@ -249,9 +249,9 @@ String sd_log::read_header(int entryIndex, byte bytes[]){
   output+= ",IS";
   output+= (char)logData.power_data[2];
 
-  SerialUSB.print("IMU data line:");
-  SerialUSB.println(entryIndex);
-  SerialUSB.println(output);
+  //SerialUSB.print("IMU data line:");
+  //SerialUSB.println(entryIndex);
+  //SerialUSB.println(output);
 
 
 }
@@ -311,6 +311,18 @@ String sd_log :: log_to_String(){
   output+= (char)logData.command_data[7];
   output+= "]";
   return output;
+}
+
+bool sd_log :: sd_init(){
+  digitalWrite(SPI_CS_SD, LOW);
+  dataLog.refresh();
+  return true;
+
+}
+
+bool sd_log :: sd_end(){
+  digitalWrite(SPI_CS_SD, HIGH);
+  return true;
 }
 
 //====INTS
