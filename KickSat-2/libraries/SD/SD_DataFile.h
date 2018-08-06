@@ -1,12 +1,11 @@
 // sd_log.h - Library for reading from and writing to the log on the SD card
 
+#include <SD.h>
+
 #ifndef SD_DATAFILE_h
 #define SD_DATAFILE_h
 
-#include <SD.h>
-
-class SD_DataFile
-{
+class SD_DataFile {
 public:
   SD_DataFile(uint16_t dw, String fn);
   bool writeDataEntry(byte* data);
