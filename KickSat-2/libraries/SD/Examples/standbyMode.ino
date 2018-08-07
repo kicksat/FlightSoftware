@@ -120,8 +120,6 @@ void loop()
   delay(1000);
 
 
-
-
   /*
    * IMU routine
    */
@@ -162,6 +160,7 @@ void loop()
 
 // Write a new log to the SD
 // SD STUFF GOES HERE
+// TODO: @emma write a new log with the updated stuff!
   while(!mySd_log.sd_refresh()){
   }
   mySd_log.logData.log_num = iteration;
@@ -175,6 +174,12 @@ void loop()
   }
   delay(1000);
   mySd_log.sd_end();
+// TODO: read the most recent header from the SD card @emma
+
+  String header_chirp = "I'm doing fine. Thanks for checking, earthling";
+// TODO: @emma
+  serial_transmit(header_chirp);
+
 // END of SD Stuff
 
   // output the command menu
@@ -187,7 +192,9 @@ void loop()
   SerialUSB.print("command num: ");
   SerialUSB.println(command);
 
-  int logs_to_send = 0;
+  int logs_to_send = 0;      // for command 2
+  String multiple_logs = ""; // for command 2
+  String config_string = "";
 
   // respond to the command
   switch(command)
@@ -201,22 +208,34 @@ void loop()
       // Get some user input for the number of logs to send down
       // Normally this o
       SerialUSB.println("How many logs shall we send down?");
-
       logs_to_send = return_selection();
+      SerialUSB.print("Fetching the last ");
+      SerialUSB.print(logs_to_send);
+      SerialUSB.println(" logs");
+
+      // TODO: @emma read the last logs_to_send logs into the multiple_logs
+
+      serial_transmit(multiple_logs);
+
       break;
 
     // Rewrite the sensor config files @connor @max
     case 3:
       SerialUSB.println("Doing command #3");
+      // TODO: make a function that does this...
       break;
 
     // Reflash the motherboard's code from MRAM @connor @max
     case 4:
+      // TODO: make a function that does this...
       SerialUSB.println("Doing command #4");
       break;
 
     // Send the mission config files
     case 5:
+      // TODO: @emma
+      // read the mission config files into config_string =
+      serial_transmit(config_string);
       SerialUSB.println("Doing command #5");
       break;
 
@@ -225,13 +244,32 @@ void loop()
       SerialUSB.println("Doing command #6");
       // TODO: enter arming mode
       // send: "Entered arming mode"
+      // This is a transition condition in the more general state diagram
+      // we will exit standby mode here
       break;
 
     // Enter End of Life mode
     case 7:
       SerialUSB.println("Doing command #7");
       // Send: ACK, are you sure you want to explode all of our hard work into pixie dust?
+      serial_transmit("Are you sure you want to kill KickSat II? (y/n)");
       // wait for response: if (response != "yes explode" ) --> go back into standby mode
+      command = return_selection();
+      SerialUSB.print("case 7, command: ");
+      SerialUSB.println(command);
+      if((command == 41) || (command == 73))
+      {
+        // go into end of life mode
+        // this is a state change into end of life mode
+        SerialUSB.println("Killing the goddamn 3u that never deserved to live MUAHAHAHAHA!");
+      }
+      else
+      {
+        // do not kill the satelite
+
+        command = 0;
+      }
+
       break;
 
     // No command --> go back to sleep and go through another standby mode loop
@@ -289,7 +327,7 @@ float read_battery()
   int val = analogRead(battery_pin); // Read Voltage
   SerialUSB.println(val);
   v = val*(416.0/110.0)*(3.3/1024); // Convert to Volts
-  return 5;
+  return v;
 }
 
 /*
@@ -338,8 +376,6 @@ void output_menu()
 int return_selection()
 {
   int incoming_command = 70;
-
-
 
   while(!SerialUSB.available())
   {
