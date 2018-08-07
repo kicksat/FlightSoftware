@@ -11,12 +11,22 @@ class KickSat_Sensor
     void operate(byte* dataOut);
     void parseMessage(String msg, String arg[]);
     void handleCommand(String cmd, byte* buf, int* index);
+    void burstWriteRegs(byte* data, uint8_t len);
+    void startADC();
+    void stopADC();
+    void resetADC();
+    void shutdownADC();
+    void wakeADC();
     
 
   private:
     int _ADCchipSelect;
     int _SDchipSelect;
     String _configFileName;
+
+    byte data_filter_chop_reg = 0x17;
+    byte vbias_reg = 0x0;
+    byte gain_pga_reg = 0x8;
 }
 
 #endif /* KICKSAT_SENSOR_H_ */
