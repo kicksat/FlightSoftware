@@ -165,8 +165,11 @@ void loop()
 // SD STUFF GOES HERE
 // TODO: @emma write a new log with the updated stuff!
 
+// TODO: read the most recent header from the SD card @emma
+  
+  String header_chirp = "I'm doing fine. Thanks for checking, earthling";
 // TODO: @emma
-
+  serial_transmit(header_chirp);
   
 // END of SD Stuff
 
@@ -428,27 +431,6 @@ void serial_transmit(String to_send)
   SerialUSB.print(to_send);
   SerialUSB.println("'");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*
