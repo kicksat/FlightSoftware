@@ -1,3 +1,4 @@
+
 //sd_log.cpp
 
 
@@ -10,7 +11,7 @@ sd_log :: sd_log(){
 
 
 //Formats the log entry from data in the logData struct and encodes floats and ints then writes to sd
-void sd_log :: write_log(Log_Data data){
+bool sd_log :: write_log(Log_Data data){
   byte output[ENTRY_LEN];
   add_String_Entry("[LN", 0, output);
   add_String_Entry(encode_int(data.log_num), LOG_NUM_INDEX, output);
@@ -54,13 +55,13 @@ void sd_log :: write_log(Log_Data data){
   }
   output[COM_INDEX + COM_LEN] = ']';
 
-  dataLog.writeDataEntry((byte*)output);
+  return dataLog.writeDataEntry((byte*)output);
 
-  //SerialUSB.println("log entry");
-  //for(int i = 0; i < ENTRY_LEN; i++){
-    //SerialUSB.print((char)output[i]);
-  //}
-  //SerialUSB.println(" ");
+  SerialUSB.println("log entry");
+  for(int i = 0; i < ENTRY_LEN; i++){
+    SerialUSB.print((char)output[i]);
+  }
+  SerialUSB.println(" ");
 }
 
 //reads a specified entry and outputs a human readable string
@@ -92,14 +93,14 @@ String sd_log :: read_entry(int entryIndex){
     logData.command_data[i] = buf[COM_INDEX + i];
   }
 
-  //SerialUSB.println("read result:");
-  for(int i = 0; i < ENTRY_LEN; i++){
-    //SerialUSB.print((char)buf[i]);
-  }
-  //SerialUSB.println(" ");
+//  SerialUSB.println("read result:");
+//  for(int i = 0; i < ENTRY_LEN; i++){
+//    SerialUSB.print((char)buf[i]);
+//  }
+//  SerialUSB.println(" ");
   String converted = log_to_String();
-  //SerialUSB.println("converted ");
-  //SerialUSB.println(converted);
+//  SerialUSB.println("converted ");
+  SerialUSB.println(converted);
   return converted;
 }
 
@@ -129,7 +130,7 @@ bool sd_log :: data_dump(int startEntry, int numEntries, String buf[]){
   for(int i = 0; i < numEntries; i++){
     buf[i] = read_entry(i + startEntry);
   }
-  return true; //make error case
+ return true; //make error case
 }
 
 //parses gps data specifically, updates struct and outputs a string
@@ -226,28 +227,28 @@ String sd_log::read_IMU(int entryIndex){
 
 //parses header data specifically, updates struct and outputs a human readable string and byte array
 String sd_log::read_header(int entryIndex, byte bytes[]){
-  String output = "";
-  byte ln[INT_LEN];
-  byte sb[BYTE_LEN];
-  byte ib[BYTE_LEN];
-  byte vb[BYTE_LEN];
-  byte is[BYTE_LEN];
-  dataLog.readLineIndex(entryIndex, LOG_NUM_INDEX, INT_LEN, ln);
-  dataLog.readLineIndex(entryIndex, STATUS_BYTE_INDEX, BYTE_LEN, sb);
-  dataLog.readLineIndex(entryIndex, I_BATT_INDEX, BYTE_LEN, ib);
-  dataLog.readLineIndex(entryIndex, V_BATT_INDEX, BYTE_LEN, vb);
-  dataLog.readLineIndex(entryIndex, I_SOLAR_INDEX, BYTE_LEN, is);
-  bytes[0] = ln[0];
-  bytes[1] = ln[1];
-  bytes[2] = sb[0];
-  bytes[3] = ib[0];
-  bytes[4] = vb[0];
-  bytes[5] = is[0];
-  logData.log_num = decode_int(ln);
-  logData.status_byte = sb[0];
-  logData.power_data[0] = ib[0];
-  logData.power_data[1] = vb[0];
-  logData.power_data[2] = is[0];
+   String output = "";
+   byte ln[INT_LEN];
+   byte sb[BYTE_LEN];
+   byte ib[BYTE_LEN];
+   byte vb[BYTE_LEN];
+   byte is[BYTE_LEN];
+   dataLog.readLineIndex(entryIndex, LOG_NUM_INDEX, INT_LEN, ln);
+   dataLog.readLineIndex(entryIndex, STATUS_BYTE_INDEX, BYTE_LEN, sb);
+   dataLog.readLineIndex(entryIndex, I_BATT_INDEX, BYTE_LEN, ib);
+   dataLog.readLineIndex(entryIndex, V_BATT_INDEX, BYTE_LEN, vb);
+   dataLog.readLineIndex(entryIndex, I_SOLAR_INDEX, BYTE_LEN, is);
+   bytes[0] = ln[0];
+   bytes[1] = ln[1];
+   bytes[2] = sb[0];
+   bytes[3] = ib[0];
+   bytes[4] = vb[0];
+   bytes[5] = is[0];
+   logData.log_num = decode_int(ln);
+   logData.status_byte = sb[0];
+   logData.power_data[0] = ib[0];
+   logData.power_data[1] = vb[0];
+   logData.power_data[2] = is[0];
   output += "LN";
   output+= logData.log_num;
   output+= ",SB";
@@ -325,12 +326,29 @@ String sd_log :: log_to_String(){
   return output;
 }
 
-//initializes to make spi friendly
+//initializes
 bool sd_log :: sd_init(){
-  digitalWrite(CS, LOW);
-  dataLog.refresh();
-  return true;
+  bool result = SD.begin(CS);
+  pinMode(CS, OUTPUT);
+  //sd_refresh();
+  if(result){
+    SerialUSB.println("initialization successful");
+  }else{
+    SerialUSB.println("initialization failed");
+  }
+  zero_logData();
+  write_log(logData);
+  return result;
+}
 
+//use every time you start sd code to switch chip select to sd chip select
+bool sd_log :: sd_refresh(){
+  digitalWrite(CS, LOW);
+  bool result = dataLog.refresh();
+  if(!result){
+    SerialUSB.println("couldn't refresh");
+  }
+  return result;
 }
 
 //ends sd to make spi friendly
@@ -339,10 +357,30 @@ bool sd_log :: sd_end(){
   return true;
 }
 
+void sd_log :: zero_logData(){
+  logData.log_num = 0;
+  logData.status_byte = '0';
+  logData.power_data[0] = '0';
+  logData.power_data[1] = '0';
+  logData.power_data[2] = '0';
+  logData.GPS_data[0] = 0.0;
+  logData.GPS_data[1] = 0.0;
+  logData.GPS_data[2] = 0.0;
+  logData.GPS_data[3] = 0.0;
+  for(int i = 0; i < 9; i++){
+    logData.IMU_data[i] = 0.0;
+  }
+  for(int i = 0; i < 8; i++){
+    logData.command_data[i] = '0';
+  }
+
+}
+
+
 //====INTS
 typedef union {
-  int val;
-  uint8_t bytes[2];
+   int val;
+   uint8_t bytes[2];
 } intunion_t;
 
 String sd_log :: encode_int(int value) {
@@ -360,8 +398,8 @@ String sd_log :: encode_int(int value) {
 
 //====FLOATS
 typedef union {
-  float val;
-  uint8_t bytes[4];
+   float val;
+   uint8_t bytes[4];
 } floatunion_t;
 
 String sd_log :: encode_float(float value) {
