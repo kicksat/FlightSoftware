@@ -1,6 +1,7 @@
 #include "KickSat_Sensor.h"
 #include <SD.h>
 
+//constructor, sets up this sensor object with the corresponding config file
 KickSat_Sensor::KickSat_Sensor(int adc_cs, int sd_cs, String cf_name) {
   _ADCchipSelect = adc_cs;
   _SDchipSelect = sd_cs;
@@ -9,6 +10,8 @@ KickSat_Sensor::KickSat_Sensor(int adc_cs, int sd_cs, String cf_name) {
   _dataFile = df;
 }
 
+//this is the main function for using the sensor. this function will execute commands on the sensor board's ADC
+//based on the config file.
 void KickSat_Sensor::operate(byte* dataOut) {
   //read commands from config file
   SD.begin(_SDchipSelect);
@@ -22,6 +25,7 @@ void KickSat_Sensor::operate(byte* dataOut) {
   }
 }
 
+//this function takes a command outputted by parseMessage, and executes that command
 void KickSat_Sensor::handleCommand(String cmd, byte* buf, int* index) {
   String argv[6];
   parseMessage(cmd, argv);
@@ -50,7 +54,9 @@ void KickSat_Sensor::handleCommand(String cmd, byte* buf, int* index) {
   
 }
 
-void parseMessage(String msg, String arg[]) {
+//this function takes one line from the config file
+//and converts it into an executable command
+void KickSat_Sensor::parseMessage(String msg, String arg[]) {
   int index = 0;
 
   int wordIndex = 0;
@@ -66,4 +72,66 @@ void parseMessage(String msg, String arg[]) {
     index++;
   }
   arg[wordIndex] = msg.substring(wordStart, index);
+}
+
+//================= Register Commands ====================//
+
+//this function wirtes [len] registers to the values specified in [data]
+//use to initialize/reset the ADC
+void KickSat_Sensor::burstWriteRegs(byte* data, uint8_t len) {
+  digitalWrite(chipSelectPin, LOW);
+  SPI.transfer(0x42);   //Send register START location
+  SPI.transfer(len);   //how many registers to write to
+  for (int i = 0; i < len; i++) {
+    SPI.transfer(data[i]);
+  }
+  delay(1);
+  digitalWrite(chipSelectPin, HIGH);
+}
+
+//brings the ADC from STANDBY mode into CONVERSION mode
+void KickSat_Sensor::startADC() {
+  digitalWrite(chipSelectPin, LOW);
+  delayMicroseconds(1);
+  SPI.transfer(0x0A); //send stop byte
+  SPI.transfer(0x08); //send start byte
+  delay(1);
+  digitalWrite(chipSelectPin, HIGH);
+}
+
+//brings the ADC from CONVERSION mode to STANDBY mode
+void KickSat_Sensor::stopADC() {
+  digitalWrite(chipSelectPin, LOW);
+  delayMicroseconds(1);
+  SPI.transfer(0x0A); //send stop byte
+  delay(1);
+  digitalWrite(chipSelectPin, HIGH);
+}
+
+//resets the ADC
+void KickSat_Sensor::resetADC() {
+  digitalWrite(chipSelectPin, LOW);
+  delayMicroseconds(1);
+  SPI.transfer(0x06); //send reset byte
+  digitalWrite(resetPin, LOW);
+  delayMicroseconds(1);
+  digitalWrite(resetPin, HIGH);
+}
+
+//brings the ADC from CONVERSION or STANDBY mode into SHUTDOWN mode
+void KickSat_Sensor::shutdownADC() {
+  digitalWrite(chipSelectPin, LOW);
+  delayMicroseconds(1);
+  SPI.transfer(0x04); //send shutdown byte
+  delay(1);
+  digitalWrite(chipSelectPin, HIGH);
+}
+
+//brings the ADC into STANDBY mode from SHUTDOWN mode
+void KickSat_Sensor::wakeADC()  {
+  digitalWrite(chipSelectPin, LOW);
+  delayMicroseconds(1);
+  SPI.transfer(0x02); //send wakeup byte
+  delay(1);
+  digitalWrite(chipSelectPin, HIGH);
 }
