@@ -145,10 +145,13 @@ void Counter::init(uint32_t time, voidFuncPtr callback) { // Initializes timer
 ///////////////////////////////////////
 
 void SleepTimer::sleep(voidFuncPtr callback) { // Initializes timer
+  if (SERIALUSBENABLE) {
+    SerialUSB.println("Entering Sleep Mode:");
+  }
   if (!_configuredRTC) { // If the RTC is not already started
     configureRTC(); // Configure RTC
   }
-  _wakeupCallback = callback;
+  _wakeupCallback = callback; // Store callback
   sleepState = true; // Turn on sleep state
   enterSleep(); // Enter sleep mode
 }
@@ -165,6 +168,7 @@ void enterSleep() { // Enters sleep mode: stops CPU, interrupts and regulator co
       SerialUSB.begin(115200); // Restart SerialUSB
       while(!SerialUSB); // Wait for serial USB port to open
     }
+    SerialUSB.println("Exiting Sleep Mode:");
   }
 }
 
@@ -292,14 +296,14 @@ void compareTriggers(int i) { // Compare trigger to counter value and handles in
 void RTC_Handler() { // Interrupt handler for RTC
   if (sleepState) { // If in sleep mode
     sleepState = false; // Disable sleep state
-    sleepTimer.wakeupCallback();
+    if (sleepTimer._wakeupCallback != NULL) {
+      sleepTimer._wakeupCallback();
+    }
   }
   for (size_t i = 0; i < numberOfTimers; i++) { // Begin iterating timer counters
     incrementTimers(i); // Increment (counters)
     compareTriggers(i); // Compare trigger to counter value and calls interrupt handler accordingly
   } // End iterating timer counters
-  debugCounter++;
-  SerialUSB.println(debugCounter); SerialUSB.println();
   resetFlagRTC(); // Clear RTC interrupt flag
 }
 

@@ -21,7 +21,7 @@ Purpose: Creates RTC timers for the SAMD micro
 
 // Define library settings
 #define MAXTIMERS         20    // Max number of allowed timers, arbitrarily picked
-#define SERIALUSBENABLE   1     // If 1, enable printing to serial
+#define SERIALUSBENABLE   0     // If 1, enable printing to serial
 #define RTCCLOCK          1     // Desired frequency of the RTC, in Hz
 #define RTCPRESCALER      1024  // Prescalar of RTC, the prescalar must have a base of 2 (e.g. 2^10=1024)
 
@@ -64,25 +64,17 @@ class Timer {
 class Counter : public Timer {
   public: // Define public functions/variables
   void init(uint32_t time, voidFuncPtr callback);
-  void init(uint32_t time) {
-    init(time, nullCallback);
-  }
-  void init(int time, voidFuncPtr callback) {
-    init((uint32_t)time, callback);
-  }
-  void init(int time) {
-    init((uint32_t)time, nullCallback);
-  }
+  void init(uint32_t time) { init(time, nullCallback); }
+  void init(int time, voidFuncPtr callback) { init((uint32_t)time, callback); }
+  void init(int time) { init((uint32_t)time, nullCallback); }
 };
 
 
 class SleepTimer {
-  private: // Define private functions/variables
-  voidFuncPtr _wakeupCallback;
-
   public: // Define public functions/variables
+  voidFuncPtr _wakeupCallback = NULL; // Wakeup callback
   void sleep(voidFuncPtr callback);
-  void wakeupCallback(void) {_wakeupCallback();}
+  void sleep() { sleep(_wakeupCallback); }
 };
 
 
