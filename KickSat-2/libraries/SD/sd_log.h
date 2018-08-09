@@ -34,7 +34,7 @@
 #define BYTE_LEN 1
 #define NUM_DEC_IN_FLOAT 6
 
-#define LOG_NAME "TESTLOG7.txt"
+#define LOG_NAME "TEST5.txt"
 
 class sd_log{
   public:

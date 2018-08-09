@@ -330,25 +330,29 @@ String sd_log :: log_to_String(){
 bool sd_log :: sd_init(){
   bool result = SD.begin(CS);
   pinMode(CS, OUTPUT);
-  //sd_refresh();
+  dataLog.refresh();
   if(result){
     SerialUSB.println("initialization successful");
   }else{
     SerialUSB.println("initialization failed");
   }
   zero_logData();
-  write_log(logData);
+  //write_log(logData);
   return result;
 }
 
 //use every time you start sd code to switch chip select to sd chip select
 bool sd_log :: sd_refresh(){
+  bool result1 = true; //SD.begin(CS);
+  if(!result1){
+    SerialUSB.println("couldn't initialize");
+  }
   digitalWrite(CS, LOW);
   bool result = dataLog.refresh();
   if(!result){
     SerialUSB.println("couldn't refresh");
   }
-  return result;
+  return result || result1;
 }
 
 //ends sd to make spi friendly
