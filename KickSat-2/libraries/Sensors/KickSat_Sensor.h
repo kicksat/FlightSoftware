@@ -7,7 +7,7 @@ class KickSat_Sensor
 {
 
   public:
-    KickSat_Sensor(int adc_cs, int sd_cs, String cf_name);
+    KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name);
     void operate(byte* dataOut);
     void parseMessage(String msg, String arg[]);
     void handleCommand(String cmd, byte* buf, int* index);
@@ -17,10 +17,11 @@ class KickSat_Sensor
     void resetADC();
     void shutdownADC();
     void wakeADC();
-    
+    void regReadout();
 
   private:
     int _ADCchipSelect;
+    int _ADCreset;
     int _SDchipSelect;
     String _configFileName;
 
