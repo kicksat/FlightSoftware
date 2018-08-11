@@ -23,6 +23,10 @@ void KickSat_Sensor::operate(byte* dataOut) {
   //TODO: read in data file
   //configFile.close();
 
+  //  TEST COMMANDS  //
+  //these commands are here just to test command parsing functionality
+  //in the final version, these will be read from a config file
+  //TODO: read these from a config file
   int numCommands = 8;
   String commandList[] = {
     "reset",
