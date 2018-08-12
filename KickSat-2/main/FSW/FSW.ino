@@ -42,6 +42,7 @@ float v = 0.000;
 void watchdog(); // Function that runs every time watchdog timer triggers
 void readHealth(); // Function to read health data
 float imuData[9];
+bool LEDSTATE = false;
 
 // SETUP //
 ///////////////////////////////////////////////////////////////////
@@ -50,6 +51,7 @@ void setup() {
   while(!SerialUSB); // Wait for serial USB port to open
   SerialUSB.println("Serial Initialized");
   delay(5000); // Provides user with time to open Serial Monitor
+  pinMode(LED_BUILTIN, OUTPUT);
   ///////////////////////////////////////////////////////////////////
 
   if(!IMU.begin()){ // Initialize imu)
@@ -63,7 +65,7 @@ void setup() {
   // Init objects //
   ///////////////////////////////////////////////////////////////////
   watchdogTimer.init(1,watchdog); // timer delay, seconds
-  beaconTimer.init(60); // timer delay, seconds
+  beaconTimer.init(30); // timer delay, seconds
   ///////////////////////////////////////////////////////////////////
 }
 ///////////////////////////////////////////////////////////////////
@@ -92,19 +94,18 @@ void loop() {
     SDLogger.sd_refresh();
     SDLogger.logData.log_num = current_log;
     SDLogger.write_log(SDLogger.logData);
-    SerialUSB.print("Wrote Log ");
-    SerialUSB.println(SDLogger.logData.log_num);
-    SerialUSB.println(SDLogger.read_entry(current_log));
-    delay(1000);
+    // SerialUSB.print("Wrote Log ");
+    // SerialUSB.println(SDLogger.logData.log_num);
+    // SerialUSB.println(SDLogger.read_entry(current_log));
+    // delay(1000);
     SDLogger.sd_end();
-
     current_log++;
 
     // TODO: read the most recent header from the SD card @emma
 
-    String header_chirp = "I'm doing fine. Thanks for checking, earthling";
+    // String header_chirp = "I'm doing fine. Thanks for checking, earthling";
     // TODO: @emma
-    serial_transmit(header_chirp);
+    // serial_transmit(header_chirp);
     // END of SD Stuff
 
     output_menu();
@@ -114,7 +115,7 @@ void loop() {
   }  // Read IMU data // TODO: Temporary, replace with readHealth
 
 
-  sleepTimer.sleep(); // Go into sleep mode until next interrupt
+  // sleepTimer.sleep(); // Go into sleep mode until next interrupt
 
 
 }
@@ -176,6 +177,12 @@ float read_battery() { // TODO: this needs to go into a battery library
 
 void watchdog() { // Function that runs every time watchdog timer triggers
   // SerialUSB.println("Watchdog");
+  if (LEDSTATE) {
+    digitalWrite(LED_BUILTIN, HIGH);
+  } else {
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  LEDSTATE = !LEDSTATE;
 }
 
 // void readHealth() {
