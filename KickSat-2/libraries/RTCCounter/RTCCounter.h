@@ -21,7 +21,6 @@ Purpose: Creates RTC timers for the SAMD micro
 
 // Define library settings
 #define MAXTIMERS         20    // Max number of allowed timers, arbitrarily picked
-#define SERIALUSBENABLE   0     // If 1, enable printing to serial
 #define RTCCLOCK          1     // Desired frequency of the RTC, in Hz
 #define RTCPRESCALER      1024  // Prescalar of RTC, the prescalar must have a base of 2 (e.g. 2^10=1024)
 
@@ -43,6 +42,7 @@ void compareTriggers(int i);
 void interruptCounter(int i);
 void interruptSleepTimer(int i);
 void enterSleep(void);
+void enterIdle(void);
 typedef void(*voidFuncPtr)(void); // Defines array for function variables
 
 
@@ -52,9 +52,11 @@ class Timer {
   voidFuncPtr nullCallback = NULL; // Null callback
   void resetTimer(void);
   void resetTimerFlag(void);
-  bool update(void);
+  bool check(void);
   void disableTimer(void);
   void enableTimer(void);
+  void pauseTimer(void);
+  void resumeTimer(void);
   void setTime(uint32_t time);
   void setCallback(voidFuncPtr callback);
   void removeCallback(void);
@@ -70,16 +72,28 @@ class Counter : public Timer {
 };
 
 
+class TimeOut : public Timer {
+  public: // Define public functions/variables
+  TimeOut() { init(); }
+  void init();
+  void start(uint32_t time);
+  void start(int time) { start((uint32_t)time); }
+  bool triggered();
+};
+
+
 class SleepTimer {
   public: // Define public functions/variables
   voidFuncPtr _wakeupCallback = NULL; // Wakeup callback
   void sleep(voidFuncPtr callback);
   void sleep() { sleep(_wakeupCallback); }
+  void idle(voidFuncPtr callback);
+  void idle() { idle(_wakeupCallback); }
 };
 
 
 extern SleepTimer sleepTimer; // Creates external class object, accessible in main script
-
+extern TimeOut timeout; // Creates external class object for a timeout
 
 #endif // ARDUINO_ARCH_SAMD
 #endif // RTCCOUNTER_H

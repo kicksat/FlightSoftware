@@ -7,8 +7,8 @@ https://github.com/sparkfun/LSM9DS1_Breakout
 
 This file implements all functions of the LSM9DS1 class. Functions here range
 from higher level stuff, like reading/writing LSM9DS1 registers to low-level,
-hardware reads and writes. Both SPI and I2C handler functions can be found
-towards the bottom of this file.
+hardware reads and writes. I2C handler functions can be found towards the
+bottom of this file.
 
 Development environment specifics:
 	IDE: Arduino 1.6
@@ -37,38 +37,31 @@ Distributed as-is; no warranty is given.
 
 float magSensitivity[4] = {0.00014, 0.00029, 0.00043, 0.00058};
 
-LSM9DS1::LSM9DS1()
-{
-	init(IMU_MODE_I2C, LSM9DS1_AG_ADDR(1), LSM9DS1_M_ADDR(1));
+LSM9DS1::LSM9DS1() {
+	init();
 }
 
-LSM9DS1::LSM9DS1(interface_mode interface, uint8_t xgAddr, uint8_t mAddr)
-{
-	init(interface, xgAddr, mAddr);
-}
-
-void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr)
-{
-	settings.device.commInterface = interface;
-	settings.device.agAddress = xgAddr;
-	settings.device.mAddress = mAddr;
+void LSM9DS1::init() {
+	settings.device.commInterface = IMU_MODE_I2C;
+	settings.device.agAddress = LSM9DS1_AG_ADDR;
+	settings.device.mAddress = LSM9DS1_M_ADDR;
 
 	settings.gyro.enabled = true;
 	settings.gyro.enableX = true;
 	settings.gyro.enableY = true;
 	settings.gyro.enableZ = true;
 	// gyro scale can be 245, 500, or 2000
-	settings.gyro.scale = 245;
+	settings.gyro.scale = 500;
 	// gyro sample rate: value between 1-6
 	// 1 = 14.9    4 = 238
 	// 2 = 59.5    5 = 476
 	// 3 = 119     6 = 952
-	settings.gyro.sampleRate = 6;
+	settings.gyro.sampleRate = 1;
 	// gyro cutoff frequency: value between 0-3
 	// Actual value of cutoff frequency depends
 	// on sample rate.
 	settings.gyro.bandwidth = 0;
-	settings.gyro.lowPowerEnable = false;
+	settings.gyro.lowPowerEnable = true;
 	settings.gyro.HPFEnable = false;
 	// Gyro HPF cutoff frequency: value between 0-9
 	// Actual value depends on sample rate. Only applies
@@ -85,12 +78,12 @@ void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr)
 	settings.accel.enableY = true;
 	settings.accel.enableZ = true;
 	// accel scale can be 2, 4, 8, or 16
-	settings.accel.scale = 2;
+	settings.accel.scale = 4;
 	// accel sample rate can be 1-6
 	// 1 = 10 Hz    4 = 238 Hz
 	// 2 = 50 Hz    5 = 476 Hz
 	// 3 = 119 Hz   6 = 952 Hz
-	settings.accel.sampleRate = 6;
+	settings.accel.sampleRate = 1;
 	// Accel cutoff freqeuncy can be any value between -1 - 3.
 	// -1 = bandwidth determined by sample rate
 	// 0 = 408 Hz   2 = 105 Hz
@@ -105,20 +98,20 @@ void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr)
 
 	settings.mag.enabled = true;
 	// mag scale can be 4, 8, 12, or 16
-	settings.mag.scale = 4;
+	settings.mag.scale = 8;
 	// mag data rate can be 0-7
 	// 0 = 0.625 Hz  4 = 10 Hz
 	// 1 = 1.25 Hz   5 = 20 Hz
 	// 2 = 2.5 Hz    6 = 40 Hz
 	// 3 = 5 Hz      7 = 80 Hz
-	settings.mag.sampleRate = 7;
+	settings.mag.sampleRate = 0;
 	settings.mag.tempCompensationEnable = false;
 	// magPerformance can be any value between 0-3
 	// 0 = Low power mode      2 = high performance
 	// 1 = medium performance  3 = ultra-high performance
-	settings.mag.XYPerformance = 3;
-	settings.mag.ZPerformance = 3;
-	settings.mag.lowPowerEnable = false;
+	settings.mag.XYPerformance = 0;
+	settings.mag.ZPerformance = 0;
+	settings.mag.lowPowerEnable = true;
 	// magOperatingMode can be 0-2
 	// 0 = continuous conversion
 	// 1 = single-conversion
@@ -139,14 +132,7 @@ void LSM9DS1::init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr)
 }
 
 
-uint16_t LSM9DS1::begin()
-{
-  // Before initializing the IMU, there are a few settings
-  // we may need to adjust. Use the settings struct to set
-  // the device's communication mode and addresses:
-  imu.settings.device.commInterface = IMU_MODE_I2C;
-  imu.settings.device.mAddress = LSM9DS1_M;
-  imu.settings.device.agAddress = LSM9DS1_AG;
+uint16_t LSM9DS1::begin() {
 
 	constrainScales();
 	// Once we have the scale values, we can calculate the resolution
@@ -514,37 +500,9 @@ void LSM9DS1::readAccel() {
 		ay -= aBiasRaw[Y_AXIS];
 		az -= aBiasRaw[Z_AXIS];
 	}
-
-  // Calculate roll in radians
-  roll = atan2(imu.ay(), imu.az());
-
-  // Calculate pitch in radians
-  pitch = atan2(-imu.ax(), sqrt(imu.ay() * imu.ay() + imu.az() * imu.az()));
-
-  // Calculate yaw in radians
-  if (my1 == 0) {
-    yaw = (mx1 < 0) ? 180.0 : 0;
-  } else {
-    yaw = atan2(mx1, my1);
-    yaw -= DECLINATION * PI / 180;
-  }
-  if (yaw > PI) {
-    yaw -= (2 * PI);
-  } else if (yaw < -PI) {
-    yaw += (2 * PI);
-  } else if (yaw < 0) {
-    yaw += 2 * PI;
-  }
-
-  // Convert everything from radians to degrees:
-  roll *= 180.0 / PI;
-  pitch *= 180.0 / PI;
-  yaw *= 180.0 / PI;
-
 }
 
-int16_t LSM9DS1::readAccel(lsm9ds1_axis axis)
-{
+int16_t LSM9DS1::readAccel(lsm9ds1_axis axis) {
 	uint8_t temp[2];
 	int16_t value;
 	xgReadBytes(OUT_X_L_XL + (2 * axis), temp, 2);
@@ -556,8 +514,7 @@ int16_t LSM9DS1::readAccel(lsm9ds1_axis axis)
 	return value;
 }
 
-void LSM9DS1::readMag()
-{
+void LSM9DS1::readMag() {
 	uint8_t temp[6]; // We'll read six bytes from the mag into temp
 	mReadBytes(OUT_X_L_M, temp, 6); // Read 6 bytes, beginning at OUT_X_L_M
 	mx = (temp[1] << 8) | temp[0]; // Store x-axis values into mx
@@ -1001,36 +958,42 @@ void LSM9DS1::xgWriteByte(uint8_t subAddress, uint8_t data)
 	// Whether we're using I2C or SPI, write a byte using the
 	// gyro-specific I2C address or SPI CS pin.
 		I2CwriteByte(settings.device.agAddress, subAddress, data);
+}
 
 void LSM9DS1::mWriteByte(uint8_t subAddress, uint8_t data)
 {
 	// Whether we're using I2C or SPI, write a byte using the
 	// accelerometer-specific I2C address or SPI CS pin.
 		return I2CwriteByte(settings.device.mAddress, subAddress, data);
+}
 
 uint8_t LSM9DS1::xgReadByte(uint8_t subAddress)
 {
 	// Whether we're using I2C or SPI, read a byte using the
 	// gyro-specific I2C address or SPI CS pin.
 		return I2CreadByte(settings.device.agAddress, subAddress);
+}
 
 void LSM9DS1::xgReadBytes(uint8_t subAddress, uint8_t * dest, uint8_t count)
 {
 	// Whether we're using I2C or SPI, read multiple bytes using the
 	// gyro-specific I2C address or SPI CS pin.
 		I2CreadBytes(settings.device.agAddress, subAddress, dest, count);
+}
 
 uint8_t LSM9DS1::mReadByte(uint8_t subAddress)
 {
 	// Whether we're using I2C or SPI, read a byte using the
 	// accelerometer-specific I2C address or SPI CS pin.
 		return I2CreadByte(settings.device.mAddress, subAddress);
+}
 
 void LSM9DS1::mReadBytes(uint8_t subAddress, uint8_t * dest, uint8_t count)
 {
 	// Whether we're using I2C or SPI, read multiple bytes using the
 	// accelerometer-specific I2C address or SPI CS pin.
 		I2CreadBytes(settings.device.mAddress, subAddress, dest, count);
+}
 
 void LSM9DS1::initI2C()
 {

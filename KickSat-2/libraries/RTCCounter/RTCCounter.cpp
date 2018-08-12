@@ -53,60 +53,56 @@ void Timer::resetTimer() { // Resets timer flag and counters, but not callback o
   overflowed[_timerID] = 0; // flag for overflow
   timerFlag[_timerID] = false; // Flags for each timer, returns true if trigger is reached
   timerEnable[_timerID] = true; // Enables for each timer, returns true if timer is enables
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("Reset:");SerialUSB.println(_timerID);
-  }
 }
 
 void Timer::resetTimerFlag() { // Resets timer flag
   timerFlag[_timerID] = false; // Flags for each timer, returns true if trigger is reached
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("FlagReset:");SerialUSB.println(_timerID);
-  }
 }
 
-bool Timer::update() { // Checks flag of timer
+bool Timer::check() { // Checks flag of timer
   if (timerFlag[_timerID]) { // If flag is true
     timerFlag[_timerID] = false; // Reset flag
-    return true; // Return flag state
-  } else {
-    return false; // Return flag state
+    return true;
   }
+  return false;
+}
+
+void Timer::pauseTimer() { // Disables timers
+  timerEnable[_timerID] = false; // Disable timer
+}
+
+void Timer::resumeTimer() { // Enables timers
+  timerEnable[_timerID] = true; // Enable timer
 }
 
 void Timer::disableTimer() { // Disables timers
+  timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
+  timerLast[_timerID] = 0; // Time since last trigger, in seconds
+  timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
+  overflowed[_timerID] = 0; // flag for overflow
+  timerFlag[_timerID] = false; // Flags for each timer, returns true if trigger is reached
   timerEnable[_timerID] = false; // Disable timer
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("Disabled:");SerialUSB.println(_timerID);
-  }
 }
 
 void Timer::enableTimer() { // Enables timer
+  timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
+  timerLast[_timerID] = 0; // Time since last trigger, in seconds
+  timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
+  overflowed[_timerID] = 0; // flag for overflow
+  timerFlag[_timerID] = false; // Flags for each timer, returns true if trigger is reached
   timerEnable[_timerID] = true; // Enable timer
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("Enabled:");SerialUSB.println(_timerID);
-  }
 }
 
 void Timer::setTime(uint32_t time) { // Sets new trigger time for timer
   timerTrigger[_timerID] = time; // Sets trigger time
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("SetTime:");SerialUSB.println(_timerID);
-  }
 }
 
 void Timer::setCallback(voidFuncPtr callback) { // Stores callback function
   timerCallback[_timerID] = callback; // Stores callback
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("SetCallback:");SerialUSB.println(_timerID);
-  }
 }
 
 void Timer::removeCallback() { // Removes callback function
   timerCallback[_timerID] = NULL; // Removes callback
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("RemovedCallback:");SerialUSB.println(_timerID);
-  }
 }
 
 ///////////////////////////////
@@ -131,9 +127,6 @@ void Counter::init(uint32_t time, voidFuncPtr callback) { // Initializes timer
   timerFlag[_timerID] = false; // Flags for each timer, returns true if trigger is reached
   timerEnable[_timerID] = true; // Enables for each timer, returns true if timer is enables
   timerCallback[_timerID] = callback; // Stores callback
-  if (SERIALUSBENABLE) {
-    SerialUSB.print("Timer Object Configured:");SerialUSB.println(_timerID);
-  }
 }
 
 //////////////////////////////////
@@ -145,9 +138,6 @@ void Counter::init(uint32_t time, voidFuncPtr callback) { // Initializes timer
 ///////////////////////////////////////
 
 void SleepTimer::sleep(voidFuncPtr callback) { // Initializes timer
-  if (SERIALUSBENABLE) {
-    SerialUSB.println("Entering Sleep Mode:");
-  }
   if (!_configuredRTC) { // If the RTC is not already started
     configureRTC(); // Configure RTC
   }
@@ -156,25 +146,77 @@ void SleepTimer::sleep(voidFuncPtr callback) { // Initializes timer
   enterSleep(); // Enter sleep mode
 }
 
+void SleepTimer::idle(voidFuncPtr callback) { // Initializes timer
+  if (!_configuredRTC) { // If the RTC is not already started
+    configureRTC(); // Configure RTC
+  }
+  _wakeupCallback = callback; // Store callback
+  sleepState = true; // Turn on sleep state
+  enterIdle(); // Enter sleep mode
+}
+
 void enterSleep() { // Enters sleep mode: stops CPU, interrupts and regulator continue
+  USBDevice.standby(); // Disable USB in sleep mode
+  SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk; // Enables deep sleep mode
+  __DSB(); // Data Synchronization Barrier, waits for previous commands to complete
+  __WFI(); // Wait For Interupt, sleep in the meantime
+  USB->DEVICE.CTRLA.reg |= USB_CTRLA_ENABLE; // Enable USB
+  while(!SerialUSB);
+  SerialUSB.println();
+}
+
+void enterIdle() { // Enters sleep mode: stops CPU, interrupts and regulator continue
   USBDevice.standby(); // Disable USB in sleep mode
   SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk; // Disables deep sleep mode
   PM->SLEEP.reg = 2; // Sets Idle Mode 2, most power saving
   __DSB(); // Data Synchronization Barrier, waits for previous commands to complete
   __WFI(); // Wait For Interupt, sleep in the meantime
-  if (SERIALUSBENABLE) {
-    USB->DEVICE.CTRLA.reg |= USB_CTRLA_ENABLE; // Enable USB
-    if (!SerialUSB) { // Check if Serial is initiated
-      SerialUSB.begin(115200); // Restart SerialUSB
-      while(!SerialUSB); // Wait for serial USB port to open
-    }
-    SerialUSB.println("Exiting Sleep Mode:");
-  }
+  USB->DEVICE.CTRLA.reg |= USB_CTRLA_ENABLE; // Enable USB
+  while(!SerialUSB);
+  SerialUSB.println();
 }
 
 /////////////////////////////////////
 // END SLEEPTIMER OBJECT FUNCTIONS //
 /////////////////////////////////////
+
+////////////////////////////////////
+// BEGIN TIMEOUT OBJECT FUNCTIONS //
+////////////////////////////////////
+
+void TimeOut::init() { // Initializes timer
+  if (!_configuredRTC) { // If the RTC is not already started
+    configureRTC(); // Configure RTC
+  }
+  _timerID = numberOfTimers; // Defines ID of timer
+  numberOfTimers++; // Iterates number of timers initialized
+  timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
+  timerTrigger[_timerID] = 0; // User defined triggers, in seconds
+  timerLast[_timerID] = 0; // Time since last trigger, in seconds
+  timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
+  overflowed[_timerID] = 0; // flag for overflow
+  timerFlag[_timerID] = false; // Flags for each timer, returns true if trigger is reached
+  timerEnable[_timerID] = false; // Enables for each timer, returns true if timer is enables
+  timerCallback[_timerID] = NULL; // Stores callback
+}
+
+void TimeOut::start(uint32_t time) {
+  resetTimer();
+  timerTrigger[_timerID] = time-1; // User defined triggers, in seconds
+}
+
+bool TimeOut::triggered() { // Checks flag of timer
+  if (timerFlag[_timerID]) { // If flag is true
+    timerFlag[_timerID] = false; // Reset flag
+    pauseTimer();
+    return true;
+  }
+  return false;
+}
+
+//////////////////////////////////
+// END TIMEOUT OBJECT FUNCTIONS //
+//////////////////////////////////
 
 /////////////////////////
 // BEGIN RTC FUNCTIONS //
@@ -182,10 +224,6 @@ void enterSleep() { // Enters sleep mode: stops CPU, interrupts and regulator co
 
 void configureRTC() { // Attach clock to 32kHz (32768Hz) Ultra Low Power Internal Oscillator (OSCULP32K)
   if (!_configuredRTC) { // If the system timer is not already started
-
-    if (SERIALUSBENABLE) {
-      SerialUSB.println("Configuring RTC");
-    }
 
     // Initialize arrays
     memset(timerCounter, 0, sizeof(timerCounter)); // Sets entire array to 0
@@ -214,10 +252,6 @@ void configureRTC() { // Attach clock to 32kHz (32768Hz) Ultra Low Power Interna
     NVIC_EnableIRQ(RTC_IRQn); // Enable interrupt
     RTC->MODE0.INTENSET.reg |= RTC_MODE0_INTENSET_CMP0; // Set the Compare 0 Interrupt Enable bit and enable the Compare 0 interrupt
     _configuredRTC = true; // Records configuration state of RTC
-
-    if (SERIALUSBENABLE) {
-      SerialUSB.println("RTC Timer Enabled");
-    }
   }
 }
 
@@ -313,5 +347,6 @@ void RTC_Handler() { // Interrupt handler for RTC
 
 // Create class objects
 SleepTimer sleepTimer;
+TimeOut timeout;
 
 #endif // ARDUINO_ARCH_SAMD

@@ -11,10 +11,10 @@ void watchdog() {
 void setup() {
   if (!SerialUSB) {
     SerialUSB.begin(115200); // Restart SerialUSB
-		while(!SerialUSB); // Wait for serial USB port to open
+    while(!SerialUSB); // Wait for serial USB port to open
+    SerialUSB.println("Serial Initialized");
     delay(5000); // Provides user with time to open Serial Monitor
   }
-  SerialUSB.println("Serial Initialized");
   watchdogTimer.init(1,watchdog); // timer delay, seconds
   SerialUSB.println("Watchdog Timer Initialized");
   beaconTimer.init(10); // timer delay, seconds
@@ -23,11 +23,15 @@ void setup() {
 }
 
 void loop() {
-
-  if (beaconTimer.update()) { // Checks time for interrupt
+  if (beaconTimer.check()) { // Checks time for interrupt
     SerialUSB.println("Beacon things!");
   }
-  delay(1000);
+  timeout.start(2);
+  while(1) {
+    if (timeout.triggered()) { // Checks time for timeout
+      SerialUSB.println("TIMEOUT");
+      break;
+    }
+  }
   sleepTimer.sleep(); // Go into sleep mode until next interrupt
-
 }

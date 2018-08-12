@@ -61,7 +61,7 @@ enum mag_scale
 // gyro_odr defines all possible data rate/bandwidth combos of the gyro:
 enum gyro_odr
 {
-	//! TODO
+	//! TODO 
 	G_ODR_PD,	// Power down (0)
 	G_ODR_149,	// 14.9 Hz (1)
 	G_ODR_595,	// 59.5 Hz (2)
@@ -123,7 +123,7 @@ enum interrupt_generators
 	INT_IG_XL = (1<<6),	 // Accel interrupt generator (INT1)
 	INT1_IG_G = (1<<7),	 // Gyro interrupt enable (INT1)
 	INT2_INACT = (1<<7),	 // Inactivity interrupt output (INT2)
-};
+};	
 
 enum accel_interrupt_generator
 {
@@ -240,11 +240,11 @@ struct temperatureSettings
 struct IMUSettings
 {
 	deviceSettings device;
-
+	
 	gyroSettings gyro;
 	accelSettings accel;
 	magSettings mag;
-
+	
 	temperatureSettings temp;
 };
 

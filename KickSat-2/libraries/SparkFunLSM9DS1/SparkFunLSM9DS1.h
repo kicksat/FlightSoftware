@@ -32,20 +32,8 @@ Distributed as-is; no warranty is given.
 #include "LSM9DS1_Registers.h"
 #include "LSM9DS1_Types.h"
 
-#define LSM9DS1_AG_ADDR(sa0)	((sa0) == 0 ? 0x6A : 0x6B)
-#define LSM9DS1_M_ADDR(sa1)		((sa1) == 0 ? 0x1C : 0x1E)
-
-// SDO_XM and SDO_G are both pulled high, so our addresses are:
-#define LSM9DS1_M 0x1E // Would be 0x1C if SDO_M is LOW
-#define LSM9DS1_AG 0x6B // Would be 0x6A if SDO_AG is LOW
-
-// Earth's magnetic field varies by location. Add or subtract
-// a declination to get a more accurate heading. Calculate
-// your's here:
-// http://www.ngdc.noaa.gov/geomag-web/#declination
-#define DECLINATION -8.58 // Declination (degrees) in Boulder, CO.
-// @ZAC is this fine... does this matter? do we want to dynamically update based on interpolated lat/long values
-
+#define LSM9DS1_AG_ADDR  0x6B // Ours are pulled high, so default is addr is 0x6B, otherwise the address is 0x6A
+#define LSM9DS1_M_ADDR   0x1E // Ours are pulled high, so default is addr is 0x1E, otherwise the address is 0x1C
 
 enum lsm9ds1_axis {
 	X_AXIS,
@@ -54,8 +42,7 @@ enum lsm9ds1_axis {
 	ALL_AXIS
 };
 
-class LSM9DS1
-{
+class LSM9DS1 {
 public:
 	IMUSettings settings;
 
@@ -81,7 +68,6 @@ public:
 	// 				If IMU_MODE_SPI, this is the chip select pin of the gyro (CS_AG)
 	//	- mAddr = If IMU_MODE_I2C, this is the I2C address of the magnetometer.
 	//				If IMU_MODE_SPI, this is the cs pin of the magnetometer (CS_M)
-	LSM9DS1(interface_mode interface, uint8_t xgAddr, uint8_t mAddr);
 	LSM9DS1();
 
 	// begin() -- Initialize the gyro, accelerometer, and magnetometer.
@@ -343,10 +329,6 @@ public:
 
 
 protected:
-	// x_mAddress and gAddress store the I2C address or SPI chip select pin
-	// for each sensor.
-	uint8_t _mAddress, _xgAddress;
-
 	// gRes, aRes, and mRes store the current resolution for each sensor.
 	// Units of these values would be DPS (or g's or Gs's) per ADC tick.
 	// This value is calculated as (sensor scale) / (2^15).
@@ -362,8 +344,7 @@ protected:
 	//   select pin connected to the CS_XG pin.
 	// - mAddr - Sets either the I2C address of the magnetometer or SPI chip
 	//   select pin connected to the CS_M pin.
-	void init(interface_mode interface, uint8_t xgAddr, uint8_t mAddr);
-
+	void init();
 	// initGyro() -- Sets up the gyroscope to begin reading.
 	// This function steps through all five gyroscope control registers.
 	// Upon exit, the following parameters will be set:
