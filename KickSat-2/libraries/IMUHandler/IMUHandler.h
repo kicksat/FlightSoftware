@@ -13,9 +13,6 @@ IMUHandler - Gathers and formats imu data from the LSM9DS1 using the SparkFunLSM
 #include "SparkFunLSM9DS1.h"
 #include "RTCCounter.h"
 
-// How many decimal places to round floats to
-#define FLOATPRECISION 6
-
 class IMUHandle {
 	public:
 	LSM9DS1 LSM9DS1Sensor; // Create IMU object

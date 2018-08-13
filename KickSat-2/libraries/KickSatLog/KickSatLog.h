@@ -51,6 +51,7 @@ public:
   bool appendBuffer(char *buf); // Function to append data to log file from the provided buffer, useful for recording uplink commands
   bool read(uint16_t numLines, char *buf); // Read last N lines in the log file
   void resetLogStruct(void); // Sets all data to zero in the Data structure
+  bool compileHealth(char *buf); // Function to compile and return health data for beacon
 };
 
 extern LogHandler logfile; // Creates an external, global logfile object

@@ -1,81 +1,88 @@
-#include <sd_log.h>
+/**
+Uplink handler for KickSat, uplink.h
+Purpose: Library for handling the reading and processing of uplink to the satellite
 
-#define LISTENINGDURATION 15 // Defined in seconds
+@author Ralen Toledo
+@version 1.0 08/12/18
+*/
 
-uint8_t parseUplink();
-void output_menu();
+#ifndef UPLINK_h
+#define UPLINK_h
+
+#include <KickSatLog.h>
+// #include <ax25.h>
+// #include <RadioHead.h>
+
+#define LISTENINGDURATION 5 // Defined in seconds
+
+bool parseUplink(char *buf);
+void processUplink(char *buf);
 
 ///////////////////////
 // Listen for uplink //
 //////////////////////////////////////////////////////////////////////////////
-uint8_t listenForUplink() {
-  SerialUSB.println("Listening for uplink...");
+bool listenForUplink(char *buf) {
   timeout.start(LISTENINGDURATION);
   while(1) { // Wait for uplink, retreive from buffer
-    if (SerialUSB.available()) { // TODO: change if radio is available, not serial
-      uint8_t command = parseUplink();
-      if (command > 0) {
-        return command;
+    // if (radio.available()) { // TODO: change if radio is available, not serial
+    if (SerialUSB.available()) { // If data is in buffer to be read
+      if (parseUplink(buf)) { // Read from buffer and validate uplink
+        return true;
       }
     }
     if (timeout.triggered()) { // Checks time for timeout
       SerialUSB.println("Uplink Timeout");
-      return 0;
+      return false;
     }
   }
 }
 
-uint8_t parseUplink() {
+bool parseUplink(char *buf) {
   ////////////////////////////////////////////////////////
-  // TODO: change from Serial.read to radio read
-  uint8_t command = SerialUSB.read(); // Reads the available char (ASCII)
-  command = command - 48; // Convert char to int (ASCII)
+  // TODO: change from Serial.read to radio.read(char *buf)
+  uint32_t i = 0;
+  // while(radio.available() > 0) { // Read until the entire buffer has been read // TODO: This function doesn't exist but should
+  //   buf[i] = radio.read(); // Reads the available char (ASCII) // TODO: This function doesn't exist but should
+  while(SerialUSB.available() > 0) { // Read until the entire buffer has been read
+    buf[i] = SerialUSB.read(); // Reads the available char (ASCII)
+    i++;
+  }
+  buf[i] = '\0';
   ////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////
-  // TODO: Incorporate real checksum check here for input
-  if (command < 1 || command > 8) {
-    SerialUSB.println("NACK");
-    return 0;
+  // if (checksum(buf)) // Verifies checksum of read uplink // TODO: Incorporate real checksum check here for input
+  if (i > 0) { // If uplink is valid, to be replaced by checksum validation
+    SerialUSB.println("ACK"); // If checksum is valid, respond with ACK
+    // radio.send("ACK") // If checksum is valid, respond with ACK // TODO: This function doesn't exist but should
+    SerialUSB.println(buf);
+    return true; // Return successfull uplink
   } else {
-    SerialUSB.println("ACK");
-    return command;
+    SerialUSB.println("NACK");
+    // radio.send("NACK") // If checksum is not valid, respond with NACK // TODO: This function doesn't exist but should
+    return false; // Return unsuccessfull uplink
   }
   ////////////////////////////////////////////////////////
 }
 
-///////////////////////
-// Listen for uplink //
+////////////////////
+// Process uplink //
 //////////////////////////////////////////////////////////////////////////////
-void output_menu() { // TODO: this is an artifact of serial, it gets replaced by the ground station receiving a beacon
-  // Listen for Uplink:
-  SerialUSB.println("Choose a command from the following menu: ");
-  SerialUSB.println("1) Send Sensor Data");
-  SerialUSB.println("2) Downlink last 10 Logs");
-  SerialUSB.println("3) Rewrite the sensor config files");
-  SerialUSB.println("4) Reflash the motherboard's code from MRAM");
-  SerialUSB.println("5) Send Mission Config Files");
-  SerialUSB.println("6) Enter Arming Mode");
-  SerialUSB.println("7) Enter End of Life Mode");
-  SerialUSB.println("8) No command");
-  SerialUSB.print("Choose a command: ");
-}
+void processUplink(char *buf) {
 
-void processUplink(uint8_t command) {
-
-  int logs_to_send = 0;      // for command 2
-  String multiple_logs = ""; // for command 2
-  String config_string = "";
+  uint8_t command = 0;
 
   // respond to the command
   switch(command)
   {
     // Send down Sensor data
     case 1:
+    SerialUSB.println("Doing command #1");
     // send_sensor_data();
     break;
     // Downlink last x number of logs, depends on user input
     case 2:
+    SerialUSB.println("Doing command #2");
     // Get some user input for the number of logs to send down
     // Normally this o
     // SerialUSB.println("How many logs shall we send down?");
@@ -156,3 +163,5 @@ void processUplink(uint8_t command) {
   }
 
 }
+
+#endif

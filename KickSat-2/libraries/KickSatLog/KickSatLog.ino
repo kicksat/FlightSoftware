@@ -51,6 +51,16 @@ void loop() {
   }
 
   if(logfile.available()) {
+    SerialUSB.println("logfile available for reading health");
+    logfile.compileHealth(buf);
+    SerialUSB.println("Printing from buf for health");
+    SerialUSB.println(buf);
+    SerialUSB.println("End printing from buf for health");
+  } else {
+    SerialUSB.println("logfile not available");
+  }
+
+  if(logfile.available()) {
     SerialUSB.println("logfile available for appending buffer");
     logfile.appendBuffer("HELLO WORLD!!!!!!!");
   } else {

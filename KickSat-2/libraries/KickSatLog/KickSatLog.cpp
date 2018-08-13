@@ -111,30 +111,30 @@ bool LogHandler::read(uint16_t numLines, char *buf) {
     for (i = logFileHandle.size(); i >= logFileHandle.size() - MAXCHARS && i >= 0; i--) { // Read the file in reverse starting at the end of the file and iterate backwards one character at a time
       logFileHandle.seek(i); // Move our read pointer to that character
       if (logFileHandle.read() == '\n') { // Read that character, if it's a new-line character
-        numNewLines++; // Iterate the counter for number of new-lines found
-      }
-      if (numLines + 1 == numNewLines) { // If we reach the dersired the lines found, exit (the +1 is required because the counter starts at zero)
-        break; // Exit if loop
-      }
+      numNewLines++; // Iterate the counter for number of new-lines found
     }
-    if (i < 0) { // If we reached the beginning of the file in our search
-      logFileHandle.seek(0); // Gets back one character that may be missed because of previous read
+    if (numLines + 1 == numNewLines) { // If we reach the dersired the lines found, exit (the +1 is required because the counter starts at zero)
+      break; // Exit if loop
     }
-    i = 0; // Redefine/reset file read pointer for our next operations
-    while (logFileHandle.available() && i < MAXCHARS) { // Now reading forward (instead of backward like before), for every character available until the end-of-file
-      buf[i] = logFileHandle.read(); // Read the character in file and save it to the buffer
-      i++; // Iterate the file read position pointer
-    }
-    buf[i] = 0; // Add null character to end of message to represent the end of the message
-    if (i > 0) { // If the length of the message is not zero (it would only equal zero if the file could not be opened)
-      buf[i-1] = 0; // Remove the end-of-line character from the end of the message
-    }
-    SerialUSB.println(buf); // Print buffer to Serial
-    logFileHandle.close(); // Close file
   }
-  endSD(); // Ends communication with the SD card
+  if (i < 0) { // If we reached the beginning of the file in our search
+    logFileHandle.seek(0); // Gets back one character that may be missed because of previous read
+  }
+  i = 0; // Redefine/reset file read pointer for our next operations
+  while (logFileHandle.available() && i < MAXCHARS) { // Now reading forward (instead of backward like before), for every character available until the end-of-file
+    buf[i] = logFileHandle.read(); // Read the character in file and save it to the buffer
+    i++; // Iterate the file read position pointer
+  }
+  buf[i] = 0; // Add null character to end of message to represent the end of the message
+  if (i > 0) { // If the length of the message is not zero (it would only equal zero if the file could not be opened)
+    buf[i-1] = 0; // Remove the end-of-line character from the end of the message
+  }
+  SerialUSB.println(buf); // Print buffer to Serial
+  logFileHandle.close(); // Close file
+}
+endSD(); // Ends communication with the SD card
 
-  return fileStatus; // Returns file status
+return fileStatus; // Returns file status
 }
 
 
@@ -198,6 +198,27 @@ void LogHandler::resetLogStruct() {
   for(uint32_t i = 0; i < 8; i++) {
     data.commandData[i] = 0;
   }
+}
+
+
+// Function to compile and return health data for beacon
+bool LogHandler::compileHealth(char *healthData) {
+  bool fileStatus = false; // Flag to record status of file, returns true if the file can be opened
+  startSD(); // Starts communication with the SD card
+  File logFileHandle = SD.open(LOGNAME, FILE_WRITE); // Open file for writing
+  if (logFileHandle) { // If the file can be opened
+    fileStatus = true; // Update flag for file status
+    char buf[256]; // Creates empty array that will be filled and then written to SD, max size of 256 is more than enough (avg size is 180 bytes)
+    // Writes data structure to buffer (char) using the sprintf function
+    sprintf(buf, "[LN%u,SB%u,IB%d,VB%d,IS%d]\n",data.logNum,data.status,data.powerData[0],data.powerData[1],data.powerData[2]);
+    String entry(buf); // Convert buf from char array to string, neccessary because the string function converts floats (which are not handled by println) to string
+    entry.trim(); // Trim excess whitespace in string
+    entry.toCharArray(healthData, entry.length()+1); // Converts string back to character array for radio transmission
+    SerialUSB.println(healthData); // Print to Serial
+    logFileHandle.close(); // Close file
+  }
+  endSD(); // Ends communication with the SD card
+  return fileStatus; // Returns file status
 }
 
 
