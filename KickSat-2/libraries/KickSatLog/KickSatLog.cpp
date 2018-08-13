@@ -69,7 +69,7 @@ bool LogHandler::appendData() {
     fileStatus = true; // Update flag for file status
     char buf[256]; // Creates empty array that will be filled and then written to SD, max size of 256 is more than enough (avg size is 180 bytes)
     // Writes data structure to buffer (char) using the sprintf function
-    sprintf(buf, "[LN%u,SB%u,IB%d,VB%d,IS%d,D&T%.6f,LAT%.6f,LON%.6f,ALT%.6g,GYR[%.6g,%.6g,%.6g],ACCL[%.6g,%.6g,%.6g],CMP[%.6g,%.6g,%.6g],COM%u%u%u%u%u%u%u%u]\n",data.logNum,data.status,data.powerData[0],data.powerData[1],data.powerData[2],data.gpsData[0],data.gpsData[1],data.gpsData[2],data.gpsData[3],data.imuData[0],data.imuData[1],data.imuData[2],data.imuData[3],data.imuData[4],data.imuData[5],data.imuData[6],data.imuData[7],data.imuData[8],data.commandData[0],data.commandData[1],data.commandData[2],data.commandData[3],data.commandData[4],data.commandData[5],data.commandData[6],data.commandData[7]);
+    sprintf(buf, "[LN%u,SB%u,IB%.4g,VB%.4g,IS%.4g,DT%d,TM%d,LAT%.6f,LON%.6f,ALT%.6g,GYR[%.6g,%.6g,%.6g],ACCL[%.6g,%.6g,%.6g],CMP[%.6g,%.6g,%.6g]]\n",data.logNum,data.status,data.powerData[0],data.powerData[1],data.powerData[2],data.dateTime[0],data.dateTime[1],data.gpsData[0],data.gpsData[1],data.gpsData[2],data.imuData[0],data.imuData[1],data.imuData[2],data.imuData[3],data.imuData[4],data.imuData[5],data.imuData[6],data.imuData[7],data.imuData[8]);
     String entry(buf); // Convert buf from char array to string, neccessary because the string function converts floats (which are not handled by println) to string
     entry.trim(); // Trim excess whitespace in string
     entry.toCharArray(buf, 256); // Converts string back to character array for radio transmission
@@ -189,14 +189,14 @@ void LogHandler::resetLogStruct() {
   for(uint32_t i = 0; i < 3; i++) {
     data.powerData[i] = 0;
   }
-  for(uint32_t i = 0; i < 4; i++) {
+  for(uint32_t i = 0; i < 2; i++) {
+    data.dateTime[i] = 0;
+  }
+  for(uint32_t i = 0; i < 3; i++) {
     data.gpsData[i] = 0;
   }
   for(uint32_t i = 0; i < 9; i++) {
     data.imuData[i] = 0;
-  }
-  for(uint32_t i = 0; i < 8; i++) {
-    data.commandData[i] = 0;
   }
 }
 
@@ -210,11 +210,11 @@ bool LogHandler::compileHealth(char *healthData) {
     fileStatus = true; // Update flag for file status
     char buf[256]; // Creates empty array that will be filled and then written to SD, max size of 256 is more than enough (avg size is 180 bytes)
     // Writes data structure to buffer (char) using the sprintf function
-    sprintf(buf, "[LN%u,SB%u,IB%d,VB%d,IS%d]\n",data.logNum,data.status,data.powerData[0],data.powerData[1],data.powerData[2]);
+    sprintf(buf, "[LN%u,SB%u,IB%.4g,VB%.4g,IS%.4g,DT%d,TM%d,LAT%.6f,LON%.6f,ALT%.6g,GYR[%.6g,%.6g,%.6g],ACCL[%.6g,%.6g,%.6g],CMP[%.6g,%.6g,%.6g]]\n",data.logNum,data.status,data.powerData[0],data.powerData[1],data.powerData[2],data.dateTime[0],data.dateTime[1],data.gpsData[0],data.gpsData[1],data.gpsData[2],data.imuData[0],data.imuData[1],data.imuData[2],data.imuData[3],data.imuData[4],data.imuData[5],data.imuData[6],data.imuData[7],data.imuData[8]);
     String entry(buf); // Convert buf from char array to string, neccessary because the string function converts floats (which are not handled by println) to string
     entry.trim(); // Trim excess whitespace in string
     entry.toCharArray(healthData, entry.length()+1); // Converts string back to character array for radio transmission
-    SerialUSB.println(healthData); // Print to Serial
+    // SerialUSB.println(healthData); // Print to Serial
     logFileHandle.close(); // Close file
   }
   endSD(); // Ends communication with the SD card
