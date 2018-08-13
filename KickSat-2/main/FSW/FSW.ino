@@ -90,7 +90,6 @@ void loop() {
 
     // readHealth(SDLogger.logData); // TODO: Fix
 
-
     SDLogger.sd_refresh();
     SDLogger.logData.log_num = current_log;
     SDLogger.write_log(SDLogger.logData);
