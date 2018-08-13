@@ -10,10 +10,13 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 #define UPLINK_h
 
 #include <KickSatLog.h>
+#include <Checksum.h>
 // #include <ax25.h>
 // #include <RadioHead.h>
 
 #define LISTENINGDURATION 5 // Defined in seconds
+
+Checksum checksumHandler;
 
 bool parseUplink(char *buf);
 void processUplink(char *buf);
@@ -52,7 +55,7 @@ bool parseUplink(char *buf) {
 
   ////////////////////////////////////////////////////////
   // if (checksum(buf)) // Verifies checksum of read uplink // TODO: Incorporate real checksum check here for input
-  if (i > 0) { // If uplink is valid, to be replaced by checksum validation
+  if (checksumHandler.evaluateChecksum(buf, i)) { // If uplink is valid, to be replaced by checksum validation
     SerialUSB.print("ACK:"); // If checksum is valid, respond with ACK
     SerialUSB.println(buf);
     // radio.send("ACK") // If checksum is valid, respond with ACK // TODO: This function doesn't exist but should
