@@ -53,12 +53,13 @@ bool parseUplink(char *buf) {
   ////////////////////////////////////////////////////////
   // if (checksum(buf)) // Verifies checksum of read uplink // TODO: Incorporate real checksum check here for input
   if (i > 0) { // If uplink is valid, to be replaced by checksum validation
-    SerialUSB.println("ACK"); // If checksum is valid, respond with ACK
-    // radio.send("ACK") // If checksum is valid, respond with ACK // TODO: This function doesn't exist but should
+    SerialUSB.print("ACK:"); // If checksum is valid, respond with ACK
     SerialUSB.println(buf);
+    // radio.send("ACK") // If checksum is valid, respond with ACK // TODO: This function doesn't exist but should
     return true; // Return successfull uplink
   } else {
-    SerialUSB.println("NACK");
+    SerialUSB.print("NACK:");
+    SerialUSB.println(buf);
     // radio.send("NACK") // If checksum is not valid, respond with NACK // TODO: This function doesn't exist but should
     return false; // Return unsuccessfull uplink
   }
