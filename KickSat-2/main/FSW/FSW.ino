@@ -60,6 +60,13 @@ void setup() {
     SerialUSB.println("SD Card Not Initialized");
   }
 
+  updateStatusByte(); // Update status byte
+
+  if(!antennaDeployed) { // If the antenna is not deployed
+    deployAntenna(); // Deploy the antenna
+    SerialUSB.println("Antenna Deployed");
+  }
+
   //////////////////
   // Init objects //
   ///////////////////////////////////////////////////////////////////
@@ -118,7 +125,7 @@ void loop() {
 }
 
 
-void createRandomData() { // Temporary until we are reading from each sensor
+void createRandomData() { // Temporary until we are     createRandomData(); // Temporary solution TODO: Complete data collection for all sensorsreading from each sensor
   data.status = random(0,10);
   for(uint8_t i = 0; i < 3; i++){
     data.powerData[i] = random(0,100);
@@ -139,6 +146,7 @@ bool batteryAboveThreshold() {
   // return readBattery() > BATTERYTHRESHOLD // TODO: Read battery doesn't exist but should
   return 3 > BATTERYTHRESHOLD;
 }
+
 
 // // handles command one to send down the sensor data
 // void send_sensor_data()

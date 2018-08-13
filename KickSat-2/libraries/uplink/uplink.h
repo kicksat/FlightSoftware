@@ -22,7 +22,7 @@ void processUplink(char *buf);
 // Listen for uplink //
 //////////////////////////////////////////////////////////////////////////////
 bool listenForUplink(char *buf) {
-  timeout.start(LISTENINGDURATION);
+  timeout.start(LISTENINGDURATION); // Start timeout timer for the listening duration
   while(1) { // Wait for uplink, retreive from buffer
     // if (radio.available()) { // TODO: change if radio is available, not serial
     if (SerialUSB.available()) { // If data is in buffer to be read
@@ -77,6 +77,7 @@ void processUplink(char *buf) {
   switch(command)
   {
     // Send down Sensor data
+
     case 1:
     SerialUSB.println("Doing command #1");
     // send_sensor_data();
