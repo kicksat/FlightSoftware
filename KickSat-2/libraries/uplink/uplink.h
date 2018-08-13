@@ -1,7 +1,6 @@
 /**
 Uplink handler for KickSat, uplink.h
 Purpose: Library for handling the reading and processing of uplink to the satellite
-
 @author Ralen Toledo
 @version 1.0 08/12/18
 */
@@ -72,22 +71,36 @@ bool parseUplink(char *buf) {
 ////////////////////
 // Process uplink //
 //////////////////////////////////////////////////////////////////////////////
+uint8_t extractCommand(byte* buf) {
+  for (int i = 0; i < NUM_COMMANDS; i++) {
+    bool flag = true;
+    for (int n = 0; n < COMMAND_WIDTH; n++) {
+      if (commandDict[i][n] != buf[n]) {
+        flag = false;
+        break;
+      }
+    }
+    if (flag) {
+      return i;
+    }
+  }
+}
+
 void processUplink(char *buf) {
 
-  uint8_t command = 0;
+  uint8_t command = extractCommand(buf);
 
   // respond to the command
   switch(command)
   {
-    // Send down Sensor data
-
-    case 1:
-    SerialUSB.println("Doing command #1");
+    // Burn wires
+    case 0:
+    SerialUSB.println("Command: Burn Wire");
     // send_sensor_data();
     break;
-    // Downlink last x number of logs, depends on user input
+    // Send down Sensor data
     case 2:
-    SerialUSB.println("Doing command #2");
+    SerialUSB.println("Command: Downlink Sensors");
     // Get some user input for the number of logs to send down
     // Normally this o
     // SerialUSB.println("How many logs shall we send down?");
@@ -102,16 +115,16 @@ void processUplink(char *buf) {
 
     break;
 
-    // Rewrite the sensor config files @connor @max
+    // Downlink last x number of logs, depends on user input
     case 3:
-    SerialUSB.println("Doing command #3");
+    SerialUSB.println("Command: Downlink Logs");
     // TODO: make a function that does this...
     break;
 
-    // Reflash the motherboard's code from MRAM @connor @max
+    // Rewrite the sensor config files @connor @max
     case 4:
     // TODO: make a function that does this...
-    SerialUSB.println("Doing command #4");
+    SerialUSB.println("Command: Uplink Sensor Config");
     break;
 
     // Send the mission config files
@@ -119,12 +132,12 @@ void processUplink(char *buf) {
     // TODO: @emma
     // read the mission config files into config_string =
     // serial_transmit(config_string);
-    SerialUSB.println("Doing command #5");
+    SerialUSB.println("Command: Downlink Mission Status");
     break;
 
     // Enter arming mode, exit standby mode
     case 6:
-    SerialUSB.println("Doing command #6");
+    SerialUSB.println("Command: Enter Arming Mode");
     // TODO: enter arming mode
     // send: "Entered arming mode"
     // This is a transition condition in the more general state diagram
@@ -133,7 +146,7 @@ void processUplink(char *buf) {
 
     // Enter End of Life mode
     case 7:
-    SerialUSB.println("Doing command #7");
+    SerialUSB.println("Command: Enter End of Life Mode");
     // Send: ACK, are you sure you want to explode all of our hard work into pixie dust?
     // serial_transmit("Are you sure you want to kill KickSat II? (y/n)");
     // wait for response: if (response != "yes explode" ) --> go back into standby mode
