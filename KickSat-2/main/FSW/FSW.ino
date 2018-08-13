@@ -60,12 +60,12 @@ void setup() {
     SerialUSB.println("SD Card Not Initialized");
   }
 
-  updateStatusByte(); // Update status byte
+  // updateStatusByte(); // Update status byte // TODO: Make these functions real and working
 
-  if(!antennaDeployed) { // If the antenna is not deployed
-    deployAntenna(); // Deploy the antenna
-    SerialUSB.println("Antenna Deployed");
-  }
+  // if(!antennaDeployed) { // If the antenna is not deployed // TODO: Make these functions real and working
+  //   deployAntenna(); // Deploy the antenna // TODO: Make these functions real and working
+  //   SerialUSB.println("Antenna Deployed");
+  // }
 
   //////////////////
   // Init objects //
