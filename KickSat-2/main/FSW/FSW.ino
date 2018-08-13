@@ -36,7 +36,7 @@ char buf[MAXCHARS]; // Create global variable for buffer from SD read function, 
 // Declare functions //
 ///////////////////////////////////////////////////////////////////
 void watchdog(); // Function that runs every time watchdog timer triggers
-bool LEDSTATE = false;
+bool WDTFLAG = false; // Flag that allows toggling of the watchdog state
 
 // SETUP //
 ///////////////////////////////////////////////////////////////////
@@ -45,7 +45,8 @@ void setup() {
   while(!SerialUSB); // Wait for serial USB port to open
   SerialUSB.println("Serial Initialized");
   delay(5000); // Provides user with time to open Serial Monitor
-  pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode
+  pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
+  pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
   ///////////////////////////////////////////////////////////////////
 
   if(IMU.begin()){ // Initialize IMU
@@ -177,11 +178,12 @@ bool batteryAboveThreshold() {
 // }
 
 void watchdog() { // Function that runs every time watchdog timer triggers
-  // SerialUSB.println("Watchdog");
-  if (LEDSTATE) {
-    digitalWrite(LED_BUILTIN, HIGH);
+  if (WDTFLAG) {
+    digitalWrite(LED_BUILTIN, HIGH); // Toggles builtin LED
+    digitalWrite(WDT_WDI, HIGH); // Toggles watchdog timer
   } else {
-    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(LED_BUILTIN, LOW); // Toggles builtin LED
+    digitalWrite(WDT_WDI, LOW); // Toggles watchdog timer
   }
-  LEDSTATE = !LEDSTATE;
+  WDTFLAG = !WDTFLAG; // Toggles watchdog flag
 }
