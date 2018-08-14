@@ -22,7 +22,7 @@ float BattHandle::readBattVoltage() {
 //calculates IBATT, from measure_Ibatt code written by Max
 float BattHandle::readBattCurrent() { 
   int currentPinValue = analogRead(I_BATT);
-  float battCurrent = currentPinValue * (3.3/1023.0); //10bit-ADC
+  float battCurrent = currentPinValue * (3.3/1023.0); //10bit-ADC, in volts
   battCurrent = (battCurrent / (20.0 * 0.02))*1000.0; //calculating actual Ibatt, putting it in mA
   return battCurrent;
 }
@@ -31,8 +31,8 @@ float BattHandle::readBattCurrent() {
 //TODO: figure out the math, cant be tested in KMB21
 float BattHandle::readBattChargeCurrent() {
   int chargeCurrentPinValue = analogRead(L1_PROG);
-  float battChargeCurrent = chargeCurrentPinValue * (3.3/1023.0); //10bit-ADC
-  battChargeCurrent = battChargeCurrent * 1000.0; //convert to mA
+  float battChargeCurrent = chargeCurrentPinValue * (3.3/1023.0); //10bit-ADC, in volts
+  battChargeCurrent = battChargeCurrent * 1000.0; //convert to mA, TODO: Fix math
   return battChargeCurrent;
 }
 
@@ -44,7 +44,7 @@ void BattHandle::read(float buf[]) {
   battVoltage = readBattVoltage();
   battCurrent = readBattCurrent();
   battChargeCurrent = readBattChargeCurrent();
-  buf[0] = battVoltage;
-  buf[1] = battCurrent;
+  buf[0] = battCurrent;
+  buf[1] = battVoltage;
   buf[2] = battChargeCurrent;
 }
