@@ -30,10 +30,10 @@ Note: Saving one entry per minute, allows ~40 years of data entry
 struct LogData {
   uint16_t logNum;
   uint8_t status;
-  uint8_t powerData[3]; // TODO: verify whether this is an int or float
-  float gpsData[4];
+  float powerData[3];
+  uint16_t dateTime[2];
+  float gpsData[3];
   float imuData[9];
-  uint8_t commandData[8];
 };
 
 

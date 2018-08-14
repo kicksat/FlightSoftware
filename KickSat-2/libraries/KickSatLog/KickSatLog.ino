@@ -21,16 +21,16 @@ void loop() {
 
   data.status = random(0,10);
   for(uint8_t i = 0; i < 3; i++){
-    data.powerData[i] = random(0,100);
+    data.powerData[i] = random(0,100)/13.87;
   }
-  for(uint8_t i = 0; i < 4; i++){
+  for(uint8_t i = 0; i < 2; i++){
+    data.dateTime[i] = random(100000,999999);
+  }
+  for(uint8_t i = 0; i < 3; i++){
     data.gpsData[i] = random(0,200)/13.87;
   }
   for(uint8_t i = 0; i < 9; i++){
     data.imuData[i] = random(0,100)/9.123;
-  }
-  for(uint8_t i = 0; i < 8; i++){
-    data.commandData[i] = random(0,9);
   }
 
   if(logfile.available()) {
