@@ -68,17 +68,18 @@ void GPSHandle::printGPSdata() {
       return; 
   }
 
-  if (checkForSubString(GPSbuff)) {
+  if (checkForSubString(GPSbuff))
+  {
     if(GPSbuff[index1+18]=='A') // check if its a valid string
     {
-    // GPSDebuggerTime(); // uncomment to debug
-    if (GPS.fix) {
-      
-      // GPSDebuggerLocation(); // uncomment to debug
-      // GPS.sendCommand(PMTK_STANDBY); // Go to standby mode
-    }
+    	// GPSDebuggerTime(); // uncomment to debug
+   	if (GPS.fix)
+	{
+	   // GPSDebuggerLocation(); // uncomment to debug
+	   // GPS.sendCommand(PMTK_STANDBY); // Go to standby mode
+        }
+     } 
    } 
- } 
 }
 
 boolean GPSHandle::checkForSubString(String main)
@@ -88,12 +89,18 @@ boolean GPSHandle::checkForSubString(String main)
   int len = main.length();
   for(i=0;i<len;i++)
   {
-    if(main[i]=='$'){
-      if(main[i+1]=='G'){
-        if(main[i+2]=='P'){
-          if(main[i+3]=='R'){
-            if(main[i+4]=='M'){
-              if(main[i+5]=='C'){
+    if(main[i]=='$')
+    {
+      if(main[i+1]=='G')
+      {
+        if(main[i+2]=='P')
+	{
+          if(main[i+3]=='R')
+	  {
+            if(main[i+4]=='M')
+	    {
+              if(main[i+5]=='C')
+	      {
                 flag = 1;
                 index1 = i;  }}}}}}
        
