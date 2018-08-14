@@ -8,7 +8,7 @@ Hardware: - KMB21
 Software: - Adafruit GPS library
 File: Header file
 Note:
-  - We have'nt used interrupt.
+  - We haven't used interrupt.
     Every time the function is called the GPS fix is checked.
     A buffer is filled with 300 characters (4 nmea string approximately). 
     Another funtion looks for the $GPRMC substring in the buffer.
