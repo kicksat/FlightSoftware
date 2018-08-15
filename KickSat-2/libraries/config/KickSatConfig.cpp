@@ -29,6 +29,14 @@ bool KickSatConfig :: getHoldstatus(){
   }
   return false;
 }
+
+byte KickSatConfig :: getStatus(){
+  byte buf[NUM_FILES];
+  readByteFromThree(buf, STATUS_LOC);
+  return buf[0];
+}
+
+
 bool KickSatConfig :: getAB1status(){
   byte buf[NUM_FILES];
   if(readByteFromThree(buf, AB1_LOC)){
@@ -88,7 +96,7 @@ void KickSatConfig :: setAB1Deployed(){
 }
 
 void KickSatConfig :: setAB2Deployed(){
-  if(writeByteToThree(FLAG_FALSE, AB2_LOC)){
+  if(writeByteToThree(FLAG_TRUE, AB2_LOC)){
 
   }
 }
@@ -124,11 +132,13 @@ bool KickSatConfig :: init() {
     pinMode(CS, OUTPUT); // Set pinmode for the SD card CS to output
     startSD(); // Starts communication with the SD card
     SDStatus = SD.begin(CS); // Record initialization of the SD card
+    SerialUSB.print("SD was false to start off, it is now: ");
+    SerialUSB.println(SDStatus);
   }
   if(SDStatus){
-     SerialUSB.println("SD initialization failed");
+     SerialUSB.println("SD initialized");
   }else{
-    SerialUSB.println("SD  config initialized");
+    SerialUSB.println("SD initialization failed");
   }
   for(int i = 0; i < NUM_FILES; i++){
    if(!initFile(filenames[i])){
@@ -276,7 +286,10 @@ bool KickSatConfig::initFile(String fileName){
   File logFileHandle = SD.open(fileName, FILE_WRITE); // Open file for writing
   if (logFileHandle) { // If the file can be opened
     fileStatus = true; // Update flag for file status
-    char buf[3] = {'0', '0', '0'}; // Creates a default zer array to write to the file
+    char buf[NUM_ENTRIES]; // Creates a default zero array to write to the file
+    for(int i = 0; i < NUM_ENTRIES; i++){
+      buf[i] = '0';
+    }
     logFileHandle.seek(0);
     logFileHandle.print(buf); // Print to log file on the SD card
     SerialUSB.println(buf); // Print to SerialUSB
