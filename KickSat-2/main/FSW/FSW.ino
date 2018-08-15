@@ -11,11 +11,13 @@ by: Ralen
 // Includes //
 //////////////
 //#include "IMUHandler.h"
-#include "KickSatLog.h"
-#include "RTCCounter.h"
-//#include <uplink.h>
-#include "burn.h"
-#include "KickSatConfig.h"
+#include <KickSatLog.h>
+#include <RTCCounter.h>
+#include <uplink.h>
+#include <burn.h>
+#include <KickSatConfig.h>
+#include <BattHandler.h>
+#include <kickSatGPS.h>
 
 /////////////////
 // Definitions //
@@ -34,12 +36,13 @@ Counter beaconTimer; // creates timer object
 Counter listenTimer; // creates timer object
 burn myBurn; // create burn wire object
 KickSatConfig myConfig; // Create config object
-
+BattHandle power;
+GPSHandle kickSatGPS;
 /////////////////////////////////
 // Initialize global variables //
 /////////////////////////////////
 char buf[MAXCHARS]; // Create global variable for buffer from SD read function, this can be piped into radio.send()
-bool armingMode;
+//bool armingMode;
 
 ///////////////////////
 // Declare functions //
@@ -53,21 +56,22 @@ void setup() {
   SerialUSB.begin(115200); // Restart SerialUSB
   while(!SerialUSB); // Wait for SerialUSB USB port to open
   SerialUSB.println("SerialUSB Initialized");
-  //delay(5000); // Provides user with time to open SerialUSB Monitor
+  
+  watchdogTimer.init(1,watchdog); // timer delay, seconds
+  beaconTimer.init(10); // timer delay, seconds
+  
+  delay(5000); // Provides user with time to open SerialUSB Monitor
   pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
   pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
   ///////////////////////////////////////////////////////////////////
 
-  watchdogTimer.init(1,watchdog); // timer delay, seconds
-  beaconTimer.init(10); // timer delay, seconds
-
   delay(500);
 
-   if(IMU.begin()){ // Initialize IMU
-     SerialUSB.println("IMU Intialized");
-   } else {
-     SerialUSB.println("IMU Could Not Be Intialized");
-   }
+//   if(IMU.begin()){ // Initialize IMU
+//     SerialUSB.println("IMU Intialized");
+//   } else {
+//     SerialUSB.println("IMU Could Not Be Intialized");
+//   }
 
   if(logfile.init()) { // Initialize SD card
     SerialUSB.println("SD Card Initialized");
@@ -80,6 +84,8 @@ void setup() {
   }else{
     SerialUSB.println("Config file not initialized");
   }
+
+  kickSatGPS.init();
 
   delay(1000);
   //deploys antenna and updates status byte
@@ -132,8 +138,8 @@ void loop() {
     // Read all health and sensor data //
     /////////////////////////////////////
     createRandomData(); // Temporary solution TODO: Complete data collection for all sensors
-    // power.read(data.powerData); // Read IMU data TODO: This function doesn't exist but should
-    // GPS.read(data.gpsData); // Read IMU data TODO: This function doesn't exist but should
+    power.read(data.powerData); // Read IMU data TODO: This function doesn't exist but should
+    kickSatGPS.read(data.gpsData); // Read IMU data TODO: This function doesn't exist but should
     //IMU.read(data.imuData); // Read IMU data
 
 
@@ -178,27 +184,26 @@ void loop() {
 
 }
 
-
 void createRandomData() { // Temporary until we are     createRandomData(); // Temporary solution TODO: Complete data collection for all sensorsreading from each sensor
   data.status = random(0,10);
   for(uint8_t i = 0; i < 3; i++){
-    data.powerData[i] = random(0,100);
+    data.powerData[i] = random(0,100)/13.87;
   }
-  for(uint8_t i = 0; i < 4; i++){
+  for(uint8_t i = 0; i < 2; i++){
+    data.dateTime[i] = random(100000,999999);
+  }
+  for(uint8_t i = 0; i < 3; i++){
     data.gpsData[i] = random(0,200)/13.87;
   }
   for(uint8_t i = 0; i < 9; i++){
     data.imuData[i] = random(0,100)/9.123;
   }
-  for(uint8_t i = 0; i < 8; i++){
-    data.commandData[i] = random(0,9);
-  }
 }
 
 
 bool batteryAboveThreshold() {
-  // return readBattery() > BATTERYTHRESHOLD // TODO: Read battery doesn't exist but should
-  return 3 > BATTERYTHRESHOLD;
+  return power.readBattVoltage() > BATTERYTHRESHOLD; // TODO: Read battery doesn't exist but should
+  //return 3 > BATTERYTHRESHOLD;
 }
 
 

@@ -43,6 +43,10 @@ IMPORTANT: GPS WOULD NOT ENTER STANDBY MODE AFTER DELIVERING MEANINGFUL DATA, UN
 Adafruit_GPS GPS(&Serial1);
 int index1;
 
+GPSHandle::GPSHandle() {
+
+}
+
 void GPSHandle::init()
 {
   SerialUSB.begin(115200);
@@ -148,7 +152,7 @@ void GPSHandle::GPSDebuggerLocation()
   SerialUSB.print("Satellites: "); SerialUSB.println((int)GPS.satellites);
  }
  
-uint16_t* GPSHandle::main()
+void GPSHandle::read(float buf[])
 {
   String h = (char*)GPS.hour;
   String m=  (char*)GPS.minute;
@@ -162,17 +166,12 @@ uint16_t* GPSHandle::main()
 
   int timeGpsInt = timeGpsString.toInt();
   int dataGpsInt = dateGpsString.toInt();
-
-  static uint16_t GPSdata[5];
-  uint16_t *GPSdatap;
-  GPSdatap = GPSdata;
   
   printGPSdata();
-  GPSdata[0] = GPS.latitudeDegrees;
-  GPSdata[1] = GPS.longitudeDegrees;
-  GPSdata[2] = GPS.altitude;
-  GPSdata[3] = timeGpsInt;
-  GPSdata[4] = dataGpsInt;
-  return GPSdata;
+  buf[0] = GPS.latitudeDegrees;
+  buf[1] = GPS.longitudeDegrees;
+  buf[2] = GPS.altitude;
+  buf[3] = timeGpsInt;
+  buf[4] = dataGpsInt;
   
 }

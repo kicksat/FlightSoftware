@@ -25,21 +25,13 @@ Note:
 
 class GPSHandle {
   public:
-  
+  GPSHandle();
   void init();
   void printGPSdata();
   boolean checkForSubString(String main);
-  uint16_t* main();
   void GPSDebuggerTime();
   void GPSDebuggerLocation();
-  
-    
-  uint16_t* read()
-  {
-    init();
-    uint16_t *GPSdataPointer[5] ={0};
-	*GPSdataPointer = main();
-	return *GPSdataPointer;
-  }
+  void read(float buf[]);
 };
+
 

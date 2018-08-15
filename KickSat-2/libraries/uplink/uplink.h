@@ -9,15 +9,17 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 #define UPLINK_h
 
 #include <KickSatLog.h>
-#include <Checksum.h>
+#include <ChecksumHandler.h>
 // #include <ax25.h>
 // #include <RadioHead.h>
+#define NUM_COMMANDS 8
+#define COMMAND_WIDTH 3
 
 
+ChecksumHandler checksumHandler;
+bool armingMode;
 
-Checksum checksumHandler;
-
-const byte commandDictionary[][] = {/* REDACTED */};
+const byte commandDict[NUM_COMMANDS][COMMAND_WIDTH] = {/* REDACTED */};
 
 bool parseUplink(char *buf);
 void processUplink(char *buf);
@@ -74,7 +76,7 @@ bool parseUplink(char *buf) {
 ////////////////////
 // Process uplink //
 //////////////////////////////////////////////////////////////////////////////
-uint8_t extractCommand(byte* buf) {
+uint8_t extractCommand(char* buf) {
   for (int i = 0; i < NUM_COMMANDS; i++) {
     bool flag = true;
     for (int n = 0; n < COMMAND_WIDTH; n++) {

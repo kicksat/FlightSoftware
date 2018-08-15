@@ -8,7 +8,7 @@ byte ChecksumHandler::calculateChecksum(byte* message, int len) {
   return val;
 }
 
-bool ChecksumHandler::evaluateChecksum(byte* message, int len) {
+bool ChecksumHandler::evaluateChecksum(char* message, int len) {
   byte val = 0;
   for (int i = 0; i < len; i++) {
     val ^= message[i];
