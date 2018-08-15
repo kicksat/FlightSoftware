@@ -99,47 +99,30 @@ void processUplink(char *buf) {
     // Burn wires
     case 0:
     SerialUSB.println("Command: Burn Wire");
-    // send_sensor_data();
+    //TODO: burn the burn wires to deploy sprites
     break;
-    // Send down Sensor data
+      
+    // Begin downlink
+    case 1:
+    SerialUSB.println("Command: Start Downlink");
+    //TODO: increase the frequency of chiprs and begin sending older log data
+    break;
+      
     case 2:
-    SerialUSB.println("Command: Downlink Sensors");
-    // Get some user input for the number of logs to send down
-    // Normally this o
-    // SerialUSB.println("How many logs shall we send down?");
-    // logs_to_send = return_selection();
-    // SerialUSB.print("Fetching the last ");
-    // SerialUSB.print(logs_to_send);
-    // SerialUSB.println(" logs");
-
-    // TODO: @emma read the last logs_to_send logs into the multiple_logs
-
-    // serial_transmit(multiple_logs);
-
-    break;
-
-    // Downlink last x number of logs, depends on user input
-    case 3:
-    SerialUSB.println("Command: Downlink Logs");
-    // TODO: make a function that does this...
-    break;
-
-    // Rewrite the sensor config files @connor @max
-    case 4:
-    // TODO: make a function that does this...
     SerialUSB.println("Command: Uplink Sensor Config");
+    //TODO: read data from uplink and write new data to sensor config files
+    //IMPORTANT: any uplink can be no longer than 64 bytes so configs must be short
     break;
 
-    // Send the mission config files
-    case 5:
-    // TODO: @emma
-    // read the mission config files into config_string =
-    // serial_transmit(config_string);
+    // Send the mission status files
+    case 3:
     SerialUSB.println("Command: Downlink Mission Status");
+    //TODO: send down current mission status byte
+    //lets the ground station know what the satellite thinks its doing
     break;
 
     // Enter arming mode, exit standby mode
-    case 6:
+    case 4:
     SerialUSB.println("Command: Enter Arming Mode");
     // TODO: enter arming mode
     // send: "Entered arming mode"
@@ -148,7 +131,7 @@ void processUplink(char *buf) {
     break;
 
     // Enter End of Life mode
-    case 7:
+    case 5:
     SerialUSB.println("Command: Enter End of Life Mode");
     // Send: ACK, are you sure you want to explode all of our hard work into pixie dust?
     // serial_transmit("Are you sure you want to kill KickSat II? (y/n)");
@@ -172,7 +155,7 @@ void processUplink(char *buf) {
     break;
 
     // No command --> go back to sleep and go through another standby mode loop
-    case 8:
+    case 6:
     //
     SerialUSB.println("Doing no command... going to sleep");
     break;
