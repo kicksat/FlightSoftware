@@ -19,43 +19,59 @@ KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_nam
 //based on the config file.
 void KickSat_Sensor::operate(byte* dataOut) {
   //read commands from config file
-  //File configFile = SD.open(_configFileName, FILE_READ);
-  //TODO: read in data file
-  //configFile.close();
-
-  //  TEST COMMANDS  //
-  //these commands are here just to test command parsing functionality
-  //in the final version, these will be read from a config file
-  //TODO: read these from a config file
-  int numCommands = 8;
-  String commandList[] = {
-    "reset",
-    "delay 500",
-    "readout",
-    "delay 500",
-    "start",
-    "delay 250",
-    "read",
-    "stop"
-  };
-
+  String commandList[64];
   
+  SD.begin(_SDchipSelect);
+  digitalWrite(_SDchipSelect, LOW);
+  _configFile = SD.open(_configFileName, FILE_READ);
+
+  //extract commands from config file
+  int numCommands = 1;
+  String commandString = "";
+  while (true) {
+	char nextChar = _configFile.read();
+	if (nextChar == -1) {
+	  break;
+	}
+	commandString += nextChar;
+  }
+  digitalWrite(_SDchipSelect, HIGH);
+
+  //execute Order 66- I mean... specified commands
   int bufIndex = 0; //needed to ensure data in buf is not overwritten
   for (int i = 0; i < numCommands; i++) {
-    //Serial.println(commandList[i]);
-    handleCommand(commandList[i], dataOut, &bufIndex);
+    handleCommand(getCommand(commandString, '\n', i), dataOut, &bufIndex);
   }
+}
+
+//this function accepts a string of commands, a separator to delimit by, and an index to search for
+//it then cuts the string into chunks, based on the specified separator, and returns the chunk
+//that corresponds with the provided index
+String KickSat_Sensor::getCommand(String data, char separator, int index) {
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
 //this function takes a command outputted by parseMessage, and executes that command
 void KickSat_Sensor::handleCommand(String cmd, byte* buf, int* index) {
   String argv[6];
   parseMessage(cmd, argv);
-
-  //Serial.println(argv[0]);
   
   if (argv[0] == "delay") {
-    delay(argv[1].toInt());
+	int dTime = argv[1].toInt();
+	if (dTime > 2000) { //set a max delay time, to avoid a near infinite delay in the case of a bit flip
+	  dTime = 2000;
+	}
+    delay(dTime);
   } else if (argv[0] == "read") {
     //read data
     digitalWrite(_ADCchipSelect, LOW);  
@@ -75,11 +91,11 @@ void KickSat_Sensor::handleCommand(String cmd, byte* buf, int* index) {
   } else if (argv[0] == "readout") {
     regReadout();
   } else if (argv[0] == "config") {
-    //burstWriteRegs(argv[3], argv[2].toInt());
+	
+    burstWriteRegs(argv[3], argv[2].toInt());
   } else if (argv[0] == "start") {
     startADC();
   } else if (argv[0] == "reset") {
-    //Serial.println("resetting");
     resetADC();
   }
   
@@ -105,6 +121,15 @@ void KickSat_Sensor::parseMessage(String msg, String arg[]) {
   arg[wordIndex] = msg.substring(wordStart, index);
 }
 
+//this function rewrites the 
+void KickSat_Sensor::rewriteConfig(byte* buf, int len) {
+  SD.begin(_SDchipSelect);
+  digitalWrite(_SDchipSelect, LOW);
+  _configFile = SD.open(_configFileName, FILE_WRITE);
+  _configFile.write(buf, len);
+  _configFile.close();
+  digitalWrite(_SDchipSelect, HIGH);
+}
 
 //==================== Register Commands ====================//
 
@@ -146,7 +171,7 @@ void KickSat_Sensor::stopADC() {
   digitalWrite(_ADCchipSelect, HIGH);
 }
 
-//resets the ADC
+//resets the ADC and starts it up with a set of default registers
 void KickSat_Sensor::resetADC() {
   Serial.println("------Resetting ADC------");
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
@@ -196,6 +221,8 @@ void KickSat_Sensor::wakeADC()  {
   digitalWrite(_ADCchipSelect, HIGH);
 }
 
+//debug function, used to print out the values of all the ADC registers
+//use to ensure the ADC is working properly and commands are being executed correctly
 void KickSat_Sensor::regReadout(){
   Serial.println("------Register Readout------");
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
@@ -243,3 +270,4 @@ void KickSat_Sensor::regReadout(){
   Serial.print("Register 0x11 (GPIOCON):   "), Serial.println(readOut17, HEX);
   Serial.println("-----------------------------");
 }
+
