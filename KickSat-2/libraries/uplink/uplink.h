@@ -118,12 +118,7 @@ void processUplink(char *buf) {
 
     // Send the mission status files
     case 3:
-    SerialUSB.println("Command: Downlink Mission Status");
-    //TODO: send down current mission status byte
-    //lets the ground station know what the satellite thinks its doing
-    byte status = myConfig.getStatus();
-    SerialUSB.print("Status: ");
-    SerialUSB.println(status);
+    
     break;
 
     // Enter arming mode, exit standby mode
