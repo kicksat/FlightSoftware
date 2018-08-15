@@ -23,8 +23,8 @@ void processUplink(char *buf);
 ///////////////////////
 // Listen for uplink //
 //////////////////////////////////////////////////////////////////////////////
-bool listenForUplink(char *buf) {
-  timeout.start(LISTENINGDURATION); // Start timeout timer for the listening duration
+bool listenForUplink(char *buf, uint8_t duration) {
+  timeout.start(duration); // Start timeout timer for the listening duration
   while(1) { // Wait for uplink, retreive from buffer
     // if (radio.available()) { // TODO: change if radio is available, not serial
     if (SerialUSB.available()) { // If data is in buffer to be read
@@ -138,6 +138,10 @@ void processUplink(char *buf) {
     // Enter arming mode, exit standby mode
     case 6:
     SerialUSB.println("Command: Enter Arming Mode");
+    // Set arming flag
+    armingMode = true;
+
+
     // TODO: enter arming mode
     // send: "Entered arming mode"
     // This is a transition condition in the more general state diagram

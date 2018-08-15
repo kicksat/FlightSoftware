@@ -16,16 +16,6 @@ void setup() {
   while(!SerialUSB);
   SerialUSB.println("Serial Initialized");
   delay(3000);
-
-  pinMode(RF_SDN, OUTPUT);
-  digitalWrite(RF_SDN, LOW);
-
-  if (!radio.init()) { //Only init once...since Interrupt flag will increment
-    SerialUSB.println("Radio Did Not Initialized");
-  } else {
-    SerialUSB.println("Radio Initialized");
-  }
-  delay(1000);
 }
 
 void loop() {

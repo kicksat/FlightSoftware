@@ -20,7 +20,9 @@ by: Ralen
 // Definitions //
 ///////////////////////////////////////////////////////////////////
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
-#define ANTENNA_WAIT 2
+#define ANTENNA_WAIT 2 // How many beacons to wait in antenna wait
+#define LISTENINGDURATION 5 // Defined in seconds
+#define ALARMDURATION 5 // Defined in seconds
 ///////////////////////////////////
 // Declaration of global objects //
 ///////////////////////////////////////////////////////////////////
@@ -28,18 +30,21 @@ by: Ralen
 Counter watchdogTimer; // creates timer object
 Counter beaconTimer; // creates timer object
 Counter listenTimer; // creates timer object
-burn myBurn;
-KickSatConfig myConfig;
+burn myBurn; // create burn wire object
+KickSatConfig myConfig; // Create config object
+
 /////////////////////////////////
 // Initialize global variables //
 ///////////////////////////////////////////////////////////////////
 char buf[MAXCHARS]; // Create global variable for buffer from SD read function, this can be piped into radio.send()
+
 ///////////////////////
 // Declare functions //
 ///////////////////////////////////////////////////////////////////
 void watchdog(); // Function that runs every time watchdog timer triggers
 bool WDTFLAG = false; // Flag that allows toggling of the watchdog state
 
+///////////
 // SETUP //
 ///////////////////////////////////////////////////////////////////
 void setup() {
