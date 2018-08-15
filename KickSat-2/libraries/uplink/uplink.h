@@ -106,7 +106,8 @@ void processUplink(char *buf) {
     // Begin downlink
     case 1:
     SerialUSB.println("Command: Start Downlink");
-    //TODO: increase the frequency of chiprs and begin sending older log data
+    //TODO: increase the frequency of beacons and begin sending older log data
+	//NOTE: this is its own function, which shits out a bunch of data
     break;
       
     case 2:
@@ -129,6 +130,8 @@ void processUplink(char *buf) {
     // send: "Entered arming mode"
     // This is a transition condition in the more general state diagram
     // we will exit standby mode here
+	// NOTE: this is a global arming mode flag that we set,
+	//so that the outer loop will know to execute the arming mode code
     break;
 
     // No command --> go back to sleep and go through another standby mode loop
