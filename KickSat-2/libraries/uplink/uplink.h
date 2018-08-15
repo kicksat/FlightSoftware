@@ -17,7 +17,7 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 
 Checksum checksumHandler;
 
-const byte commandDictionary[7][12] = {// REDACTED //};
+const byte commandDictionary[][] = {/* REDACTED */};
 
 bool parseUplink(char *buf);
 void processUplink(char *buf);
