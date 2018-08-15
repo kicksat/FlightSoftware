@@ -35,16 +35,28 @@ void burn::burnAntennas() {
 
 void burn::burnAB1() {
     digitalWrite(BURN_RELAY_A, HIGH);
-    for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
+    // for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
+    //     // PWM with 10% duty cycle
+    //     digitalWrite(ANTENNA_BURN_1, HIGH);
+    //     delay(5);
+    //     digitalWrite(ANTENNA_BURN_1, LOW);
+    //     delay(45);
+    //     digitalWrite(ANTENNA_BURN_1, HIGH);
+    //     delay(5);
+    //     digitalWrite(ANTENNA_BURN_1, LOW);
+    //     delay(45);
+    // }
+    timeout.start(ANTENNA_BURN_TIME);
+    while(1) {
         // PWM with 10% duty cycle
         digitalWrite(ANTENNA_BURN_1, HIGH);
         delay(5);
         digitalWrite(ANTENNA_BURN_1, LOW);
         delay(45);
-        digitalWrite(ANTENNA_BURN_1, HIGH);
-        delay(5);
-        digitalWrite(ANTENNA_BURN_1, LOW);
-        delay(45);
+        if (timeout.triggered()) { // Checks time for timeout
+          SerialUSB.println("Uplink Timeout");
+          return false;
+        }
     }
     digitalWrite(BURN_RELAY_A, LOW);
 }

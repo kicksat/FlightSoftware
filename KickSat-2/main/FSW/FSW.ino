@@ -1,6 +1,7 @@
 /////////////////////////////////////////////////////////////////
 ////////////////// KICKSAT-2 FLIGHT SOFTWARE ////////////////////
 /////////////////////////////////////////////////////////////////
+
 /*
 Last update on: 8-12-18
 by: Ralen
@@ -8,7 +9,7 @@ by: Ralen
 
 //////////////
 // Includes //
-///////////////////////////////////////////////////////////////////
+//////////////
 //#include "IMUHandler.h"
 #include "KickSatLog.h"
 #include "RTCCounter.h"
@@ -18,14 +19,15 @@ by: Ralen
 
 /////////////////
 // Definitions //
-///////////////////////////////////////////////////////////////////
+/////////////////
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
 #define ANTENNA_WAIT 2 // How many beacons to wait in antenna wait
 #define LISTENINGDURATION 5 // Defined in seconds
-#define ALARMDURATION 5 // Defined in seconds
+#define ARMINGDURATION 5 // Defined in seconds
+
 ///////////////////////////////////
 // Declaration of global objects //
-///////////////////////////////////////////////////////////////////
+///////////////////////////////////
 //IMUHandle IMU; // create IMU object
 Counter watchdogTimer; // creates timer object
 Counter beaconTimer; // creates timer object
@@ -35,18 +37,18 @@ KickSatConfig myConfig; // Create config object
 
 /////////////////////////////////
 // Initialize global variables //
-///////////////////////////////////////////////////////////////////
+/////////////////////////////////
 char buf[MAXCHARS]; // Create global variable for buffer from SD read function, this can be piped into radio.send()
+bool armingMode;
 
 ///////////////////////
 // Declare functions //
-///////////////////////////////////////////////////////////////////
-void watchdog(); // Function that runs every time watchdog timer triggers
+///////////////////////
 bool WDTFLAG = false; // Flag that allows toggling of the watchdog state
 
 ///////////
 // SETUP //
-///////////////////////////////////////////////////////////////////
+///////////
 void setup() {
   SerialUSB.begin(115200); // Restart SerialUSB
   while(!SerialUSB); // Wait for SerialUSB USB port to open
@@ -59,15 +61,14 @@ void setup() {
   watchdogTimer.init(1,watchdog); // timer delay, seconds
   beaconTimer.init(10); // timer delay, seconds
 
-  SerialUSB.println("we got here at least");
-
   delay(500);
 
-//  if(IMU.begin()){ // Initialize IMU
-//    SerialUSB.println("IMU Intialized");
-//  } else {
-//    SerialUSB.println("IMU Could Not Be Intialized");
-//  }
+   if(IMU.begin()){ // Initialize IMU
+     SerialUSB.println("IMU Intialized");
+   } else {
+     SerialUSB.println("IMU Could Not Be Intialized");
+   }
+
   if(logfile.init()) { // Initialize SD card
     SerialUSB.println("SD Card Initialized");
   } else {
@@ -79,7 +80,6 @@ void setup() {
   }else{
     SerialUSB.println("Config file not initialized");
   }
-  SerialUSB.println("yay here!");
 
   delay(1000);
   //deploys antenna and updates status byte
@@ -114,7 +114,7 @@ void setup() {
 
   //////////////////
   // Init objects //
-  ///////////////////////////////////////////////////////////////////
+  //////////////////
 
   ///////////////////////////////////////////////////////////////////
 }
@@ -122,7 +122,7 @@ void setup() {
 
 //////////
 // LOOP //
-///////////////////////////////////////////////////////////////////
+//////////
 void loop() {
 
   // Check if the beaconTimer has triggered and the battery is above the threshold voltage
@@ -155,9 +155,19 @@ void loop() {
     //////////////////////////
     // Enter listening mode //
     //////////////////////////
-    //if (listenForUplink(buf)) {
+    if (listenForUplink(buf, LISTENINGDURATION)) {
       // processUplink();
-    //}
+    }
+
+    //////////////////////////
+    // Enter listening mode //
+    //////////////////////////
+    if (armingMode) {
+      if (listenForUplink(buf, ARMINGDURATION)) {
+      // processUplink(); // myBurn.burnDB1();
+
+      }
+    }
 
   }
 
