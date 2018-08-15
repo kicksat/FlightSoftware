@@ -1,6 +1,5 @@
 #include "KickSatConfig.h"
 
-bool ConfigStatus = false; // Global variable for config initialization status, true=config initialized
 String filenames[3] = {"config0.txt", "config1.txt", "config2.txt"};
 
 int KickSatConfig :: checkAntennaTimer(){
@@ -107,24 +106,24 @@ void KickSatConfig :: setDeployed(){
 
 // Initialize SD card
 bool KickSatConfig :: init() {
-  if (!ConfigStatus) { // If the  SD card is not initialized
+  if (!SDStatus) { // If the SD card is not initialized
     pinMode(CS, OUTPUT); // Set pinmode for the SD card CS to output
     startSD(); // Starts communication with the SD card
-    ConfigStatus = true;//SD.begin(CS); // Record initialization of the SD card
-    if(!ConfigStatus){
-       SerialUSB.println("SD initialization failed");
-    }else{
-      SerialUSB.println("SD initialized");
-    }
-    for(int i = 0; i < 3; i++){
-     if(!initFile(filenames[i])){
-      ConfigStatus = false;
-      SerialUSB.println("File initialization failed");
-     }
-    }
-    endSD(); // Ends communication with the SD card
+    SDStatus = SD.begin(CS); // Record initialization of the SD card
   }
-  return ConfigStatus; // Returns true if SD card initializes
+  if(SDStatus){
+     SerialUSB.println("SD initialization failed");
+  }else{
+    SerialUSB.println("SD  config initialized");
+  }
+  for(int i = 0; i < 3; i++){
+   if(!initFile(filenames[i])){
+    SDStatus = false;
+    SerialUSB.println("File initialization failed");
+   }
+  }
+  endSD(); // Ends communication with the SD card
+  return SDStatus; // Returns true if SD card initializes
 }
 
 

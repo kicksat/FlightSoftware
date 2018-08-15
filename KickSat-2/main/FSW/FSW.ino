@@ -20,7 +20,7 @@ by: Ralen
 // Definitions //
 ///////////////////////////////////////////////////////////////////
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
-#define ANTENNA_WAIT 5
+#define ANTENNA_WAIT 2
 ///////////////////////////////////
 // Declaration of global objects //
 ///////////////////////////////////////////////////////////////////
@@ -55,8 +55,6 @@ void setup() {
   beaconTimer.init(10); // timer delay, seconds
 
   SerialUSB.println("we got here at least");
-
-  SD.begin(SPI_CS_SD);
 
   delay(500);
 

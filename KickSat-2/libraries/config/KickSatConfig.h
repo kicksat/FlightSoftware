@@ -6,6 +6,7 @@
 
 #include "Arduino.h"
 #include "SD.h"
+#include "KickSatLog.h"
 
 #define CS SPI_CS_SD
 #define AB1_BYTE 0x1E
