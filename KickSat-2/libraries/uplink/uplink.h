@@ -10,10 +10,9 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 
 #include <KickSatLog.h>
 #include <Checksum.h>
+#include <burn.h>
 // #include <ax25.h>
 // #include <RadioHead.h>
-
-
 
 Checksum checksumHandler;
 
@@ -99,90 +98,54 @@ void processUplink(char *buf) {
     // Burn wires
     case 0:
     SerialUSB.println("Command: Burn Wire");
-    // send_sensor_data();
+    burn.burnDB1();
+	burn.burnDB2();
+	burn.burnDB3();
     break;
-    // Send down Sensor data
+
+    // Begin downlink
+    case 1:
+    SerialUSB.println("Command: Start Downlink");
+    //TODO: increase the frequency of beacons and begin sending older log data
+	//NOTE: this is its own function, which shits out a bunch of data
+    break;
+
     case 2:
-    SerialUSB.println("Command: Downlink Sensors");
-    // Get some user input for the number of logs to send down
-    // Normally this o
-    // SerialUSB.println("How many logs shall we send down?");
-    // logs_to_send = return_selection();
-    // SerialUSB.print("Fetching the last ");
-    // SerialUSB.print(logs_to_send);
-    // SerialUSB.println(" logs");
-
-    // TODO: @emma read the last logs_to_send logs into the multiple_logs
-
-    // serial_transmit(multiple_logs);
-
-    break;
-
-    // Downlink last x number of logs, depends on user input
-    case 3:
-    SerialUSB.println("Command: Downlink Logs");
-    // TODO: make a function that does this...
-    break;
-
-    // Rewrite the sensor config files @connor @max
-    case 4:
-    // TODO: make a function that does this...
     SerialUSB.println("Command: Uplink Sensor Config");
+    //TODO: read data from uplink and write new data to sensor config files
+    //IMPORTANT: any uplink can be no longer than 64 bytes so configs must be short
     break;
 
-    // Send the mission config files
-    case 5:
-    // TODO: @emma
-    // read the mission config files into config_string =
-    // serial_transmit(config_string);
+    // Send the mission status files
+    case 3:
     SerialUSB.println("Command: Downlink Mission Status");
+    //TODO: send down current mission status byte
+    //lets the ground station know what the satellite thinks its doing
+    byte status = myConfig.getStatus();
+    SerialUSB.print("Status: ");
+    SerialUSB.println(status);
     break;
 
     // Enter arming mode, exit standby mode
-    case 6:
+    case 4:
     SerialUSB.println("Command: Enter Arming Mode");
-    // Set arming flag
-    armingMode = true;
-
-
     // TODO: enter arming mode
     // send: "Entered arming mode"
     // This is a transition condition in the more general state diagram
     // we will exit standby mode here
-    break;
-
-    // Enter End of Life mode
-    case 7:
-    SerialUSB.println("Command: Enter End of Life Mode");
-    // Send: ACK, are you sure you want to explode all of our hard work into pixie dust?
-    // serial_transmit("Are you sure you want to kill KickSat II? (y/n)");
-    // wait for response: if (response != "yes explode" ) --> go back into standby mode
-    // command = return_selection();
-    // SerialUSB.print("case 7, command: ");
-    // SerialUSB.println(command);
-    // if((command == 41) || (command == 73))
-    // {
-    //   // go into end of life mode
-    //   // this is a state change into end of life mode
-    //   SerialUSB.println("Killing the goddamn 3u that never deserved to live MUAHAHAHAHA!");
-    // }
-    // else
-    // {
-    //   // do not kill the satelite
-    //
-    //   command = 0;
-    // }
-
+	// NOTE: this is a global arming mode flag that we set,
+	//so that the outer loop will know to execute the arming mode code
     break;
 
     // No command --> go back to sleep and go through another standby mode loop
-    case 8:
-    //
+    case 5:
+    //NOP
     SerialUSB.println("Doing no command... going to sleep");
     break;
 
     // No command --> go back to sleep and go through another standby mode loop
     default:
+    //could potentially trigger due to failed command read
     SerialUSB.println("Doing no command... going to sleep");
     break;
   }
