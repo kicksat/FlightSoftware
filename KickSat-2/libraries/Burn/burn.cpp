@@ -2,125 +2,51 @@
 // burn.c
 //**********************************************************
 
-
-// TODO: ADD IN EEPROM STUFF
-
+#include "Arduino.h"
+#include <RTCCounter.h>
 #include "burn.h"
 
-void burn::init() {
-    pinMode(ANTENNA_BURN_1, OUTPUT);
-    digitalWrite(ANTENNA_BURN_1, LOW);
-
-    pinMode(ANTENNA_BURN_2, OUTPUT);
-    digitalWrite(ANTENNA_BURN_2, LOW);
-
-    pinMode(DEPLOY_BURN_1, OUTPUT);
-    digitalWrite(DEPLOY_BURN_1, LOW);
-
-    pinMode(DEPLOY_BURN_2, OUTPUT);
-    digitalWrite(DEPLOY_BURN_2, LOW);
-
-    pinMode(BURN_RELAY_A, OUTPUT);
-    digitalWrite(BURN_RELAY_A, LOW);
-
-    pinMode(BURN_RELAY_B, OUTPUT);
-    digitalWrite(BURN_RELAY_B, LOW);
-
-}
-
-void burn::burnAntennas() {
-    burnAB1();
-    burnAB2();
-}
-
-void burn::burnAB1() {
-    digitalWrite(BURN_RELAY_A, HIGH);
-    // for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
-    //     // PWM with 10% duty cycle
-    //     digitalWrite(ANTENNA_BURN_1, HIGH);
-    //     delay(5);
-    //     digitalWrite(ANTENNA_BURN_1, LOW);
-    //     delay(45);
-    //     digitalWrite(ANTENNA_BURN_1, HIGH);
-    //     delay(5);
-    //     digitalWrite(ANTENNA_BURN_1, LOW);
-    //     delay(45);
-    // }
-    timeout.start(ANTENNA_BURN_TIME);
-    while(1) {
-        // PWM with 10% duty cycle
-        digitalWrite(ANTENNA_BURN_1, HIGH);
-        delay(5);
-        digitalWrite(ANTENNA_BURN_1, LOW);
-        delay(45);
-        if (timeout.triggered()) { // Checks time for timeout
-          SerialUSB.println("Uplink Timeout");
-          return false;
-        }
+void burn::burn(RELAY relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency){ // duration(s), dutyCycle(%), Frequency (Hz)
+  pinMode(burnwire, OUTPUT);
+  digitalWrite(relay, HIGH);
+  float  cycleTime = 1/pulseFrequency;
+  timeout.start(duration);
+  while(1) {
+    digitalWrite(burnwire, HIGH);
+    delay(cycleTime*dutyCycle/100);
+    digitalWrite(burnwire, LOW);
+    delay(cycleTime*(1-dutyCycle/100));
+    if (timeout.triggered()) { // Checks time for timeout
+      return false;
     }
-    digitalWrite(BURN_RELAY_A, LOW);
+  }
+  digitalWrite(relay, LOW);
+  pinMode(burnwire, OUTPUT);
 }
 
-void burn::burnAB2() {
-    digitalWrite(BURN_RELAY_A, HIGH);
-    for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
-        // PWM with 10% duty cycle
-        digitalWrite(ANTENNA_BURN_2, HIGH);
-        delay(5);
-        digitalWrite(ANTENNA_BURN_2, LOW);
-        delay(45);
-        digitalWrite(ANTENNA_BURN_2, HIGH);
-        delay(5);
-        digitalWrite(ANTENNA_BURN_2, LOW);
-        delay(45);
-    }
-    digitalWrite(BURN_RELAY_A, LOW);
+void burn::burnAntennaOne() {
+  burn(BURN_RELAY_A, BURN_ANTENNA_1, ANTENNA_BURN_TIME, ANTENNADUTYCYCLE, ANTENNABURNFREQUENCY);
 }
 
-void burn::burnDB1() {
-    digitalWrite(BURN_RELAY_B, HIGH);
-    for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
-        // PWM with 10% duty cycle
-        digitalWrite(DEPLOY_BURN_1, HIGH);
-        delay(5);
-        digitalWrite(DEPLOY_BURN_1, LOW);
-        delay(45);
-        digitalWrite(DEPLOY_BURN_1, HIGH);
-        delay(5);
-        digitalWrite(DEPLOY_BURN_1, LOW);
-        delay(45);
-    }
-    digitalWrite(BURN_RELAY_B, LOW);
+void burn::burnAntennaTwo() {
+  burn(BURN_RELAY_A, BURN_ANTENNA_2, ANTENNA_BURN_TIME, ANTENNADUTYCYCLE, ANTENNABURNFREQUENCY);
 }
 
-void burn::burnDB2() {
-    digitalWrite(BURN_RELAY_B, HIGH);
-    for (unsigned int k = 0; k < SPRITE_BURN_TIME/100; ++k) {
-        // PWM with 30% duty cycle
-        digitalWrite(DEPLOY_BURN_2, HIGH);
-        delay(15);
-        digitalWrite(DEPLOY_BURN_2, LOW);
-        delay(35);
-        digitalWrite(DEPLOY_BURN_2, HIGH);
-        delay(15);
-        digitalWrite(DEPLOY_BURN_2, LOW);
-        delay(35);
-      }
-      digitalWrite(BURN_RELAY_B, LOW);
+void burn::burnSpriteOne() {
+  burn(BURN_RELAY_B, BURN_SPRITE_1, ANTENNA_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
 }
 
-void burn::burnDB3(){
-  digitalWrite(BURN_RELAY_B, HIGH);
-    for (unsigned int k = 0; k < SPRITE_BURN_TIME/100; ++k) {
-        // PWM with 30% duty cycle
-        digitalWrite(DEPLOY_BURN_3, HIGH);
-        delay(15);
-        digitalWrite(DEPLOY_BURN_3, LOW);
-        delay(35);
-        digitalWrite(DEPLOY_BURN_3, HIGH);
-        delay(15);
-        digitalWrite(DEPLOY_BURN_3, LOW);
-        delay(35);
-      }
-      digitalWrite(BURN_RELAY_B, LOW);
+void burn::burnSpriteTwo() {
+  burn(BURN_RELAY_B, BURN_SPRITE_2, ANTENNA_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
 }
+
+void burn::burnSpriteThree(){
+  burn(BURN_RELAY_B, BURN_SPRITE_3, ANTENNA_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
+}
+
+void burn::burnAntenna() {
+  burnAntennaOne();
+  burnAntennaTwo();
+}
+
+Burn burn;
