@@ -10,6 +10,7 @@ by: Ralen
 //////////////
 // Includes //
 //////////////
+<<<<<<< HEAD
 //#include "IMUHandler.h"
 #include <KickSatLog.h>
 #include <RTCCounter.h>
@@ -18,12 +19,21 @@ by: Ralen
 #include <KickSatConfig.h>
 #include <BattHandler.h>
 #include <kickSatGPS.h>
+=======
+#include "IMUHandler.h"
+#include "KickSatLog.h"
+#include "RTCCounter.h"
+#include <uplink.h>
+#include "burn.h"
+#include "KickSatConfig.h"
+>>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
 
 /////////////////
 // Definitions //
 /////////////////
+#define HOLDTIME 900 // Time to hold after initial deployment, in seconds
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
-#define ANTENNA_WAIT 2 // How many beacons to wait in antenna wait
+#define ANTENNA_WAIT 2 // How many beacons to wait in antenna wait, minutes
 #define LISTENINGDURATION 5 // Defined in seconds
 #define ARMINGDURATION 5 // Defined in seconds
 
@@ -34,10 +44,14 @@ by: Ralen
 Counter watchdogTimer; // creates timer object
 Counter beaconTimer; // creates timer object
 Counter listenTimer; // creates timer object
+<<<<<<< HEAD
 burn myBurn; // create burn wire object
 KickSatConfig myConfig; // Create config object
 BattHandle power;
 GPSHandle kickSatGPS;
+=======
+
+>>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
 /////////////////////////////////
 // Initialize global variables //
 /////////////////////////////////
@@ -53,6 +67,7 @@ bool WDTFLAG = false; // Flag that allows toggling of the watchdog state
 // SETUP //
 ///////////
 void setup() {
+<<<<<<< HEAD
   SerialUSB.begin(115200); // Restart SerialUSB
   while(!SerialUSB); // Wait for SerialUSB USB port to open
   SerialUSB.println("SerialUSB Initialized");
@@ -61,10 +76,13 @@ void setup() {
   beaconTimer.init(10); // timer delay, seconds
   
   delay(5000); // Provides user with time to open SerialUSB Monitor
+=======
+  // Define pin modes
+>>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
   pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
   pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
-  ///////////////////////////////////////////////////////////////////
 
+<<<<<<< HEAD
   delay(500);
 
 //   if(IMU.begin()){ // Initialize IMU
@@ -72,19 +90,37 @@ void setup() {
 //   } else {
 //     SerialUSB.println("IMU Could Not Be Intialized");
 //   }
+=======
+  // Begin timers
+  watchdogTimer.init(1,watchdog); // timer delay, seconds
 
-  if(logfile.init()) { // Initialize SD card
-    SerialUSB.println("SD Card Initialized");
+  // Initialize Serial
+  SerialUSB.begin(115200); // Restart SerialUSB
+  while(!SerialUSB); // Wait for SerialUSB USB port to open
+  SerialUSB.println("SerialUSB Initialized");
+  delay(5000); // Provides user with time to open SerialUSB Monitor or upload before sleep
+
+  // Init objects
+  if(configFile.init()) { // Initialize SD card and config file
+    SerialUSB.println("Config File Initialized");
   } else {
-    SerialUSB.println("SD Card Not Initialized");
+    SerialUSB.println("Config File Not Initialized");
+  }
+>>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
+
+  if(logfile.init()) { // Initialize log file
+    SerialUSB.println("Log Card Initialized");
+  } else {
+    SerialUSB.println("Log Card Not Initialized");
   }
 
-  if(myConfig.init()){
-    SerialUSB.println("Config file initialized");
-  }else{
-    SerialUSB.println("Config file not initialized");
+  if(IMU.begin()){ // Initialize IMU
+    SerialUSB.println("IMU Intialized");
+  } else {
+    SerialUSB.println("IMU Could Not Be Intialized");
   }
 
+<<<<<<< HEAD
   kickSatGPS.init();
 
   delay(1000);
@@ -95,34 +131,51 @@ void setup() {
       myConfig.incrementAntennaTimer();
       delay(1000);
       //sleep
-    }
-    if(myConfig.checkAntennaTimer() >= ANTENNA_WAIT){
-      if(!myConfig.getAB1status() && batteryAboveThreshold()){
-        myBurn.init();
-        myBurn.burnAB1();
-        myConfig.setAB1Deployed();
-        SerialUSB.println("Antenna 1 burned");
-        byte buf[3];
-        myConfig.readByteFromThree(buf, 0);
-        SerialUSB.println(buf[0], HEX);
+=======
+  ///////////////
+  // HOLD MODE //
+  ///////////////
+  // Goes into HOLD mode unpon initial deployment, flag is set to not enter this flag more than once
+  if (!configFile.getHoldstatus()) { // If the satellite has just deployed and not been in HOLD mode yet (HOLD mode is the mandatory delay after deployment)
+    SerialUSB.println("Entering HOLD mode");
+    holdTimer.init(90,holdModeCallback); // timer delay, seconds
+    timeout.start(HOLDTIME) // Sets up a backup timer to escape hold mode (while loop) (in case SD card is corrupted or something else unexpected)
+    while(!configFile.getHoldstatus()) { // Hold here until we hit our hold timeout
+      if (timeout.triggered()) { // Checks time for timeout
+        /* write hold status as completed (we only hold once) */
+        break;
       }
-      if(!myConfig.getAB2status() && batteryAboveThreshold()){
-        myBurn.init();
-        myBurn.burnAB2();
-        myConfig.setAB2Deployed();
-        SerialUSB.println("Antenna 2 burned");
-        byte buf[3];
-        myConfig.readByteFromThree(buf, 0);
-        SerialUSB.println(buf[0], HEX);
+>>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
+    }
+  }
+
+  /////////////////////
+  // DEPLOY ANTENNAS //
+  /////////////////////
+  // Deploys antenna and updates status byte
+  if (!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
+    SerialUSB.println("Begining Antenna Deployment Procedure");
+    timeout.start(15); // Starts a timeout timer
+    while(!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
+      if(!configFile.getAB1status() && batteryAboveThreshold()) { // Burn the first antenna wire if it hasn't already been done and the battery threshold is met
+        burn.burnAntennaOne();
+        configFile.setAB1Deployed();
+        SerialUSB.println("Antenna One Burned");
+      }
+      if(!configFile.getAB2status() && batteryAboveThreshold()) { // Burn the second antenna wire if it hasn't already been done and the battery threshold is met
+        burn.burnAntennaTwo();
+        configFile.setAB2Deployed();
+        SerialUSB.println("Antenna Two Burned");
+      }
+      if (timeout.triggered()) { // Checks time for timeout
+        break;
       }
     }
   }
 
-  //////////////////
-  // Init objects //
-  //////////////////
+// Begin beacon timer
+beaconTimer.init(10); // timer delay, seconds
 
-  ///////////////////////////////////////////////////////////////////
 }
 ///////////////////////////////////////////////////////////////////
 
@@ -170,8 +223,7 @@ void loop() {
     //////////////////////////
     if (armingMode) {
       if (listenForUplink(buf, ARMINGDURATION)) {
-      // processUplink(); // myBurn.burnDB1();
-
+        processUplink(); // Process uplink while in arming mode
       }
     }
 
@@ -253,4 +305,11 @@ void watchdog() { // Function that runs every time watchdog timer triggers
     digitalWrite(WDT_WDI, LOW); // Toggles watchdog timer
   }
   WDTFLAG = !WDTFLAG; // Toggles watchdog flag
+}
+
+void holdModeCallback() {
+  //Increment time in config file on SD card
+  if (/* timer value in config file >= HOLDTIME */) {
+    /* write hold status as completed (we only hold once) */
+  }
 }
