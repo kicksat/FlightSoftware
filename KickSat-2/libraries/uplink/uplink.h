@@ -1,7 +1,7 @@
 /**
 Uplink handler for KickSat, uplink.h
 Purpose: Library for handling the reading and processing of uplink to the satellite
-@author Ralen Toledo
+@author Ralen Toledo, Connor Settle
 @version 1.0 08/12/18
 */
 
@@ -16,6 +16,8 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 #define LISTENINGDURATION 5 // Defined in seconds
 
 Checksum checksumHandler;
+
+const byte commandDictionary[7][12] = {// REDACTED //};
 
 bool parseUplink(char *buf);
 void processUplink(char *buf);
@@ -84,6 +86,7 @@ uint8_t extractCommand(byte* buf) {
       return i;
     }
   }
+  return -1;
 }
 
 void processUplink(char *buf) {
@@ -176,6 +179,7 @@ void processUplink(char *buf) {
 
     // No command --> go back to sleep and go through another standby mode loop
     default:
+    //could potentially trigger due to failed command read
     SerialUSB.println("Doing no command... going to sleep");
     break;
   }
