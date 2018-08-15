@@ -51,7 +51,7 @@ public:
     byte readByte(String filename, int location);
 };
 
-
+extern KickSatConfig configFile; // Create config object
 
 
 #endif

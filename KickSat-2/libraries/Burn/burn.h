@@ -32,14 +32,14 @@ typedef enum { // Relay options
 
 class Burn {
 public:
+  void burnAntennaOne();
+  void burnAntennaTwo();
   void burnAntenna();
   void burnSpriteOne();
   void burnSpriteTwo();
   void burnSpriteThree();
 private:
   void burn(RELAY relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency); // duration(s), dutyCycle(%), Frequency (Hz)
-  void burnAntennaOne();
-  void burnAntennaTwo();
 };
 
 extern Burn burn;

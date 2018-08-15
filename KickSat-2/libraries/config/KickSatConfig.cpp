@@ -301,3 +301,5 @@ bool KickSatConfig::errorCorrectContents(){
   }
   return false;
 }
+
+KickSatConfig configFile; // Create config object
