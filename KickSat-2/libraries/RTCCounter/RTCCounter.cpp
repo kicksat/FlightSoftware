@@ -201,6 +201,10 @@ void TimeOut::init() { // Initializes timer
 }
 
 void TimeOut::start(uint32_t time) {
+  if (!timerInitialized) {
+    init();
+    timerInitialized = true;
+  }
   resetTimer();
   timerTrigger[_timerID] = time-1; // User defined triggers, in seconds
 }

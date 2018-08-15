@@ -74,11 +74,13 @@ class Counter : public Timer {
 
 class TimeOut : public Timer {
   public: // Define public functions/variables
-  TimeOut() { init(); }
+  TimeOut() { timerInitialized = false; }
   void init();
   void start(uint32_t time);
   void start(int time) { start((uint32_t)time); }
   bool triggered();
+private:
+  bool timerInitialized;
 };
 
 
