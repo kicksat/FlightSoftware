@@ -97,39 +97,44 @@ void setup() {
   // Goes into HOLD mode unpon initial deployment, flag is set to not enter this flag more than once
   if (!configFile.getHoldstatus()) { // If the satellite has just deployed and not been in HOLD mode yet (HOLD mode is the mandatory delay after deployment)
     SerialUSB.println("Entering HOLD mode");
-    holdTimer.init(90,holdModeCallback); // timer delay, seconds
+    holdTimer.init(HOLDTIME,holdModeCallback); // timer delay, seconds
     timeout.start(HOLDTIME) // Sets up a backup timer to escape hold mode (while loop) (in case SD card is corrupted or something else unexpected)
     while(!configFile.getHoldstatus()) { // Hold here until we hit our hold timeout
+      sleepTimer.sleep(); // Sleep
       if (timeout.triggered()) { // Checks time for timeout
         /* write hold status as completed (we only hold once) */
         break;
       }
     }
-  }
 
-  /////////////////////
-  // DEPLOY ANTENNAS //
-  /////////////////////
-  // Deploys antenna and updates status byte
-  if (!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
-    SerialUSB.println("Begining Antenna Deployment Procedure");
-    timeout.start(15); // Starts a timeout timer
-    while(!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
-      if(!configFile.getAB1status() && batteryAboveThreshold()) { // Burn the first antenna wire if it hasn't already been done and the battery threshold is met
+    /////////////////////
+    // DEPLOY ANTENNAS //
+    /////////////////////
+    // Deploys antenna and updates status byte
+    if (!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
+      SerialUSB.println("Begining Antenna Deployment Procedure");
+      timeout.start(15); // Starts a timeout timer
+      while(!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
+        if(!configFile.getAB1status() && batteryAboveThreshold()) { // Burn the first antenna wire if it hasn't already been done and the battery threshold is met
         burn.burnAntennaOne();
         configFile.setAB1Deployed();
         SerialUSB.println("Antenna One Burned");
       }
       if(!configFile.getAB2status() && batteryAboveThreshold()) { // Burn the second antenna wire if it hasn't already been done and the battery threshold is met
-        burn.burnAntennaTwo();
-        configFile.setAB2Deployed();
-        SerialUSB.println("Antenna Two Burned");
-      }
-      if (timeout.triggered()) { // Checks time for timeout
-        break;
-      }
+      burn.burnAntennaTwo();
+      configFile.setAB2Deployed();
+      SerialUSB.println("Antenna Two Burned");
+    }
+    if (timeout.triggered()) { // Checks time for timeout
+      break;
     }
   }
+}
+
+
+}
+
+
 
 // Begin beacon timer
 beaconTimer.init(10); // timer delay, seconds
@@ -216,43 +221,6 @@ bool batteryAboveThreshold() {
   //return 3 > BATTERYTHRESHOLD;
 }
 
-
-// // handles command one to send down the sensor data
-// void send_sensor_data()
-// {
-//   while(1)
-//   {
-//     float command1_threshold = 2.055; // TODO: measure the actual battery level needed to complete the sensor downlink
-//     v = read_battery(); // TODO: make this function correct... it does not work as is (board A)
-//     SerialUSB.print("CMD 1 Threshold: ");
-//     SerialUSB.println(command1_threshold);
-//     SerialUSB.print("Battery Voltage: ");
-//     SerialUSB.println(v);
-//     if(v < command1_threshold)
-//     {
-//       SerialUSB.println("Going to sleep...");
-//       // TODO: go to sleep for 30 seconds
-//       SerialUSB.println("Awake!");
-//     }
-//     else
-//     {
-//       SerialUSB.println("Battery is charged enough to send sensor info");
-//       break;
-//     }
-//   }
-//
-//   // out of the while(1) loop, send the sensor data
-//
-//   // TODO: Read sensor data from SD card @ Emma
-//   // TODO: @max @connor --> do we want to send another command for which sensor to send data on at the top of this sensor
-//   // this way the function would begin with listening for which sensor number to send data about
-//
-//   // Send down the sensor data via SerialUSB (radio)
-//   String sensor_data_string = "Rad: 759 kRad";
-//   // translate to ax25 packet;
-//   SerialUSB_transmit(sensor_data_string);
-//
-// }
 
 void watchdog() { // Function that runs every time watchdog timer triggers
   if (WDTFLAG) {
