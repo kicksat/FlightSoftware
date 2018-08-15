@@ -1,13 +1,17 @@
 #include "RTCCounter.h"
 #include "KickSatConfig.h"
 
-#define HOLDTIME 10 // Time to hold after initial deployment, in minutes
+#define HOLDTIME 10 // Time to hold after initial deployment, in minutes NOTE: this number CAN'T be bigger than 255
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
 
+//watchdog stuff
+int cnt;
+void watchdog();
+bool LEDSTATE = false;
+Counter watchdogTimer; // creates timer object
 
-bool deployAntennasFlag = false;
+
 bool incrementTimerFlag = false;
-int antennaTimer = 0;
 
 Counter beaconTimer; // creates timer object
 Counter holdTimer;
@@ -15,6 +19,7 @@ Counter holdTimer;
 
 void setup(){
   pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
+  watchdogTimer.init(1,watchdog); // timer delay, seconds
 
   // Initialize Serial
   SerialUSB.begin(115200); // Restart SerialUSB
@@ -42,13 +47,13 @@ void setup(){
     while(configFile.getHoldstatus()) { // Hold here until we hit our hold timeout
       if(incrementTimerFlag){
         configFile.incrementAntennaTimer();
-        antennaTimer = configFile.checkAntennaTimer();
         incrementTimerFlag = false;
         SerialUSB.println("incremented timer");
       }
-      if(deployAntennasFlag){
+      if (configFile.checkAntennaTimer() >= HOLDTIME) {// timer value in config file >= number of hold timer intervals in holdtime
+        /* deploys antennas after hold time */
         deployAntennas();
-        SerialUSB.println("tried to deploy antennas");
+        SerialUSB.println("Antennas deployed");
       }
 //      sleepTimer.sleep(); // Sleep
 //      if (timeout.triggered()) { // Checks time for timeout
@@ -72,12 +77,8 @@ bool batteryAboveThreshold() {
 
 
 void holdModeCallback() {
-  //Increment time in config file on SD card
+  //sets flag to tell main code to increment time in config file on SD card
   incrementTimerFlag = true;
-  if (antennaTimer >= HOLDTIME) {// timer value in config file >= number of 10sec intervals in holdtime
-    /* deploys antennas after hold time */
-    deployAntennasFlag = true;
-  }
 }
 
 
@@ -109,6 +110,7 @@ void deployAntennas(){
     checkConfigStatus();
 }
 
+//prints out all values stored in config file and tests all getters
 void checkConfigStatus(){
   SerialUSB.println();
   SerialUSB.print("Status: ");
@@ -129,4 +131,13 @@ void checkConfigStatus(){
   SerialUSB.println(configFile.checkAntennaTimer());
   SerialUSB.println();
   delay(500);
+}
+
+void watchdog() { // Function that runs every time watchdog timer triggers
+  if (LEDSTATE) {
+    digitalWrite(LED_BUILTIN, HIGH);
+  } else {
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  LEDSTATE = !LEDSTATE;
 }
