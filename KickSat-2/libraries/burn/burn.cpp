@@ -7,21 +7,29 @@
 #include "burn.h"
 
 void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency){ // duration(s), dutyCycle(%), Frequency (Hz)
-  pinMode(burnwire, OUTPUT);
-  digitalWrite(relay, HIGH);
+
+  SerialUSB.println(relay);
+  SerialUSB.println(burnwire);
+  SerialUSB.println(duration);
+  SerialUSB.println(dutyCycle);
+  SerialUSB.println(pulseFrequency);
+  SerialUSB.println();
+
+  // pinMode(burnwire, OUTPUT);
+  // digitalWrite(relay, HIGH);
   float  cycleTime = 1/pulseFrequency;
   timeout.start(duration);
   while(1) {
-    digitalWrite(burnwire, HIGH);
+    // digitalWrite(burnwire, HIGH);
     delay(cycleTime*dutyCycle/100);
-    digitalWrite(burnwire, LOW);
+    // digitalWrite(burnwire, LOW);
     delay(cycleTime*(1-dutyCycle/100));
     if (timeout.triggered()) { // Checks time for timeout
       break;
     }
   }
-  digitalWrite(relay, LOW);
-  pinMode(burnwire, OUTPUT);
+  // digitalWrite(relay, LOW);
+
 }
 
 void Burn::burnAntennaOne() {

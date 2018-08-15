@@ -24,11 +24,6 @@ typedef enum { // Relay options
   BURN_SPRITE_2 = ENAB_BURN4,
   BURN_SPRITE_3 = ENAB_BURN5
 } BURNWIRE;
-//
-//typedef enum { // Relay options
-//  BURN_RELAY_A,
-//  BURN_RELAY_B
-//} RELAY;
 
 class Burn {
 public:

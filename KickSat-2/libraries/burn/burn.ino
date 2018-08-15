@@ -8,13 +8,18 @@ void setup() {
   SerialUSB.println("Serial Initialized");
   delay(5000);
 
-
+  burn.burnAntennaOne();
+  burn.burnAntennaTwo();
+  burn.burnSpriteOne();
+  burn.burnSpriteTwo();
+  burn.burnSpriteThree();
 
 }
 
 
 
 void loop() {
+
 
 
 }
