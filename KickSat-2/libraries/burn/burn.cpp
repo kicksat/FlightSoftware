@@ -21,9 +21,9 @@ void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_
   timeout.start(duration);
   while(1) {
     // digitalWrite(burnwire, HIGH);
-    delay(cycleTime*dutyCycle/100);
+    delayMicroseconds(cycleTime*dutyCycle/100);
     // digitalWrite(burnwire, LOW);
-    delay(cycleTime*(1-dutyCycle/100));
+    delayMicroseconds(cycleTime*(1-dutyCycle/100));
     if (timeout.triggered()) { // Checks time for timeout
       break;
     }
