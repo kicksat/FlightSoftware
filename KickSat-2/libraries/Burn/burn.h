@@ -6,26 +6,42 @@
 #define BURN_h
 
 #include "Arduino.h"
+#include <RTCCounter.h>
 
-#define ANTENNA_BURN_1  ENAB_BURN1
-#define ANTENNA_BURN_2  ENAB_BURN2
-#define DEPLOY_BURN_1   ENAB_BURN3
-#define DEPLOY_BURN_2   ENAB_BURN4
-#define DEPLOY_BURN_3   ENAB_BURN5
+#define ANTENNA_BURN_TIME   2 // seconds
+#define SPRITE_BURN_TIME   12 // seconds
 
-#define ANTENNA_BURN_TIME   2000 //milliseconds
-#define SPRITE_BURN_TIME   12000 //milliseconds
+#define ANTENNADUTYCYCLE 10 // %
+#define SPRITEDUTYCYCLE 30 // %
 
- class burn {
-  public:
-    void init();
-    void burnAntennas();
-    void burnAB1();
-    void burnAB2();
-    void burnDB1();
-    void burnDB2();
-    void burnDB3();
+#define ANTENNABURNFREQUENCY 20 //Hz
+#define SPRITEBURNFREQUENCY 20 // Hz
 
+typedef enum { // Relay options
+  BURN_ANTENNA_1, = ENAB_BURN1,
+  BURN_ANTENNA_2 = ENAB_BURN2,
+  BURN_SPRITE_1 = ENAB_BURN3,
+  BURN_SPRITE_2 = ENAB_BURN4,
+  BURN_SPRITE_3 = ENAB_BURN5
+} BURNWIRE;
+
+typedef enum { // Relay options
+  BURN_RELAY_A,
+  BURN_RELAY_B
+} RELAY;
+
+class Burn {
+public:
+  void burnAntenna();
+  void burnSpriteOne();
+  void burnSpriteTwo();
+  void burnSpriteThree();
+private:
+  void burn(RELAY relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency); // duration(s), dutyCycle(%), Frequency (Hz)
+  void burnAntennaOne();
+  void burnAntennaTwo();
 };
+
+extern Burn burn;
 
 #endif
