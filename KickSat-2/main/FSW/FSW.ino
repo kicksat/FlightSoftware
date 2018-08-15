@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////
-//////////////////// KICKSAT-2 FLIGHT SOFTWARE ////////////////////
-///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+////////////////// KICKSAT-2 FLIGHT SOFTWARE ////////////////////
+/////////////////////////////////////////////////////////////////
 /*
 Last update on: 8-12-18
 by: Ralen
@@ -9,29 +9,31 @@ by: Ralen
 //////////////
 // Includes //
 ///////////////////////////////////////////////////////////////////
-#include <IMUHandler.h>
-#include <KickSatLog.h>
-#include <RTCCounter.h>
-#include <uplink.h>
+//#include "IMUHandler.h"
+#include "KickSatLog.h"
+#include "RTCCounter.h"
+//#include <uplink.h>
+#include "burn.h"
+#include "KickSatConfig.h"
 
 /////////////////
 // Definitions //
 ///////////////////////////////////////////////////////////////////
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
-
+#define ANTENNA_WAIT 5
 ///////////////////////////////////
 // Declaration of global objects //
 ///////////////////////////////////////////////////////////////////
-IMUHandle IMU; // create IMU object
+//IMUHandle IMU; // create IMU object
 Counter watchdogTimer; // creates timer object
 Counter beaconTimer; // creates timer object
 Counter listenTimer; // creates timer object
-
+burn myBurn;
+KickSatConfig myConfig;
 /////////////////////////////////
 // Initialize global variables //
 ///////////////////////////////////////////////////////////////////
 char buf[MAXCHARS]; // Create global variable for buffer from SD read function, this can be piped into radio.send()
-
 ///////////////////////
 // Declare functions //
 ///////////////////////////////////////////////////////////////////
@@ -42,36 +44,75 @@ bool WDTFLAG = false; // Flag that allows toggling of the watchdog state
 ///////////////////////////////////////////////////////////////////
 void setup() {
   SerialUSB.begin(115200); // Restart SerialUSB
-  while(!SerialUSB); // Wait for serial USB port to open
-  SerialUSB.println("Serial Initialized");
-  delay(5000); // Provides user with time to open Serial Monitor
+  while(!SerialUSB); // Wait for SerialUSB USB port to open
+  SerialUSB.println("SerialUSB Initialized");
+  //delay(5000); // Provides user with time to open SerialUSB Monitor
   pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
   pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
   ///////////////////////////////////////////////////////////////////
 
-  if(IMU.begin()){ // Initialize IMU
-    SerialUSB.println("IMU Intialized");
-  } else {
-    SerialUSB.println("IMU Could Not Be Intialized");
-  }
+  watchdogTimer.init(1,watchdog); // timer delay, seconds
+  beaconTimer.init(10); // timer delay, seconds
+
+  SerialUSB.println("we got here at least");
+
+  SD.begin(SPI_CS_SD);
+
+  delay(500);
+
+//  if(IMU.begin()){ // Initialize IMU
+//    SerialUSB.println("IMU Intialized");
+//  } else {
+//    SerialUSB.println("IMU Could Not Be Intialized");
+//  }
   if(logfile.init()) { // Initialize SD card
     SerialUSB.println("SD Card Initialized");
   } else {
     SerialUSB.println("SD Card Not Initialized");
   }
 
-  // updateStatusByte(); // Update status byte // TODO: Make these functions real and working
+  if(myConfig.init()){
+    SerialUSB.println("Config file initialized");
+  }else{
+    SerialUSB.println("Config file not initialized");
+  }
+  SerialUSB.println("yay here!");
 
-  // if(!antennaDeployed) { // If the antenna is not deployed // TODO: Make these functions real and working
-  //   deployAntenna(); // Deploy the antenna // TODO: Make these functions real and working
-  //   SerialUSB.println("Antenna Deployed");
-  // }
+  delay(1000);
+  //deploys antenna and updates status byte
+  myConfig.writeByteToThree((byte)1, 1);
+  while(!myConfig.getAB2status()) { // If the antenna is not deployed // TODO: Make these functions real and working
+    if (beaconTimer.check()) {
+      myConfig.incrementAntennaTimer();
+      delay(1000);
+      //sleep
+    }
+    if(myConfig.checkAntennaTimer() >= ANTENNA_WAIT){
+      if(!myConfig.getAB1status() && batteryAboveThreshold()){
+        myBurn.init();
+        myBurn.burnAB1();
+        myConfig.setAB1Deployed();
+        SerialUSB.println("Antenna 1 burned");
+        byte buf[3];
+        myConfig.readByteFromThree(buf, 0);
+        SerialUSB.println(buf[0], HEX);
+      }
+      if(!myConfig.getAB2status() && batteryAboveThreshold()){
+        myBurn.init();
+        myBurn.burnAB2();
+        myConfig.setAB2Deployed();
+        SerialUSB.println("Antenna 2 burned");
+        byte buf[3];
+        myConfig.readByteFromThree(buf, 0);
+        SerialUSB.println(buf[0], HEX);
+      }
+    }
+  }
 
   //////////////////
   // Init objects //
   ///////////////////////////////////////////////////////////////////
-  watchdogTimer.init(1,watchdog); // timer delay, seconds
-  beaconTimer.init(10); // timer delay, seconds
+
   ///////////////////////////////////////////////////////////////////
 }
 ///////////////////////////////////////////////////////////////////
@@ -90,7 +131,7 @@ void loop() {
     createRandomData(); // Temporary solution TODO: Complete data collection for all sensors
     // power.read(data.powerData); // Read IMU data TODO: This function doesn't exist but should
     // GPS.read(data.gpsData); // Read IMU data TODO: This function doesn't exist but should
-    IMU.read(data.imuData); // Read IMU data
+    //IMU.read(data.imuData); // Read IMU data
 
 
     //////////////////////////////////
@@ -111,9 +152,9 @@ void loop() {
     //////////////////////////
     // Enter listening mode //
     //////////////////////////
-    if (listenForUplink(buf)) {
+    //if (listenForUplink(buf)) {
       // processUplink();
-    }
+    //}
 
   }
 
@@ -128,16 +169,16 @@ void loop() {
 void createRandomData() { // Temporary until we are     createRandomData(); // Temporary solution TODO: Complete data collection for all sensorsreading from each sensor
   data.status = random(0,10);
   for(uint8_t i = 0; i < 3; i++){
-    data.powerData[i] = random(0,100)/13.87;
+    data.powerData[i] = random(0,100);
   }
-  for(uint8_t i = 0; i < 2; i++){
-    data.dateTime[i] = random(100000,999999);
-  }
-  for(uint8_t i = 0; i < 3; i++){
+  for(uint8_t i = 0; i < 4; i++){
     data.gpsData[i] = random(0,200)/13.87;
   }
   for(uint8_t i = 0; i < 9; i++){
     data.imuData[i] = random(0,100)/9.123;
+  }
+  for(uint8_t i = 0; i < 8; i++){
+    data.commandData[i] = random(0,9);
   }
 }
 
@@ -178,10 +219,10 @@ bool batteryAboveThreshold() {
 //   // TODO: @max @connor --> do we want to send another command for which sensor to send data on at the top of this sensor
 //   // this way the function would begin with listening for which sensor number to send data about
 //
-//   // Send down the sensor data via Serial (radio)
+//   // Send down the sensor data via SerialUSB (radio)
 //   String sensor_data_string = "Rad: 759 kRad";
 //   // translate to ax25 packet;
-//   serial_transmit(sensor_data_string);
+//   SerialUSB_transmit(sensor_data_string);
 //
 // }
 
