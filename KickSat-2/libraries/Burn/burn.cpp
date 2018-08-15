@@ -47,30 +47,28 @@ void burn::burnAB1() {
         delay(45);
     }
     digitalWrite(BURN_RELAY_A, LOW);
-    antenna1_deployed = 1;    //change to write to config file
 }
 
 void burn::burnAB2() {
-    digitalWrite(BURN_RELAY_B, HIGH);
-    for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
-        // PWM with 10% duty cycle
-        digitalWrite(ANTENNA_BURN_2, HIGH);
-        delay(5);
-        digitalWrite(ANTENNA_BURN_2, LOW);
-        delay(45);
-        digitalWrite(ANTENNA_BURN_2, HIGH);
-        delay(5);
-        digitalWrite(ANTENNA_BURN_2, LOW);
-        delay(45);
-    }
-    digitalWrite(BURN_RELAY_B, LOW);
-    antenna2_deployed = 1;    //write to config file
-}
-
-void burn::burnDB1() {
     digitalWrite(BURN_RELAY_A, HIGH);
     for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
         // PWM with 10% duty cycle
+        digitalWrite(ANTENNA_BURN_2, HIGH);
+        delay(5);
+        digitalWrite(ANTENNA_BURN_2, LOW);
+        delay(45);
+        digitalWrite(ANTENNA_BURN_2, HIGH);
+        delay(5);
+        digitalWrite(ANTENNA_BURN_2, LOW);
+        delay(45);
+    }
+    digitalWrite(BURN_RELAY_A, LOW);
+}
+
+void burn::burnDB1() {
+    digitalWrite(BURN_RELAY_B, HIGH);
+    for (unsigned int k = 0; k < ANTENNA_BURN_TIME/100; ++k) {
+        // PWM with 10% duty cycle
         digitalWrite(DEPLOY_BURN_1, HIGH);
         delay(5);
         digitalWrite(DEPLOY_BURN_1, LOW);
@@ -80,8 +78,7 @@ void burn::burnDB1() {
         digitalWrite(DEPLOY_BURN_1, LOW);
         delay(45);
     }
-    digitalWrite(BURN_RELAY_A, LOW);
-    db1_burned = 1;   //write to config file
+    digitalWrite(BURN_RELAY_B, LOW);
 }
 
 void burn::burnDB2() {
@@ -98,23 +95,20 @@ void burn::burnDB2() {
         delay(35);
       }
       digitalWrite(BURN_RELAY_B, LOW);
-      db2_burned = 1;   //write to config file
 }
 
-
-
-bool burn::AB1deployed() {
-    return antenna1_deployed; //read from config
-}
-
-bool burn::AB2deployed() {
-    return antenna2_deployed; //read from config
-}
-
-bool burn::DB1burned() {
-    return db1_burned;  //read from config
-}
-
-bool burn::DB2burned() {
-    return db2_burned;  //read from config
+void burn::burnDB3(){
+  digitalWrite(BURN_RELAY_B, HIGH);
+    for (unsigned int k = 0; k < SPRITE_BURN_TIME/100; ++k) {
+        // PWM with 30% duty cycle
+        digitalWrite(DEPLOY_BURN_3, HIGH);
+        delay(15);
+        digitalWrite(DEPLOY_BURN_3, LOW);
+        delay(35);
+        digitalWrite(DEPLOY_BURN_3, HIGH);
+        delay(15);
+        digitalWrite(DEPLOY_BURN_3, LOW);
+        delay(35);
+      }
+      digitalWrite(BURN_RELAY_B, LOW);
 }
