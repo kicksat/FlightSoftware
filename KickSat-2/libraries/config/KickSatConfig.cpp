@@ -3,8 +3,8 @@
 String filenames[3] = {"config0.txt", "config1.txt", "config2.txt"};
 
 int KickSatConfig :: checkAntennaTimer(){
-  byte buf[3];
-  if(readByteFromThree(buf, 1)){
+  byte buf[NUM_FILES];
+  if(readByteFromThree(buf, TIMER_LOC)){
     uint8_t result = buf[0];
     //SerialUSB.print("Antenna Timer: ");
     //SerialUSB.println((int)result);
@@ -17,14 +17,22 @@ void  KickSatConfig :: incrementAntennaTimer(){
   int timerNum = checkAntennaTimer();
   timerNum ++;
   byte newTimerNum = (byte)(uint8_t)timerNum;
-  writeByteToThree(newTimerNum, 1);
+  writeByteToThree(newTimerNum, TIMER_LOC);
 
 }
-
+bool KickSatConfig :: getHoldstatus(){
+  byte buf[NUM_FILES];
+  if(readByteFromThree(buf, STATUS_LOC)){
+    if(buf[0] == HOLD_BYTE){
+      return true;
+    }
+  }
+  return false;
+}
 bool KickSatConfig :: getAB1status(){
-  byte buf[3];
-  if(readByteFromThree(buf, 0)){
-    if(buf[0] == AB1_BYTE){
+  byte buf[NUM_FILES];
+  if(readByteFromThree(buf, AB1_LOC)){
+    if(buf[0] == FLAG_TRUE){
       return true;
     }
   }
@@ -32,9 +40,9 @@ bool KickSatConfig :: getAB1status(){
 }
 
 bool KickSatConfig :: getAB2status(){
- byte buf[3];
-  if(readByteFromThree(buf, 0)){
-    if(buf[0] == AB2_BYTE){
+ byte buf[NUM_FILES];
+  if(readByteFromThree(buf, AB2_LOC)){
+    if(buf[0] == FLAG_TRUE){
       return true;
     }
   }
@@ -42,8 +50,8 @@ bool KickSatConfig :: getAB2status(){
 }
 
 bool KickSatConfig :: getStandbyStatus(){
- byte buf[3];
-  if(readByteFromThree(buf, 0)){
+ byte buf[NUM_FILES];
+  if(readByteFromThree(buf, STATUS_LOC)){
     if(buf[0] == STANDBY_BYTE){
       return true;
     }
@@ -53,8 +61,8 @@ bool KickSatConfig :: getStandbyStatus(){
 }
 
 bool KickSatConfig :: getArmedStatus(){
- byte buf[3];
-  if(readByteFromThree(buf, 0)){
+ byte buf[NUM_FILES];
+  if(readByteFromThree(buf, STATUS_LOC)){
     if(buf[0] == ARMED_BYTE){
       return true;
     }
@@ -63,8 +71,8 @@ bool KickSatConfig :: getArmedStatus(){
 }
 
 bool KickSatConfig :: getDeployedStatus(){
- byte buf[3];
-  if(readByteFromThree(buf, 0)){
+ byte buf[NUM_FILES];
+  if(readByteFromThree(buf, STATUS_LOC)){
     if(buf[0] == DEPLOYED_BYTE){
       return true;
     }
@@ -74,31 +82,37 @@ bool KickSatConfig :: getDeployedStatus(){
 
 
 void KickSatConfig :: setAB1Deployed(){
-  if(writeByteToThree(AB1_BYTE, 0)){
+  if(writeByteToThree(FLAG_TRUE, AB1_LOC)){
 
   }
 }
 
 void KickSatConfig :: setAB2Deployed(){
-  if(writeByteToThree(AB2_BYTE, 0)){
+  if(writeByteToThree(FLAG_FALSE, AB2_LOC)){
+
+  }
+}
+
+void KickSatConfig :: setHold(){
+  if(writeByteToThree(HOLD_BYTE, STATUS_LOC)){
 
   }
 }
 
 void KickSatConfig :: setStandby(){
-  if(writeByteToThree(STANDBY_BYTE, 0)){
+  if(writeByteToThree(STANDBY_BYTE, STATUS_LOC)){
 
   }
 }
 
 void KickSatConfig :: setArmed(){
-  if(writeByteToThree(ARMED_BYTE, 0)){
+  if(writeByteToThree(ARMED_BYTE, STATUS_LOC)){
 
   }
 }
 
 void KickSatConfig :: setDeployed(){
-  if(writeByteToThree(DEPLOYED_BYTE, 0)){
+  if(writeByteToThree(DEPLOYED_BYTE, STATUS_LOC)){
 
   }
 }
@@ -116,7 +130,7 @@ bool KickSatConfig :: init() {
   }else{
     SerialUSB.println("SD  config initialized");
   }
-  for(int i = 0; i < 3; i++){
+  for(int i = 0; i < NUM_FILES; i++){
    if(!initFile(filenames[i])){
     SDStatus = false;
     SerialUSB.println("File initialization failed");
@@ -155,19 +169,23 @@ void KickSatConfig::endSD() {
 
 
 bool KickSatConfig::writeByteToThree(byte data, int location){
-  bool result[3] = {false, false, false};
-  for(int i = 0; i < 3; i++){
-    result[i] = writeByte(filenames[i], data, location);
+  bool writeSuccessful[NUM_FILES];
+  for(int i = 0; i < NUM_FILES; i++){ //initialize to false
+    writeSuccessful[i] = false;
   }
-  if(result[0] && result[1] && result[2]){
-    return true;
+  for(int i = 0; i < NUM_FILES; i++){ //write data to file and record if write successful
+    writeSuccessful[i] = writeByte(filenames[i], data, location);
   }
-  return false;
+  bool result = false;
+  for(int i = 0; i < NUM_FILES; i++){ //checks that all writes were successful
+    result = result && writeSuccessful[i];
+  }
+  return result;
 }
 
 
-bool KickSatConfig::readByteFromThree(byte data[3], int location){
-  for(int i = 0; i < 3; i++){
+bool KickSatConfig::readByteFromThree(byte data[NUM_FILES], int location){
+  for(int i = 0; i < NUM_FILES; i++){
      data[i] = readByte(filenames[i], location);
   }
   if(data[0] == data[1]){
@@ -210,7 +228,6 @@ byte KickSatConfig::readByte(String filename, int location){
     fileStatus = true; // Update flag for file status
     //goes to location
     bool validLocation = logFileHandle.seek(location);
-    //ERROR CORRECTION HERE?
     if(!validLocation){
       SerialUSB.println("Error non valid location in file");
       logFileHandle.close();
@@ -236,7 +253,6 @@ bool KickSatConfig::writeByte(String filename, byte data, int location){
     fileStatus = true; // Update flag for file status
     //goes to location
     bool validLocation = logFileHandle.seek(location);
-    //ERROR CORRECTION HERE?
     if(!validLocation){
       SerialUSB.println("Error non valid location in file");
       logFileHandle.close();
@@ -271,21 +287,24 @@ bool KickSatConfig::initFile(String fileName){
 }
 
 
-
+//checks whether the files can open, deletes and makes new file if one can't open
 bool KickSatConfig::errorCorrectOpening(){
-  bool canOpen[3] = {false, false, false};
+  bool canOpen[NUM_FILES];
+  for(int i = 0; i < NUM_FILES; i++){ //initialize to false
+    canOpen[i] = false;
+  }
   int numTrue = 0;
-  for(int i = 0; i < 3; i++){
+  for(int i = 0; i < NUM_FILES; i++){
     canOpen[i] = available(filenames[0]);
     if(canOpen[i]){
       numTrue++;
     }
   }
-  if(numTrue == 3){
+  if(numTrue == NUM_FILES){
     SerialUSB.println("All files can open");
     return true;
-  }else if (numTrue ==2){
-    //delete false file and make a new one, reinitialize then copy other files contents into it
+  }else if (numTrue == 2){   // TODO: change to make generic
+    //TODO delete false file and make a new one, reinitialize then copy other files contents into it
     SerialUSB.println("One file can't open");
     return true;
   }else{
@@ -294,12 +313,15 @@ bool KickSatConfig::errorCorrectOpening(){
   }
 }
 
+//checks that the contents of all bytes are the same
 bool KickSatConfig::errorCorrectContents(){
-  byte buf[3];
-  if(readByteFromThree(buf, 0) && readByteFromThree(buf, 1)){
-    return true;
+  byte buf[NUM_FILES];
+  bool result;
+  for(int i = 0; i < NUM_ENTRIES; i++){
+    result = result && readByteFromThree(buf, i);
   }
-  return false;
+
+  return result;
 }
 
 KickSatConfig configFile; // Create config object

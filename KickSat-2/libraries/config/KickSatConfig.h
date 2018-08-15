@@ -9,12 +9,18 @@
 #include "KickSatLog.h"
 
 #define CS SPI_CS_SD
-#define AB1_BYTE 0x1E
-#define AB2_BYTE 0x3E
+#define HOLD_BYTE 0x1E
 #define STANDBY_BYTE 0x02
 #define ARMED_BYTE 0x06
 #define DEPLOYED_BYTE 0x0E
-
+#define STATUS_LOC 0
+#define AB1_LOC 2
+#define AB2_LOC 3
+#define TIMER_LOC 4
+#define FLAG_TRUE 0xff
+#define FLAG_FALSE 0x00
+#define NUM_FILES 3
+#define NUM_ENTRIES 5
 
 class KickSatConfig {
 public:
@@ -23,12 +29,14 @@ public:
     byte getStatus();
     bool getAB1status();
     bool getAB2status();
+    bool getHoldstatus();
     bool getStandbyStatus();
     bool getArmedStatus();
     bool getDeployedStatus();
 
     void setAB1Deployed();
     void setAB2Deployed();
+    void setHold();
     void setStandby();
     void setArmed();
     void setDeployed();
