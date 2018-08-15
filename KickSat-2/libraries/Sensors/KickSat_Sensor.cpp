@@ -32,6 +32,8 @@ void KickSat_Sensor::operate(byte* dataOut) {
 	char nextChar = _configFile.read();
 	if (nextChar == -1) {
 	  break;
+	} else if (nextChar == '\n') {
+	  numCommands++;
 	}
 	commandString += nextChar;
   }
