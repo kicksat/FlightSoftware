@@ -18,32 +18,95 @@ KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_nam
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC
 //based on the config file.
 void KickSat_Sensor::operate(byte* dataOut) {
-  //read commands from config file
-  String commandList[64];
-  
   SD.begin(_SDchipSelect);
   digitalWrite(_SDchipSelect, LOW);
-  _configFile = SD.open(_configFileName, FILE_READ);
-
-  //extract commands from config file
-  int numCommands = 1;
-  String commandString = "";
-  while (true) {
-	char nextChar = _configFile.read();
-	if (nextChar == -1) {
-	  break;
-	} else if (nextChar == '\n') {
-	  numCommands++;
+  
+  if (validateConfigFiles()) {
+	
+    //extract commands from config file
+	_configFile = SD.open(_configFileName, FILE_READ);
+	int numCommands = 0;
+	String commandString = "";
+	while (true) {
+	  char nextChar = _configFile.read();
+	  if (nextChar == -1) {
+	    break;
+	  } else if (nextChar == '\n') {
+	    numCommands++;
+	  }
+	  commandString += nextChar;
 	}
-	commandString += nextChar;
-  }
-  digitalWrite(_SDchipSelect, HIGH);
+	digitalWrite(_SDchipSelect, HIGH);
 
-  //execute Order 66- I mean... specified commands
-  int bufIndex = 0; //needed to ensure data in buf is not overwritten
-  for (int i = 0; i < numCommands; i++) {
-    handleCommand(getCommand(commandString, '\n', i), dataOut, &bufIndex);
+	//execute Order 66- I mean... specified commands
+	int bufIndex = 0; //needed to ensure data in buf is not overwritten
+	for (int i = 0; i < numCommands; i++) {
+	  handleCommand(getCommand(commandString, '\n', i), dataOut, &bufIndex);
+	}
+  } else {
+	//TODO: handle case in which error correction fails
   }
+}
+
+//this function reads the main config file and its two backups, and validates their checksums
+//if any file fails teh checksum, it is overwritten by one of the files which passed the checksum
+//if all three files are corrupted, returns false
+//otherwise returns true
+bool KickSat_Sensor::validateConfigFiles() {
+	bool valid_0, valid_1, valid_2;
+	String backup1 = _configFileName + "_1";
+	String backup2 = _configFileName + "_2";
+	File correctFile;
+	
+	//check base config file
+	_configFile = SD.open(_configFileName, FILE_READ);
+	int sz = _configFile.size();
+	byte* buf[sz];
+	_configFile.read(buf, sz);
+	valid_0 = Checksum.evaluateChecksum(buf, sz));
+	_configFile.close();
+	
+	//check backup 1
+	_configFile = SD.open(backup1, FILE_READ);
+	_configFile.read(buf, sz);
+	valid_1 = Checksum.evaluateChecksum(buf, sz));
+	_configFile.close();
+	
+	//check backup 2
+	_configFile = SD.open(backup2, FILE_READ);
+	_configFile.read(buf, sz);
+	valid_2 = Checksum.evaluateChecksum(buf, sz));
+	_configFile.close();
+	
+	if (valid_0) {
+	  correctFile = SD.open(_configFileName, FILE_READ);
+	} else if (valid_1) {
+	  correctFile = SD.open(backup1, FILE_READ);
+	} else if (valid_2) {
+	  correctFile = SD.open(backup2, FILE_READ);
+	} else {
+	  return false;
+	}
+	
+	correctFile.read(buf, sz);
+	correctFile.close();
+	if (!valid_0) {
+	  _configFile = SD.open(_configFileName, FILE_WRITE);
+	  _configFile.write(buf, sz);
+	  _configFile.close();
+	}
+	if (!valid_1) {
+	  _configFile = SD.open(backup1, FILE_WRITE);
+	  _configFile.write(buf, sz);
+	  _configFile.close();
+	}
+	if (!valid_2) {
+	  _configFile = SD.open(backup2, FILE_WRITE);
+	  _configFile.write(buf, sz);
+	  _configFile.close();
+	}
+	
+	return true;
 }
 
 //this function accepts a string of commands, a separator to delimit by, and an index to search for
