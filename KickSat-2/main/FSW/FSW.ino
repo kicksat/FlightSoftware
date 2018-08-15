@@ -10,8 +10,7 @@ by: Ralen
 //////////////
 // Includes //
 //////////////
-<<<<<<< HEAD
-//#include "IMUHandler.h"
+#include "IMUHandler.h"
 #include <KickSatLog.h>
 #include <RTCCounter.h>
 #include <uplink.h>
@@ -19,14 +18,6 @@ by: Ralen
 #include <KickSatConfig.h>
 #include <BattHandler.h>
 #include <kickSatGPS.h>
-=======
-#include "IMUHandler.h"
-#include "KickSatLog.h"
-#include "RTCCounter.h"
-#include <uplink.h>
-#include "burn.h"
-#include "KickSatConfig.h"
->>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
 
 /////////////////
 // Definitions //
@@ -44,14 +35,9 @@ by: Ralen
 Counter watchdogTimer; // creates timer object
 Counter beaconTimer; // creates timer object
 Counter listenTimer; // creates timer object
-<<<<<<< HEAD
-burn myBurn; // create burn wire object
-KickSatConfig myConfig; // Create config object
 BattHandle power;
 GPSHandle kickSatGPS;
-=======
 
->>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
 /////////////////////////////////
 // Initialize global variables //
 /////////////////////////////////
@@ -67,30 +53,10 @@ bool WDTFLAG = false; // Flag that allows toggling of the watchdog state
 // SETUP //
 ///////////
 void setup() {
-<<<<<<< HEAD
-  SerialUSB.begin(115200); // Restart SerialUSB
-  while(!SerialUSB); // Wait for SerialUSB USB port to open
-  SerialUSB.println("SerialUSB Initialized");
-  
-  watchdogTimer.init(1,watchdog); // timer delay, seconds
-  beaconTimer.init(10); // timer delay, seconds
-  
-  delay(5000); // Provides user with time to open SerialUSB Monitor
-=======
   // Define pin modes
->>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
   pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
   pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
 
-<<<<<<< HEAD
-  delay(500);
-
-//   if(IMU.begin()){ // Initialize IMU
-//     SerialUSB.println("IMU Intialized");
-//   } else {
-//     SerialUSB.println("IMU Could Not Be Intialized");
-//   }
-=======
   // Begin timers
   watchdogTimer.init(1,watchdog); // timer delay, seconds
 
@@ -106,7 +72,6 @@ void setup() {
   } else {
     SerialUSB.println("Config File Not Initialized");
   }
->>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
 
   if(logfile.init()) { // Initialize log file
     SerialUSB.println("Log Card Initialized");
@@ -120,18 +85,12 @@ void setup() {
     SerialUSB.println("IMU Could Not Be Intialized");
   }
 
-<<<<<<< HEAD
-  kickSatGPS.init();
+  if(kickSatGPS.init()){ // Initialize IMU
+    SerialUSB.println("IMU Intialized");
+  } else {
+    SerialUSB.println("IMU Could Not Be Intialized");
+  }
 
-  delay(1000);
-  //deploys antenna and updates status byte
-  myConfig.writeByteToThree((byte)1, 1);
-  while(!myConfig.getAB2status()) { // If the antenna is not deployed // TODO: Make these functions real and working
-    if (beaconTimer.check()) {
-      myConfig.incrementAntennaTimer();
-      delay(1000);
-      //sleep
-=======
   ///////////////
   // HOLD MODE //
   ///////////////
@@ -145,7 +104,6 @@ void setup() {
         /* write hold status as completed (we only hold once) */
         break;
       }
->>>>>>> 71fe21e4fd9898b797e4e67a36bfbe01b8f32b58
     }
   }
 
