@@ -102,14 +102,14 @@ void processUplink(char *buf) {
 	burn.burnDB2();
 	burn.burnDB3();
     break;
-      
+
     // Begin downlink
     case 1:
     SerialUSB.println("Command: Start Downlink");
     //TODO: increase the frequency of beacons and begin sending older log data
 	//NOTE: this is its own function, which shits out a bunch of data
     break;
-      
+
     case 2:
     SerialUSB.println("Command: Uplink Sensor Config");
     //TODO: read data from uplink and write new data to sensor config files
@@ -121,6 +121,9 @@ void processUplink(char *buf) {
     SerialUSB.println("Command: Downlink Mission Status");
     //TODO: send down current mission status byte
     //lets the ground station know what the satellite thinks its doing
+    byte status = myConfig.getStatus();
+    SerialUSB.print("Status: ");
+    SerialUSB.println(status);
     break;
 
     // Enter arming mode, exit standby mode
