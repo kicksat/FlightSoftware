@@ -22,11 +22,12 @@ by: Ralen
 /////////////////
 // Definitions //
 /////////////////
-#define HOLDTIME 900 // Time to hold after initial deployment, in seconds
+#define HOLDTIME 10000 // Time to hold after initial deployment, in milliseconds
+#define BEACONTIMER 10000 // Frequency of beacon, in milliseconds
+#define ANTENNAWAITTIME 15000 // Frequency of beacon, in milliseconds
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
-#define ANTENNA_WAIT 2 // How many beacons to wait in antenna wait, minutes
-#define LISTENINGDURATION 5 // Defined in seconds
-#define ARMINGDURATION 5 // Defined in seconds
+#define LISTENINGDURATION 5000 // Defined in milliseconds
+#define ARMINGDURATION 5000 // Defined in milliseconds
 
 ///////////////////////////////////
 // Declaration of global objects //
@@ -58,7 +59,7 @@ void setup() {
   pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
 
   // Begin timers
-  watchdogTimer.init(1,watchdog); // timer delay, seconds
+  watchdogTimer.init(1000,watchdog); // timer delay, seconds
 
   // Initialize Serial
   SerialUSB.begin(115200); // Restart SerialUSB
@@ -97,47 +98,33 @@ void setup() {
   // Goes into HOLD mode unpon initial deployment, flag is set to not enter this flag more than once
   if (!configFile.getHoldstatus()) { // If the satellite has just deployed and not been in HOLD mode yet (HOLD mode is the mandatory delay after deployment)
     SerialUSB.println("Entering HOLD mode");
+    configFile.setHold();
     holdTimer.init(HOLDTIME,holdModeCallback); // timer delay, seconds
-    timeout.start(HOLDTIME) // Sets up a backup timer to escape hold mode (while loop) (in case SD card is corrupted or something else unexpected)
-    while(!configFile.getHoldstatus()) { // Hold here until we hit our hold timeout
-      sleepTimer.sleep(); // Sleep
-      if (timeout.triggered()) { // Checks time for timeout
-        /* write hold status as completed (we only hold once) */
-        break;
+    //    timeout.start(HOLDTIME); // Sets up a backup timer to escape hold mode (while loop) (in case SD card is corrupted or something else unexpected)
+    while(configFile.getHoldstatus()) { // Hold here until we hit our hold timeout
+      if(incrementTimerFlag){
+        configFile.incrementAntennaTimer();
+        incrementTimerFlag = false;
+        SerialUSB.println("incremented timer");
       }
-    }
-
-    /////////////////////
-    // DEPLOY ANTENNAS //
-    /////////////////////
-    // Deploys antenna and updates status byte
-    if (!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
-      SerialUSB.println("Begining Antenna Deployment Procedure");
-      timeout.start(15); // Starts a timeout timer
-      while(!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
-        if(!configFile.getAB1status() && batteryAboveThreshold()) { // Burn the first antenna wire if it hasn't already been done and the battery threshold is met
-        burn.burnAntennaOne();
-        configFile.setAB1Deployed();
-        SerialUSB.println("Antenna One Burned");
+      if (configFile.checkAntennaTimer() >= HOLDTIME) {// timer value in config file >= number of hold timer intervals in holdtime
+        /* deploys antennas after hold time */
+        deployAntennas();
+        SerialUSB.println("Antennas deployed");
       }
-      if(!configFile.getAB2status() && batteryAboveThreshold()) { // Burn the second antenna wire if it hasn't already been done and the battery threshold is met
-      burn.burnAntennaTwo();
-      configFile.setAB2Deployed();
-      SerialUSB.println("Antenna Two Burned");
-    }
-    if (timeout.triggered()) { // Checks time for timeout
-      break;
+      //      sleepTimer.sleep(); // Sleep
+      //      if (timeout.triggered()) { // Checks time for timeout
+      //        /* write hold status as completed (we only hold once) */
+      //        break;
+      //      }
     }
   }
 }
 
 
-}
-
-
 
 // Begin beacon timer
-beaconTimer.init(10); // timer delay, seconds
+beaconTimer.init(BEACONTIMER); // timer delay, seconds
 
 }
 ///////////////////////////////////////////////////////////////////
@@ -187,6 +174,7 @@ void loop() {
     if (armingMode) {
       if (listenForUplink(buf, ARMINGDURATION)) {
         processUplink(); // Process uplink while in arming mode
+
       }
     }
 
@@ -234,8 +222,33 @@ void watchdog() { // Function that runs every time watchdog timer triggers
 }
 
 void holdModeCallback() {
-  //Increment time in config file on SD card
-  if (/* timer value in config file >= HOLDTIME */) {
-    /* write hold status as completed (we only hold once) */
+ incrementTimerFlag = true; // Sets flag to tell main code to increment time in config file on SD card
+}
+
+/////////////////////
+// DEPLOY ANTENNAS //
+/////////////////////
+// Deploys antenna and updates antenna flags
+void deployAntennas(){
+  SerialUSB.println("Begining Antenna Deployment Procedure");
+  timeout.start(ANTENNAWAITTIME); // Starts a timeout timer
+  while(!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
+    if(!configFile.getAB1status() && batteryAboveThreshold()) { // Burn the first antenna wire if it hasn't already been done and the battery threshold is met
+    //burn.burnAntennaOne();
+    configFile.setAB1Deployed();
+    SerialUSB.println("Antenna One Burned");
+    checkConfigStatus();
   }
+  if(!configFile.getAB2status() && batteryAboveThreshold()) { // Burn the second antenna wire if it hasn't already been done and the battery threshold is met
+  //burn.burnAntennaTwo();
+  configFile.setAB2Deployed();
+  SerialUSB.println("Antenna Two Burned");
+  checkConfigStatus();
+}
+if (timeout.triggered()) { // Checks time for timeout
+  break;
+}
+}
+configFile.setStandby(); //updates mode to standby
+checkConfigStatus();
 }

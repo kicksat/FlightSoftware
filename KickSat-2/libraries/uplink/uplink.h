@@ -44,25 +44,25 @@ bool listenForUplinkArmingMode(char *buf, uint8_t duration) {
   }
 }
 
-/////////////////////////////////////
-// Listen for uplink in armingmode //
-/////////////////////////////////////
-bool listenForUplink(char *buf, uint8_t duration) {
-  timeout.start(duration); // Start timeout timer for the listening duration
-  while(1) { // Wait for uplink, retreive from buffer
-    // if (radio.available()) { // TODO: change if radio is available, not serial
-    if (SerialUSB.available()) { // If data is in buffer to be read
-      if (parseUplink(buf)) { // Read from buffer and validate uplink
-        return true;
-      }
-    }
-    if (timeout.triggered()) { // Checks time for timeout
-      SerialUSB.println("Uplink Timeout");
-      return false;
-    }
-    // sleepTimer.sleep(); // Go into sleep mode until next interrupt
-  }
-}
+// /////////////////////////////////////
+// // Listen for uplink in armingmode //
+// /////////////////////////////////////
+// bool listenForUplink(char *buf, uint8_t duration) {
+//   timeout.start(duration); // Start timeout timer for the listening duration
+//   while(1) { // Wait for uplink, retreive from buffer
+//     // if (radio.available()) { // TODO: change if radio is available, not serial
+//     if (SerialUSB.available()) { // If data is in buffer to be read
+//       if (parseUplink(buf)) { // Read from buffer and validate uplink
+//         return true;
+//       }
+//     }
+//     if (timeout.triggered()) { // Checks time for timeout
+//       SerialUSB.println("Uplink Timeout");
+//       return false;
+//     }
+//     // sleepTimer.sleep(); // Go into sleep mode until next interrupt
+//   }
+// }
 
 //////////////////
 // Parse uplink //
@@ -125,18 +125,16 @@ void processUplink(char *buf) {
     // Burn wires
     case 0:
     SerialUSB.println("Command: Burn Wire");
-	  byte metadata = buf[COMMAND_WIDTH]; //grab the first byte after the command, this is the matadata byte
-	  if (metadata == 0x01) {
-		  burn.burnDB1();
-	  } else if (metadata == 0x02) {
-		  burn.burnDB2();
-	  } else if (metadata == 0x03) {
-		  burn.burnDB3();
-	  } else if (metadata == 0x0F) {
-		  burn.burnDB1();
-		  burn.burnDB2();
-		  burn.burnDB3();
-	  }
+    byte metadata = buf[COMMAND_WIDTH]; //grab the first byte after the command, this is the matadata byte
+    if (metadata == 0x01) { // Burn wire one
+
+    } else if (metadata == 0x02) { // Burn wire two
+
+    } else if (metadata == 0x03) { // Burn wire three
+
+    } else if (metadata == 0x0F) { // Burn all wires
+
+    }
     break;
 
     // Begin downlink
