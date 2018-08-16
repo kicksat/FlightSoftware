@@ -125,9 +125,18 @@ void processUplink(char *buf) {
     // Burn wires
     case 0:
     SerialUSB.println("Command: Burn Wire");
-    burn.burnDB1();
-    burn.burnDB2();
-    burn.burnDB3();
+	  byte metadata = buf[COMMAND_WIDTH]; //grab the first byte after the command, this is the matadata byte
+	  if (metadata == 0x01) {
+		  burn.burnDB1();
+	  } else if (metadata == 0x02) {
+		  burn.burnDB2();
+	  } else if (metadata == 0x03) {
+		  burn.burnDB3();
+	  } else if (metadata == 0x0F) {
+		  burn.burnDB1();
+		  burn.burnDB2();
+		  burn.burnDB3();
+	  }
     break;
 
     // Begin downlink
