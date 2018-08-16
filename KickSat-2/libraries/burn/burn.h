@@ -8,8 +8,8 @@
 #include "Arduino.h"
 #include <RTCCounter.h>
 
-#define ANTENNA_BURN_TIME   2 // seconds
-#define SPRITE_BURN_TIME   12 // seconds
+#define ANTENNA_BURN_TIME   2000 // seconds
+#define SPRITE_BURN_TIME   12000 // seconds
 
 #define ANTENNADUTYCYCLE 10 // %
 #define SPRITEDUTYCYCLE 30 // %

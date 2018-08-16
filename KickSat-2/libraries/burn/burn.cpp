@@ -6,7 +6,7 @@
 #include <RTCCounter.h>
 #include "burn.h"
 
-void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency){ // duration(s), dutyCycle(%), Frequency (Hz)
+void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency){ // duration(ms), dutyCycle(%), Frequency (Hz)
 
   SerialUSB.println(relay);
   SerialUSB.println(burnwire);
