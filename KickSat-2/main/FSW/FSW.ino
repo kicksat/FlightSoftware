@@ -174,7 +174,6 @@ void loop() {
     if (armingMode) {
       if (listenForUplink(buf, ARMINGDURATION)) {
         processUplink(); // Process uplink while in arming mode
-
       }
     }
 
