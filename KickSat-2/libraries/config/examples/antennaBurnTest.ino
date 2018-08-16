@@ -1,7 +1,7 @@
 #include "RTCCounter.h"
 #include "KickSatConfig.h"
 
-#define HOLDTIME 10 // Time to hold after initial deployment, in minutes NOTE: this number CAN'T be bigger than 255
+#define HOLDTIME 10000 // Time to hold after initial deployment, in minutes NOTE: this number CAN'T be bigger than 255
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
 
 //watchdog stuff
@@ -19,7 +19,7 @@ Counter holdTimer;
 
 void setup(){
   pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
-  watchdogTimer.init(1,watchdog); // timer delay, seconds
+  watchdogTimer.init(1000,watchdog); // timer delay, seconds
 
   // Initialize Serial
   SerialUSB.begin(115200); // Restart SerialUSB
@@ -42,8 +42,8 @@ void setup(){
   if (!configFile.getHoldstatus()) { // If the satellite has just deployed and not been in HOLD mode yet (HOLD mode is the mandatory delay after deployment)
     SerialUSB.println("Entering HOLD mode");
     configFile.setHold();
-    holdTimer.init(10,holdModeCallback); // timer delay, seconds
-//    timeout.start(HOLDTIME); // Sets up a backup timer to escape hold mode (while loop) (in case SD card is corrupted or something else unexpected)
+    holdTimer.init(HOLDTIME,holdModeCallback); // timer delay, seconds
+    //    timeout.start(HOLDTIME); // Sets up a backup timer to escape hold mode (while loop) (in case SD card is corrupted or something else unexpected)
     while(configFile.getHoldstatus()) { // Hold here until we hit our hold timeout
       if(incrementTimerFlag){
         configFile.incrementAntennaTimer();
@@ -55,11 +55,11 @@ void setup(){
         deployAntennas();
         SerialUSB.println("Antennas deployed");
       }
-//      sleepTimer.sleep(); // Sleep
-//      if (timeout.triggered()) { // Checks time for timeout
-//        /* write hold status as completed (we only hold once) */
-//        break;
-//      }
+      //      sleepTimer.sleep(); // Sleep
+      //      if (timeout.triggered()) { // Checks time for timeout
+      //        /* write hold status as completed (we only hold once) */
+      //        break;
+      //      }
     }
   }
 
@@ -87,27 +87,27 @@ void holdModeCallback() {
 /////////////////////
 // Deploys antenna and updates antenna flags
 void deployAntennas(){
-    SerialUSB.println("Begining Antenna Deployment Procedure");
-    timeout.start(15); // Starts a timeout timer
-    while(!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
-      if(!configFile.getAB1status() && batteryAboveThreshold()) { // Burn the first antenna wire if it hasn't already been done and the battery threshold is met
-        //burn.burnAntennaOne();
-        configFile.setAB1Deployed();
-        SerialUSB.println("Antenna One Burned");
-        checkConfigStatus();
-      }
-      if(!configFile.getAB2status() && batteryAboveThreshold()) { // Burn the second antenna wire if it hasn't already been done and the battery threshold is met
-        //burn.burnAntennaTwo();
-        configFile.setAB2Deployed();
-        SerialUSB.println("Antenna Two Burned");
-        checkConfigStatus();
-      }
-      if (timeout.triggered()) { // Checks time for timeout
-        break;
-      }
-    }
-    configFile.setStandby(); //updates mode to standby
+  SerialUSB.println("Begining Antenna Deployment Procedure");
+  timeout.start(ANTENNAWAITTIME); // Starts a timeout timer
+  while(!configFile.getAB1status() || !configFile.getAB2status()) { // While either antenna burn wire is not burned
+    if(!configFile.getAB1status() && batteryAboveThreshold()) { // Burn the first antenna wire if it hasn't already been done and the battery threshold is met
+    //burn.burnAntennaOne();
+    configFile.setAB1Deployed();
+    SerialUSB.println("Antenna One Burned");
     checkConfigStatus();
+  }
+  if(!configFile.getAB2status() && batteryAboveThreshold()) { // Burn the second antenna wire if it hasn't already been done and the battery threshold is met
+  //burn.burnAntennaTwo();
+  configFile.setAB2Deployed();
+  SerialUSB.println("Antenna Two Burned");
+  checkConfigStatus();
+}
+if (timeout.triggered()) { // Checks time for timeout
+  break;
+}
+}
+configFile.setStandby(); //updates mode to standby
+checkConfigStatus();
 }
 
 //prints out all values stored in config file and tests all getters
