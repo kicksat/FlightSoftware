@@ -15,9 +15,9 @@ void setup() {
     SerialUSB.println("Serial Initialized");
     delay(5000); // Provides user with time to open Serial Monitor
   }
-  watchdogTimer.init(1,watchdog); // timer delay, seconds
+  watchdogTimer.init(1000,watchdog); // timer delay, milliseconds
   SerialUSB.println("Watchdog Timer Initialized");
-  beaconTimer.init(10); // timer delay, seconds
+  beaconTimer.init(10000); // timer delay, milliseconds
   SerialUSB.println("Beacon Timer Initialized");
   SerialUSB.println("Setup Complete");
 }
@@ -26,7 +26,7 @@ void loop() {
   if (beaconTimer.check()) { // Checks time for interrupt
     SerialUSB.println("Beacon things!");
   }
-  timeout.start(2);
+  timeout.start(2000); // start a timeout timer delay, milliseconds
   while(1) {
     if (timeout.triggered()) { // Checks time for timeout
       SerialUSB.println("TIMEOUT");

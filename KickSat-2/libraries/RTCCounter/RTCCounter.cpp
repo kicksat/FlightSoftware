@@ -46,7 +46,7 @@ voidFuncPtr timerCallback[MAXTIMERS]; // Array of callback pointers for timers
 // BEGIN TIME OBJECT FUNCTIONS //
 /////////////////////////////////
 
-void Timer::resetTimer() { // Resets timer flag and counters, but not callback or trigger
+void Timer::reset() { // Resets timer flag and counters, but not callback or trigger
   timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
   timerLast[_timerID] = 0; // Time since last trigger, in seconds
   timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
@@ -55,7 +55,7 @@ void Timer::resetTimer() { // Resets timer flag and counters, but not callback o
   timerEnable[_timerID] = true; // Enables for each timer, returns true if timer is enables
 }
 
-void Timer::resetTimerFlag() { // Resets timer flag
+void Timer::resetFlag() { // Resets timer flag
   timerFlag[_timerID] = false; // Flags for each timer, returns true if trigger is reached
 }
 
@@ -67,15 +67,15 @@ bool Timer::check() { // Checks flag of timer
   return false;
 }
 
-void Timer::pauseTimer() { // Disables timers
+void Timer::pause() { // Disables timers
   timerEnable[_timerID] = false; // Disable timer
 }
 
-void Timer::resumeTimer() { // Enables timers
+void Timer::resume() { // Enables timers
   timerEnable[_timerID] = true; // Enable timer
 }
 
-void Timer::disableTimer() { // Disables timers
+void Timer::disable() { // Disables timers
   timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
   timerLast[_timerID] = 0; // Time since last trigger, in seconds
   timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
@@ -84,7 +84,7 @@ void Timer::disableTimer() { // Disables timers
   timerEnable[_timerID] = false; // Disable timer
 }
 
-void Timer::enableTimer() { // Enables timer
+void Timer::enable() { // Enables timer
   timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
   timerLast[_timerID] = 0; // Time since last trigger, in seconds
   timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
@@ -93,8 +93,8 @@ void Timer::enableTimer() { // Enables timer
   timerEnable[_timerID] = true; // Enable timer
 }
 
-void Timer::setTime(uint32_t time) { // Sets new trigger time for timer
-  timerTrigger[_timerID] = time; // Sets trigger time
+void Timer::set(uint32_t time) { // Sets new trigger time for timer
+  timerTrigger[_timerID] = (time/CLOCKMATCH >= 1) ? round(time/CLOCKMATCH) : 1; // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
 }
 
 void Timer::setCallback(voidFuncPtr callback) { // Stores callback function
@@ -120,7 +120,7 @@ void Counter::init(uint32_t time, voidFuncPtr callback) { // Initializes timer
   _timerID = numberOfTimers; // Defines ID of timer
   numberOfTimers++; // Iterates number of timers initialized
   timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
-  timerTrigger[_timerID] = time; // User defined triggers, in seconds
+  timerTrigger[_timerID] = (time/CLOCKMATCH >= 1) ? round(time/CLOCKMATCH) : 1; // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
   timerLast[_timerID] = 0; // Time since last trigger, in seconds
   timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
   overflowed[_timerID] = 0; // flag for overflow
@@ -205,14 +205,14 @@ void TimeOut::start(uint32_t time) {
     init();
     timerInitialized = true;
   }
-  resetTimer();
-  timerTrigger[_timerID] = time-1; // User defined triggers, in seconds
+  reset();
+  timerTrigger[_timerID] = (time/CLOCKMATCH >= 1) ? round(time/CLOCKMATCH)-1 : 1; // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
 }
 
 bool TimeOut::triggered() { // Checks flag of timer
   if (timerFlag[_timerID]) { // If flag is true
     timerFlag[_timerID] = false; // Reset flag
-    pauseTimer();
+    pause();
     return true;
   }
   return false;
@@ -246,7 +246,9 @@ void configureRTC() { // Attach clock to 32kHz (32768Hz) Ultra Low Power Interna
     // Configure RTC in Mode 0 for only compare match interupt events
     resetRTC(); // Reset RTC timer
     RTC->MODE0.INTENCLR.reg |= RTC_MODE0_INTENCLR_CMP0; // Clear the Compare 0 Interrupt Enable bit and disable the corresponding interrupt
-    RTC->MODE0.COMP[0].reg = (uint32_t)((OSCULP32KCLOCK / (RTCPRESCALER * RTCCLOCK)) - 1); // Sets the counter compare value
+
+    uint32_t matchvalue = (uint32_t)round(((double)OSCULP32KCLOCK / (double)RTCPRESCALER) * ((double)CLOCKMATCH/1000) - 1); // Calculates timer match value, the timer counts up to this number and then interrupts
+    RTC->MODE0.COMP[0].reg = ((matchvalue > 0) ? matchvalue : 1); // Sets the counter compare value
     while (syncingRTC()); // wait until GCLK is done syncing
     RTC->MODE0.CTRL.reg = (uint16_t)(RTC_MODE0_CTRL_ENABLE | ((uint8_t)(log(RTCPRESCALER)/log(2)) << RTC_MODE0_CTRL_PRESCALER_Pos) | RTC_MODE0_CTRL_MATCHCLR); // Sets prescalar, enables match compare reset and enables Mode 0
     while (syncingRTC()); // wait until RTC is done syncing
@@ -269,11 +271,11 @@ void setCompareRTC(uint32_t time) { // Sets compare time
   while (syncingRTC()); // wait until GCLK is done syncing
 }
 
-inline bool syncingGCLK() { // wait until GCLK is done syncing
+bool syncingGCLK() { // wait until GCLK is done syncing
   return (GCLK->STATUS.bit.SYNCBUSY);
 }
 
-inline bool syncingRTC() { // wait until RTC is done syncing
+bool syncingRTC() { // wait until RTC is done syncing
   return (RTC->MODE0.STATUS.bit.SYNCBUSY);
 }
 
@@ -301,7 +303,7 @@ void removeResetRTC() { // Remove software reset of RTC
   while (syncingRTC());
 }
 
-void incrementTimers(int i) {
+void increment(int i) {
   if (timerEnable[i]) { // If the timer is enabled
     if (timerLast[i] > OVERFLOW) {timerLast[i] = OVERFLOW;} // Catch unexpected values for last interrupt time
     if (overflowed[i]) { // Handle overflowed counters
@@ -319,7 +321,7 @@ void incrementTimers(int i) {
   } // if (timerEnable[i])
 }
 
-void compareTriggers(int i) { // Compare trigger to counter value and handles interrupt
+void compare(int i) { // Compare trigger to counter value and handles interrupt
   if (timerCounter[i]-timerLast[i] >= timerTrigger[i] || (overflowed[i] && (timerOverflow[i] >= timerTrigger[i]))) { // Catches if the counter is >= the trigger
     timerFlag[i] = 1; // Set interrupt flag
     timerLast[i] = timerCounter[i]; // Update last interrupt time
@@ -339,8 +341,8 @@ void RTC_Handler() { // Interrupt handler for RTC
     }
   }
   for (size_t i = 0; i < numberOfTimers; i++) { // Begin iterating timer counters
-    incrementTimers(i); // Increment (counters)
-    compareTriggers(i); // Compare trigger to counter value and calls interrupt handler accordingly
+    increment(i); // Increment (counters)
+    compare(i); // Compare trigger to counter value and calls interrupt handler accordingly
   } // End iterating timer counters
   resetFlagRTC(); // Clear RTC interrupt flag
 }

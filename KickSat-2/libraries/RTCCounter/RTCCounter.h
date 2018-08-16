@@ -21,7 +21,7 @@ Purpose: Creates RTC timers for the SAMD micro
 
 // Define library settings
 #define MAXTIMERS         20    // Max number of allowed timers, arbitrarily picked
-#define RTCCLOCK          1     // Desired frequency of the RTC, in Hz
+#define CLOCKMATCH        1000  // Desired clock match value, in millisecs
 #define RTCPRESCALER      1024  // Prescalar of RTC, the prescalar must have a base of 2 (e.g. 2^10=1024)
 
 
@@ -30,15 +30,15 @@ void configureRTC(void);
 void RTC_Handler(void); // RTC handle function, runs on each interrupt
 void setClockRTC(uint32_t time);
 void setCompareRTC(uint32_t time);
-inline bool syncingGCLK(void);
-inline bool syncingRTC(void);
+bool syncingGCLK(void);
+bool syncingRTC(void);
 void disableRTC(void);
 void enableRTC(void);
 void resetFlagRTC(void);
 void resetRTC(void);
 void removeResetRTC(void);
-void incrementTimers(int i);
-void compareTriggers(int i);
+void increment(int i);
+void compare(int i);
 void interruptCounter(int i);
 void interruptSleepTimer(int i);
 void enterSleep(void);
@@ -50,14 +50,14 @@ class Timer {
   public: // Define public functions/variables
   int _timerID; // Unique timer ID, defined chronologically starting at 0, increasing by 1 for each timer;
   voidFuncPtr nullCallback = NULL; // Null callback
-  void resetTimer(void);
-  void resetTimerFlag(void);
+  void reset(void);
+  void resetFlag(void);
   bool check(void);
-  void disableTimer(void);
-  void enableTimer(void);
-  void pauseTimer(void);
-  void resumeTimer(void);
-  void setTime(uint32_t time);
+  void disable(void);
+  void enable(void);
+  void pause(void);
+  void resume(void);
+  void set(uint32_t time);
   void setCallback(voidFuncPtr callback);
   void removeCallback(void);
 };
