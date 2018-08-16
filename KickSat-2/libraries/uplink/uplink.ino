@@ -1,6 +1,6 @@
 #include <RTCCounter.h>
 
-#define LISTENINGDURATION 15
+#define LISTENINGDURATION 15000 // milliseconds
 
 void setup() {
   SerialUSB.begin(115200);

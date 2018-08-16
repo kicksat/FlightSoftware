@@ -26,7 +26,27 @@ void processUplink(char *buf);
 
 ///////////////////////
 // Listen for uplink //
-//////////////////////////////////////////////////////////////////////////////
+///////////////////////
+bool listenForUplinkArmingMode(char *buf, uint8_t duration) {
+  timeout.start(duration); // Start timeout timer for the listening duration
+  while(1) { // Wait for uplink, retreive from buffer
+    // if (radio.available()) { // TODO: change if radio is available, not serial
+    if (SerialUSB.available()) { // If data is in buffer to be read
+      if (parseUplink(buf)) { // Read from buffer and validate uplink
+        return true;
+      }
+    }
+    if (timeout.triggered()) { // Checks time for timeout
+      SerialUSB.println("Uplink Timeout");
+      return false;
+    }
+    // sleepTimer.sleep(); // Go into sleep mode until next interrupt
+  }
+}
+
+/////////////////////////////////////
+// Listen for uplink in armingmode //
+/////////////////////////////////////
 bool listenForUplink(char *buf, uint8_t duration) {
   timeout.start(duration); // Start timeout timer for the listening duration
   while(1) { // Wait for uplink, retreive from buffer
@@ -40,12 +60,15 @@ bool listenForUplink(char *buf, uint8_t duration) {
       SerialUSB.println("Uplink Timeout");
       return false;
     }
-  // sleepTimer.sleep(); // Go into sleep mode until next interrupt
+    // sleepTimer.sleep(); // Go into sleep mode until next interrupt
   }
 }
 
+//////////////////
+// Parse uplink //
+//////////////////
 bool parseUplink(char *buf) {
-  ////////////////////////////////////////////////////////
+  // Read available data from buffer
   // TODO: change from Serial.read to radio.read(char *buf)
   uint32_t i = 0;
   // while(radio.available() > 0) { // Read until the entire buffer has been read // TODO: This function doesn't exist but should
@@ -55,9 +78,8 @@ bool parseUplink(char *buf) {
     i++;
   }
   buf[i] = '\0';
-  ////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////
+  // Checksum data
   // if (checksum(buf)) // Verifies checksum of read uplink // TODO: Incorporate real checksum check here for input
   if (checksumHandler.evaluateChecksum(buf, i)) { // If uplink is valid, to be replaced by checksum validation
     SerialUSB.print("ACK:"); // If checksum is valid, respond with ACK
@@ -70,12 +92,11 @@ bool parseUplink(char *buf) {
     // radio.send("NACK") // If checksum is not valid, respond with NACK // TODO: This function doesn't exist but should
     return false; // Return unsuccessfull uplink
   }
-  ////////////////////////////////////////////////////////
 }
 
-////////////////////
-// Process uplink //
-//////////////////////////////////////////////////////////////////////////////
+///////////////////
+// Parse command //
+///////////////////
 uint8_t extractCommand(byte* buf) {
   for (int i = 0; i < NUM_COMMANDS; i++) {
     bool flag = true;
@@ -91,6 +112,9 @@ uint8_t extractCommand(byte* buf) {
   }
 }
 
+////////////////////
+// Process uplink //
+////////////////////
 void processUplink(char *buf) {
 
   uint8_t command = extractCommand(buf);
@@ -102,22 +126,22 @@ void processUplink(char *buf) {
     case 0:
     SerialUSB.println("Command: Burn Wire");
     burn.burnDB1();
-	burn.burnDB2();
-	burn.burnDB3();
+    burn.burnDB2();
+    burn.burnDB3();
     break;
-      
+
     // Begin downlink
     case 1:
     SerialUSB.println("Command: Start Downlink");
     //TODO: increase the frequency of beacons and begin sending older log data
-	//NOTE: this is its own function, which shits out a bunch of data
+    //NOTE: this is its own function, which shits out a bunch of data
     break;
-      
+
     case 2:
     SerialUSB.println("Command: Uplink Sensor Config");
     //TODO: read data from uplink and write new data to sensor config files
     //IMPORTANT: any uplink can be no longer than 64 bytes so configs must be short
-	
+
     break;
 
     // Enter arming mode, exit standby mode
@@ -127,8 +151,8 @@ void processUplink(char *buf) {
     // send: "Entered arming mode"
     // This is a transition condition in the more general state diagram
     // we will exit standby mode here
-	// NOTE: this is a global arming mode flag that we set,
-	//so that the outer loop will know to execute the arming mode code
+    // NOTE: this is a global arming mode flag that we set,
+    //so that the outer loop will know to execute the arming mode code
     break;
 
     // No command --> go back to sleep and go through another standby mode loop
@@ -143,7 +167,6 @@ void processUplink(char *buf) {
     SerialUSB.println("Doing no command... going to sleep");
     break;
   }
-
 }
 
 #endif
