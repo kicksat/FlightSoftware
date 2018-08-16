@@ -25,39 +25,45 @@
 
 class KickSatConfig {
 public:
-    int checkAntennaTimer();
-    void incrementAntennaTimer();
-    byte getStatus();
-    bool getAB1status();
-    bool getAB2status();
-    bool getHoldstatus();
-    bool getStandbyStatus();
-    bool getArmedStatus();
-    bool getDeployedStatus();
+  int checkAntennaTimer();
+  void incrementAntennaTimer();
+  byte getStatus();
+  bool getAB1status();
+  bool getAB2status();
+  bool getDB1status();
+  bool getDB2status();
+  bool getDB3status();  
+  bool getHoldstatus();
+  bool getStandbyStatus();
+  bool getArmedStatus();
+  bool getDeployedStatus();
 
-    void setAB1Deployed();
-    void setAB2Deployed();
-    void setHold();
-    void setStandby();
-    void setArmed();
-    void setDeployed();
+  void setAB1Deployed();
+  void setAB2Deployed();
+  void setDB1Deployed();
+  void setDB2Deployed();
+  void setDB3Deployed();
+  void setHold();
+  void setStandby();
+  void setArmed();
+  void setDeployed();
 
-    bool init();
-    void startSD();
-    void endSD();
+  bool init();
+  void startSD();
+  void endSD();
 
-    bool errorCorrectOpening();
-    bool errorCorrectContents();
+  bool errorCorrectOpening();
+  bool errorCorrectContents();
 
-    bool initFile(String fileName);
+  bool initFile(String fileName);
 
-//private:
+  //private:
 
-    bool available(String filename);
-    bool writeByteToThree(byte data, int location);
-    bool readByteFromThree(byte data[3], int location);
-    bool writeByte(String filename, byte data, int location);
-    byte readByte(String filename, int location);
+  bool available(String filename);
+  bool writeByteToThree(byte data, int location);
+  bool readByteFromThree(byte data[3], int location);
+  bool writeByte(String filename, byte data, int location);
+  byte readByte(String filename, int location);
 };
 
 extern KickSatConfig configFile; // Create config object
