@@ -27,7 +27,7 @@ by: Ralen
 #define ANTENNAWAITTIME 15000 // Frequency of beacon, in milliseconds
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
 #define LISTENINGDURATION 5000 // Defined in milliseconds
-#define ARMINGDURATION 5000 // Defined in milliseconds
+#define ARMINGDURATION 5000 // Defined in milliseconds // 3 minutes
 
 ///////////////////////////////////
 // Declaration of global objects //
@@ -152,6 +152,7 @@ void loop() {
     if(logfile.available()) {
       logfile.appendData();
     }
+    // TODO: add append/save sensor data
 
     //////////////////////////////////////////
     // Format health data and send to radio //
@@ -165,18 +166,25 @@ void loop() {
     // Enter listening mode //
     //////////////////////////
     if (listenForUplink(buf, LISTENINGDURATION)) {
-      // processUplink();
+      processUplink(); // Process uplink
     }
 
-    //////////////////////////
-    // Enter listening mode //
-    //////////////////////////
-    if (armingMode) {
-      if (listenForUplink(buf, ARMINGDURATION)) {
-        processUplink(); // Process uplink while in arming mode
+    ///////////////////////////////////
+    // Enter arming mode upon reques //
+    ///////////////////////////////////
+    if (getArmedStatus()) {
+      listenForUplinkArmingMode(buf, ARMINGDURATION)); // Listen for burn commands and stores flags for each burn wire request
+      if (getDB1status()) { // Read config file for flag to burn sprite burn wire #1 // TODO: Decide whether or not to add a battery threshold check
+        burn.burnSpriteOne(); // Burn sprite burn wire #1
       }
+      if (getDB2status()) { // Read config file for flag to burn sprite burn wire #2 // TODO: Decide whether or not to add a battery threshold check
+        burn.burnSpriteTwo(); // Burn sprite burn wire #2
+      }
+      if (getDB3status()) { // Read config file for flag to burn sprite burn wire #3 // TODO: Decide whether or not to add a battery threshold check
+        burn.burnSpriteThree(); // Burn sprite burn wire #3
+      }
+      setStandby(); // Return to stanby mode
     }
-
   }
 
   //////////////////////
@@ -204,8 +212,7 @@ void createRandomData() { // Temporary until we are     createRandomData(); // T
 
 
 bool batteryAboveThreshold() {
-  return power.readBattVoltage() > BATTERYTHRESHOLD; // TODO: Read battery doesn't exist but should
-  //return 3 > BATTERYTHRESHOLD;
+  return power.readBattVoltage() > BATTERYTHRESHOLD; // Read battery voltage and compare it to threshold
 }
 
 
