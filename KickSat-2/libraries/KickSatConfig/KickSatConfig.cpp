@@ -57,6 +57,38 @@ bool KickSatConfig :: getAB2status(){
   return false;
 }
 
+bool KickSatConfig :: getDB1status(){
+  byte buf[NUM_FILES];
+   if(readByteFromThree(buf, DB1_LOC)){
+     if(buf[0] == FLAG_TRUE){
+       return true;
+     }
+   }
+   return false;
+}
+
+bool KickSatConfig :: getDB2status(){
+  byte buf[NUM_FILES];
+   if(readByteFromThree(buf, DB2_LOC)){
+     if(buf[0] == FLAG_TRUE){
+       return true;
+     }
+   }
+   return false;
+}
+
+bool KickSatConfig :: getDB3status(){
+  byte buf[NUM_FILES];
+   if(readByteFromThree(buf, DB3_LOC)){
+     if(buf[0] == FLAG_TRUE){
+       return true;
+     }
+   }
+   return false;
+
+}
+
+
 bool KickSatConfig :: getStandbyStatus(){
  byte buf[NUM_FILES];
   if(readByteFromThree(buf, STATUS_LOC)){
@@ -93,6 +125,27 @@ void KickSatConfig :: setAB1Deployed(){
   if(writeByteToThree(FLAG_TRUE, AB1_LOC)){
 
   }
+}
+
+void KickSatConfig :: setDB1Deployed(){
+  if(writeByteToThree(FLAG_TRUE, DB1_LOC)){
+
+  }
+
+}
+
+void KickSatConfig :: setDB2Deployed(){
+  if(writeByteToThree(FLAG_TRUE, DB2_LOC)){
+
+  }
+
+}
+
+void KickSatConfig :: setDB3Deployed(){
+  if(writeByteToThree(FLAG_TRUE, DB3_LOC)){
+
+  }
+
 }
 
 void KickSatConfig :: setAB2Deployed(){

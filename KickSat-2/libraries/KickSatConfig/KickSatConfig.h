@@ -14,13 +14,16 @@
 #define ARMED_BYTE 'a'//0x06
 #define DEPLOYED_BYTE 'd'//0x0E
 #define STATUS_LOC 0
-#define AB1_LOC 2
-#define AB2_LOC 1
-#define TIMER_LOC 3
+#define AB1_LOC 1
+#define AB2_LOC 2
+#define DB1_LOC 3
+#define DB2_LOC 4
+#define DB3_LOC 5
+#define TIMER_LOC 6
 #define FLAG_TRUE '1'
 #define FLAG_FALSE '0'
 #define NUM_FILES 3
-#define NUM_ENTRIES 5
+#define NUM_ENTRIES 7
 
 
 class KickSatConfig {
@@ -32,7 +35,7 @@ public:
   bool getAB2status();
   bool getDB1status();
   bool getDB2status();
-  bool getDB3status();  
+  bool getDB3status();
   bool getHoldstatus();
   bool getStandbyStatus();
   bool getArmedStatus();

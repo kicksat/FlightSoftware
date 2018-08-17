@@ -22,10 +22,20 @@ void setup() {
 
   configFile.setAB2Deployed();
   checkConfigStatus();
+
   configFile.setStandby();
   checkConfigStatus();
 
   configFile.setArmed();
+  checkConfigStatus();
+
+  configFile.setDB1Deployed();
+  checkConfigStatus();
+
+  configFile.setDB2Deployed();
+  checkConfigStatus();
+
+  configFile.setDB3Deployed();
   checkConfigStatus();
 
   configFile.setDeployed();
@@ -41,6 +51,12 @@ void checkConfigStatus(){
   SerialUSB.println(configFile.getAB1status());
   SerialUSB.print("AB2 deployed: ");
   SerialUSB.println(configFile.getAB2status());
+  SerialUSB.print("DB1 deployed: ");
+  SerialUSB.println(configFile.getDB1status());
+  SerialUSB.print("DB2 deployed: ");
+  SerialUSB.println(configFile.getDB2status());
+  SerialUSB.print("DB3 deployed: ");
+  SerialUSB.println(configFile.getDB3status());
   SerialUSB.print("Hold mode: ");
   SerialUSB.println(configFile.getHoldstatus());
   SerialUSB.print("Standby mode: ");
