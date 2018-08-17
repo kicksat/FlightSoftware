@@ -2,6 +2,8 @@
 #include <SD.h>
 #include <SPI.h>
 
+#define SPI_RATE 8000000
+
 //constructor, sets up this sensor object with the corresponding config file
 KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name) {
   _ADCchipSelect = adc_cs;
@@ -38,11 +40,13 @@ void KickSat_Sensor::operate(byte* dataOut) {
 	}
 	digitalWrite(_SDchipSelect, HIGH);
 
+	wakeADC();
 	//execute Order 66- I mean... specified commands
 	int bufIndex = 0; //needed to ensure data in buf is not overwritten
 	for (int i = 0; i < numCommands; i++) {
 	  handleCommand(getCommand(commandString, '\n', i), dataOut, &bufIndex);
 	}
+	shutdownADC();
   } else {
 	//TODO: handle case in which error correction fails
   }
@@ -53,31 +57,63 @@ void KickSat_Sensor::operate(byte* dataOut) {
 //if all three files are corrupted, returns false
 //otherwise returns true
 bool KickSat_Sensor::validateConfigFiles() {
-	bool valid_0, valid_1, valid_2;
+	bool valid_0 = true;
+	bool valid_1 = true;
+	bool valid_2 = true;
 	String backup1 = _configFileName + "_1";
 	String backup2 = _configFileName + "_2";
 	File correctFile;
+	int sz;
+	
+	//make sure the files can even open, and initialize buffer and sz variables
+	_configFile = SD.open(_configFileName, FILE_READ);
+	if (!_configFile) {
+		valid_0 = false;
+	} else {
+		sz = _configFile.size();
+	}
+	_configFile.close();
+	_configFile = SD.open(backup1, FILE_READ);
+	if (!_configFile) {
+		valid_1 = false;
+	} else {
+		sz = _configFile.size();
+	}
+	_configFile.close();
+	_configFile = SD.open(backup2, FILE_READ);
+	if (!_configFile) {
+		valid_2 = false;
+	} else {
+		sz = _configFile.size();
+	}
+	_configFile.close();
+	byte* buf[sz];
 	
 	//check base config file
-	_configFile = SD.open(_configFileName, FILE_READ);
-	int sz = _configFile.size();
-	byte* buf[sz];
-	_configFile.read(buf, sz);
-	valid_0 = Checksum.evaluateChecksum(buf, sz));
-	_configFile.close();
+	if (valid_0) {
+		_configFile = SD.open(_configFileName, FILE_READ);
+		_configFile.read(buf, sz);
+		valid_0 = Checksum.evaluateChecksum(buf, sz));
+		_configFile.close();
+	}
 	
 	//check backup 1
-	_configFile = SD.open(backup1, FILE_READ);
-	_configFile.read(buf, sz);
-	valid_1 = Checksum.evaluateChecksum(buf, sz));
-	_configFile.close();
+	if (valid_1) {
+		_configFile = SD.open(backup1, FILE_READ);
+		_configFile.read(buf, sz);
+		valid_1 = Checksum.evaluateChecksum(buf, sz));
+		_configFile.close();
+	}
 	
 	//check backup 2
-	_configFile = SD.open(backup2, FILE_READ);
-	_configFile.read(buf, sz);
-	valid_2 = Checksum.evaluateChecksum(buf, sz));
-	_configFile.close();
+	if (valid_2) {
+		_configFile = SD.open(backup2, FILE_READ);
+		_configFile.read(buf, sz);
+		valid_2 = Checksum.evaluateChecksum(buf, sz));
+		_configFile.close();
+	}
 	
+	//identify a usable correct file
 	if (valid_0) {
 	  correctFile = SD.open(_configFileName, FILE_READ);
 	} else if (valid_1) {
@@ -88,6 +124,7 @@ bool KickSat_Sensor::validateConfigFiles() {
 	  return false;
 	}
 	
+	//rewrite any corrupted files
 	correctFile.read(buf, sz);
 	correctFile.close();
 	if (!valid_0) {
@@ -202,7 +239,7 @@ void KickSat_Sensor::rewriteConfig(byte* buf, int len) {
 //use to initialize/reset the ADC
 void KickSat_Sensor::burstWriteRegs(byte* data, uint8_t len) {
   Serial.println("------Writing ADC Config------");
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(SPI_RATE, MSBFIRST, SPI_MODE1));
   digitalWrite(_SDchipSelect, LOW);
   SPI.transfer(0x42);   //Send register START location
   SPI.transfer(len);   //how many registers to write to
@@ -216,7 +253,7 @@ void KickSat_Sensor::burstWriteRegs(byte* data, uint8_t len) {
 //brings the ADC from STANDBY mode into CONVERSION mode
 void KickSat_Sensor::startADC() {
   Serial.println("------Starting ADC------");
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(SPI_RATE, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x0A); //send stop byte
@@ -228,7 +265,7 @@ void KickSat_Sensor::startADC() {
 //brings the ADC from CONVERSION mode to STANDBY mode
 void KickSat_Sensor::stopADC() {
   Serial.println("------Stopping ADC------");
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(SPI_RATE, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x0A); //send stop byte
@@ -239,7 +276,7 @@ void KickSat_Sensor::stopADC() {
 //resets the ADC and starts it up with a set of default registers
 void KickSat_Sensor::resetADC() {
   Serial.println("------Resetting ADC------");
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(SPI_RATE, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x06); //send reset byte
@@ -267,7 +304,7 @@ void KickSat_Sensor::resetADC() {
 //brings the ADC from CONVERSION or STANDBY mode into SHUTDOWN mode
 void KickSat_Sensor::shutdownADC() {
   Serial.println("------Shutting Down ADC------");
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(SPI_RATE, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x04); //send shutdown byte
@@ -278,7 +315,7 @@ void KickSat_Sensor::shutdownADC() {
 //brings the ADC into STANDBY mode from SHUTDOWN mode
 void KickSat_Sensor::wakeADC()  {
   Serial.println("------Waking ADC------");
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(SPI_RATE, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x02); //send wakeup byte
@@ -290,7 +327,7 @@ void KickSat_Sensor::wakeADC()  {
 //use to ensure the ADC is working properly and commands are being executed correctly
 void KickSat_Sensor::regReadout(){
   Serial.println("------Register Readout------");
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(SPI_RATE, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x20);   //Send register START location
