@@ -1,5 +1,5 @@
 #include "KickSatConfig.h"
-#include "KickSatLog.h"
+#include <KickSatLog.h>
 //KickSatConfig configFile;
 
 
@@ -29,6 +29,15 @@ void setup() {
   configFile.setArmed();
   checkConfigStatus();
 
+  configFile.setDB1Flag();
+  checkConfigStatus();
+
+  configFile.setDB2Flag();
+  checkConfigStatus();
+
+  configFile.setDB3Flag();
+  checkConfigStatus();
+
   configFile.setDB1Deployed();
   checkConfigStatus();
 
@@ -51,6 +60,12 @@ void checkConfigStatus(){
   SerialUSB.println(configFile.getAB1status());
   SerialUSB.print("AB2 deployed: ");
   SerialUSB.println(configFile.getAB2status());
+  SerialUSB.print("DB1 flag: ");
+  SerialUSB.println(configFile.getDB1FlagStatus());
+  SerialUSB.print("DB2 flag: ");
+  SerialUSB.println(configFile.getDB2FlagStatus());
+  SerialUSB.print("DB3 flag: ");
+  SerialUSB.println(configFile.getDB3FlagStatus());
   SerialUSB.print("DB1 deployed: ");
   SerialUSB.println(configFile.getDB1status());
   SerialUSB.print("DB2 deployed: ");

@@ -6,11 +6,11 @@
 #include <Arduino.h>
 
 class ChecksumHandler {
-  
+
   public:
     byte calculateChecksum(byte* message, int len);
-    bool evaluateChecksum(char* message, int len);
-    
+    bool evaluateChecksum(byte* message, int len);
+
 };
 
 extern ChecksumHandler Checksum;
