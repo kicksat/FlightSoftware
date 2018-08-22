@@ -1,5 +1,7 @@
 #include "KickSatLog.h"
+SdFat SD;
 
+LogHandler logfile(SD);
 char buf[MAXCHARS]; // Create global variable for buffer from SD read function, this can be piped into radio.send()
 
 void setup() {

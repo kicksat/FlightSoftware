@@ -17,6 +17,10 @@ bool SDStatus = false; // Global variable for SD initialization status, true=SD 
 struct LogData data; // Structure for all data storage
 
 
+LogHandler::LogHandler(SdFat _sd) {
+  SD = _sd;
+}
+
 // Initialize SD card
 bool LogHandler::init() {
   if (!SDStatus) { // If the SD card is not initialized
@@ -222,4 +226,4 @@ bool LogHandler::compileHealth(char *healthData) {
 }
 
 
-LogHandler logfile; // Creates an external, global logfile object
+

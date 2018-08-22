@@ -1,5 +1,5 @@
 #include "KickSat_Sensor.h"
-#include "SD_DataFile.h"
+#include <SD_DataFile.h>
 #include <SPI.h>
 #include <SdFat.h>
 SdFat SD;
@@ -38,7 +38,7 @@ void setup() {
 //    byte newConfig[configFile.size()];
 //    configFile.read(newConfig, configFile.size());
 //    configFile.close();
-//    
+//
 //    if (kSensor.rewriteConfigs(newConfig, configFile.size())) {
 //      Serial.println("rewrite complete");
 //    } else {
@@ -50,7 +50,7 @@ void setup() {
 //  digitalWrite(SD_CS, HIGH);
 //  while(1) {}
 
-  
+
 }
 
 void loop() {
@@ -62,7 +62,7 @@ void loop() {
     Serial.print(buf[i]), Serial.print(",");
   }
   Serial.println();
-  
+
 //  byte out[3];
 //  dataFile.readDataEntry(0, out);
 
