@@ -206,7 +206,7 @@ void TimeOut::start(uint32_t time) {
     timerInitialized = true;
   }
   reset();
-  timerTrigger[_timerID] = time; //(time/CLOCKMATCH >= 1) ? round(time/CLOCKMATCH)-1 : 1; // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
+  timerTrigger[_timerID] = time; // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
 }
 
 bool TimeOut::triggered() { // Checks flag of timer
