@@ -256,12 +256,12 @@ void KickSat_Sensor::parseMessage(String msg, String arg[]) {
 
 //this function wirtes [len] registers to the values specified in [data]
 //use to initialize/reset the ADC
-void KickSat_Sensor::burstWriteRegs(byte* data, uint8_t len) {
+void KickSat_Sensor::burstWriteRegs(byte start, uint8_t len, byte* data) {
   Serial.println("------Writing ADC Config------");
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_SDchipSelect, LOW);
-  SPI.transfer(0x42);   //Send register START location
-  SPI.transfer(len);   //how many registers to write to
+  SPI.transfer(start);   //Send register START location
+  SPI.transfer(len - 1);   //how many registers to write to (must be len-1 as the ADC considers 0x00 to be 1, 0x01 is 2, ect)
   for (int i = 0; i < len; i++) {
     SPI.transfer(data[i]);
   }
