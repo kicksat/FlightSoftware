@@ -1,14 +1,17 @@
 //SD_DataFile.cpp
 
 #include "SD_DataFile.h"
-#include <SD.h>
+#include <SDFat.h>
+
+#define Serial SerialUSB
 
 //constructor, sets up file type and name
-SD_DataFile::SD_DataFile(int cs_pin, uint16_t dw, String fn) {
+SD_DataFile::SD_DataFile(int cs_pin, uint16_t dw, String fn, SdFat _sd) {
   _chipSelectPin = cs_pin;
   _dataWidth = dw;
   _fileName = fn;
   _numEntries = 0;
+  SD = _sd;
   
   pinMode(_chipSelectPin, OUTPUT);
   digitalWrite(_chipSelectPin, HIGH);
@@ -28,6 +31,12 @@ bool SD_DataFile::refresh() {
   }
   digitalWrite(_chipSelectPin, HIGH);
   return false;
+}
+
+//returns the number of entries currently detected in the file
+//NOTE: if refresh() has not been called, this will be incorrect
+int SD_DataFile::size() {
+  return _numEntries;
 }
 
 //writes from the passed array into the next data entry slot on the data file
@@ -67,6 +76,9 @@ bool SD_DataFile::readDataEntry(int index, byte* buf) {
   return false;
 }
 
+//reads a single data entry from a line containing multiple entries
+//reads an entry of length len from line lineNum starting at the specified index
+//the data is stored in buf
 bool SD_DataFile::readLineIndex(int lineNum, int index, int len, byte* buf){
   if (lineNum < _numEntries) {
     SD.begin(_chipSelectPin);

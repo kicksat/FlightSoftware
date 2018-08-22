@@ -2,24 +2,27 @@
 
 #ifndef SD_DATAFILE_h
 #define SD_DATAFILE_h
-
-#include <SD.h>
+#include <Arduino.h>
+#include <SdFat.h>
 
 class SD_DataFile
 {
   public:
-    SD_DataFile(int cs_pin, uint16_t dw, String fn);
+    SD_DataFile(int cs_pin, uint16_t dw, String fn, SdFat _sd);
+    bool refresh();
+    int size();
     bool writeDataEntry(byte* data);
     bool readDataEntry(int index, byte* buf);
     bool readLineIndex(int lineNum, int index, int len, byte* buf);
-    bool refresh();
 
+  private:
     // member variables
     uint16_t _dataWidth;
     uint16_t _numEntries;
     String _fileName;
     File _dataFile;
     int _chipSelectPin;
+    SdFat SD;
 };
 
 #endif 

@@ -1,14 +1,16 @@
 #include "KickSat_Sensor.h"
 #include "ChecksumHandler.h"
-#include <SD.h>
 #include <SPI.h>
+#include <SdFat.h>
+#define Serial SerialUSB
 
 //constructor, sets up this sensor object with the corresponding config file
-KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name) {
+KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name, SdFat _sd) {
   _ADCchipSelect = adc_cs;
   _ADCreset = adc_rst;
   _SDchipSelect = sd_cs;
   _configFileName = cf_name;
+  SD = _sd;
 
   pinMode(_ADCchipSelect, OUTPUT);
   pinMode(_ADCreset, OUTPUT);
@@ -20,20 +22,16 @@ KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_nam
 //based on the config file.
 void KickSat_Sensor::operate(byte* dataOut) {
   //read commands from config file
-  SD.begin(_SDchipSelect);
-  digitalWrite(_SDchipSelect, LOW);
-
+  if (validateConfigFiles()) {
+    SD.begin(_SDchipSelect);
+    digitalWrite(_SDchipSelect, LOW);
     File _configFile = SD.open(_configFileName, FILE_READ);
-    if (!_configFile) {
-      Serial.println("Critical config error");
-    }
-    validateConfigFiles();
     //extract commands from config file
     int numCommands = 0;
     String commandString = "";
     while (true) {
       char nextChar = _configFile.read();
-      if (nextChar == -1) {
+      if (nextChar == 255) {
         break;
       } else if (nextChar == '\n') {
         numCommands++;
@@ -41,16 +39,147 @@ void KickSat_Sensor::operate(byte* dataOut) {
       commandString += nextChar;
     }
     digitalWrite(_SDchipSelect, HIGH);
+    
+    //wake the ADC, talk to it, and then shut it down again
+    wakeADC();
+    int bufIndex = 0; //needed to ensure data in buf is not overwritten
 
-  //wake the ADC, talk to it, and then shut it down again
-  wakeADC();
-  int bufIndex = 0; //needed to ensure data in buf is not overwritten
-  for (int i = 0; i < numCommands; i++) {
-    //Serial.println(commandList[i]);
-    handleCommand(getCommand(commandString, '\n', i), dataOut, &bufIndex);
-    Serial.println(getCommand(commandString, '\n', i));
+    for (int i = 0; i < numCommands; i++) {
+      handleCommand(getCommand(commandString, '\n', i), dataOut, &bufIndex);
+    }
+    shutdownADC();
+  } else {
+    //TODO: handle case in which error correction fails
+    Serial.println("Warning: Config files corrupted beyond repair");
   }
-  shutdownADC();
+  
+}
+
+//this function accepts a string of commands, a separator to delimit by, and an index to search for
+//it then cuts the string into chunks, based on the specified separator, and returns the chunk
+//that corresponds with the provided index
+String KickSat_Sensor::getCommand(String data, char separator, int index) {
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+  return found>index ? data.substring(strIndex[0], strIndex[1] - 1) : "";
+}
+
+//this function takes a command outputted by parseMessage, and executes that command
+void KickSat_Sensor::handleCommand(String cmd, byte* buf, int* index) {
+  String argv[6];
+  parseMessage(cmd, argv);
+
+  Serial.println(argv[0]);
+  
+  if (argv[0] == "read") {
+    //read data
+    digitalWrite(_ADCchipSelect, LOW);  
+    SPI.transfer(0x12); //transfer read command  
+    byte inByte1 = SPI.transfer(0x00);
+    byte inByte2 = SPI.transfer(0x00);
+    byte inByte3 = SPI.transfer(0x00);
+    delay(1);
+    digitalWrite(_ADCchipSelect, HIGH);
+
+    //save data
+    int i = *index;
+    buf[i] = inByte1;
+    buf[i+1] = inByte2;
+    buf[i+2] = inByte3;
+    *index += 3;
+  } else if (argv[0] == "delay") {
+    delay(argv[1].toInt());
+  } else if (argv[0] == "readout") {
+    regReadout();
+  } else if (argv[0] == "config") {
+//    burstWriteRegs(argv[1], argv[2].toInt());
+  } else if (argv[0] == "start") {
+    startADC();
+  } else if (argv[0] == "reset") {
+    resetADC();
+  } else if (argv[0] == "mosfet") {
+    mosfetV(argv[1].toInt());
+    int i = *index;
+    buf[i] = val1;
+    buf[i+1] = val2;
+    buf[i+2] = val3;
+    *index += 3;
+    Serial.println(-1*dataConvert(val1,val2,val3)); 
+  } else if (argv[0] == "stop") {
+    stopADC();
+  } else {
+    Serial.println("NOP: No command performed");
+  }
+  
+}
+
+//this function takes one line from the config file
+//and converts it into an executable command
+void KickSat_Sensor::parseMessage(String msg, String arg[]) {
+  int index = 0;
+
+  int wordIndex = 0;
+  int wordStart = 0;
+  while (index < msg.length()) {
+    if (msg.charAt(index) == ' ') {
+      arg[wordIndex] = msg.substring(wordStart, index);
+      wordStart = index + 1;
+      wordIndex++;
+    }
+    index++;
+  }
+  arg[wordIndex] = msg.substring(wordStart, index);
+}
+
+
+//==================== Config Commands ====================//
+
+//this function accepts a buffer and a length,
+//and will write this buffer and a checksum byte based on that buffer to the config files
+//returns true if all the writes succeeded, false otherwise
+bool KickSat_Sensor::rewriteConfigs(byte* buf, int len) {
+  String backup1 = _configFileName.substring(0, _configFileName.length() - 4) + "1.txt";
+  String backup2 = _configFileName.substring(0, _configFileName.length() - 4) + "2.txt";
+  File cFile;
+
+  SD.begin(_SDchipSelect); //TODO: figure out why this was necessary, and clean this fucking library based on that knowledge
+  digitalWrite(_SDchipSelect, LOW);
+  byte checksumByte = Checksum.calculateChecksum(buf, len);
+
+  bool success = true;
+
+  //O_CREAT makes it so that the file will be created again if it is missing
+  //O_WRITE allows the file to be written to
+  //O_TRUNC deletes the file if it already exists, so that a new, correct one can take its place
+  cFile = SD.open(_configFileName, O_CREAT | O_WRITE | O_TRUNC);
+  if (!cFile) {success = false;}
+  cFile.write(buf, len);
+  cFile.write(checksumByte);
+  cFile.close();
+
+  cFile = SD.open(backup1, O_CREAT | O_WRITE | O_TRUNC);
+  if (!cFile) {success = false;}
+  cFile.write(buf, len);
+  cFile.write(checksumByte);
+  cFile.close();
+
+  cFile = SD.open(backup2, O_CREAT | O_WRITE | O_TRUNC);
+  if (!cFile) {success = false;}
+  cFile.write(buf, len);
+  cFile.write(checksumByte);
+  cFile.close();
+
+  digitalWrite(_SDchipSelect, HIGH);
+
+  return success;
 }
 
 //this function reads the main config file and its two backups, and validates their checksums
@@ -69,6 +198,9 @@ bool KickSat_Sensor::validateConfigFiles() {
   int sz0 = 0;
   int sz1 = 0;
   int sz2 = 0;
+
+  SD.begin(_SDchipSelect);
+  digitalWrite(_SDchipSelect, LOW);
   
   //make sure the files can even open, and initialize buffer and sz variables
   _configFile = SD.open(_configFileName, FILE_READ);
@@ -146,109 +278,27 @@ bool KickSat_Sensor::validateConfigFiles() {
   correctFile.read(buf, correctsz);
   correctFile.close();
   if (!valid_0) {
-    //Serial.println("valid_0 is false");
-    SD.remove(_configFileName);
-    _configFile = SD.open(_configFileName, FILE_WRITE);
+    //O_CREAT makes it so that the file will be created again if it is missing
+    //O_WRITE allows the file to be written to
+    //O_TRUNC deletes the file if it already exists, so that a new, correct one can take its place
+    _configFile = SD.open(_configFileName, O_CREAT | O_WRITE | O_TRUNC);
     _configFile.write(buf, correctsz);
     _configFile.close();
   }
   if (!valid_1) {
-    //Serial.println("valid_1 is false");
-    SD.remove(backup1);
-    _configFile = SD.open(backup1, FILE_WRITE);
+    _configFile = SD.open(backup1, O_CREAT | O_WRITE | O_TRUNC);
     _configFile.write(buf, correctsz);
     _configFile.close();
   }
   if (!valid_2) {
-    //Serial.println("valid_2 is false");
-    SD.remove(backup2);
-    _configFile = SD.open(backup2, FILE_WRITE);
+    _configFile = SD.open(backup2, O_CREAT | O_WRITE | O_TRUNC);
     _configFile.write(buf, correctsz);
     _configFile.close();
   }
+
+  digitalWrite(_SDchipSelect, HIGH);
   
   return true;
-}
-
-//this function accepts a string of commands, a separator to delimit by, and an index to search for
-//it then cuts the string into chunks, based on the specified separator, and returns the chunk
-//that corresponds with the provided index
-String KickSat_Sensor::getCommand(String data, char separator, int index) {
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length()-1;
-  for(int i=0; i<=maxIndex && found<=index; i++){
-    if(data.charAt(i)==separator || i==maxIndex){
-        found++;
-        strIndex[0] = strIndex[1]+1;
-        strIndex[1] = (i == maxIndex) ? i+1 : i;
-    }
-  }
-  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
-
-//this function takes a command outputted by parseMessage, and executes that command
-void KickSat_Sensor::handleCommand(String cmd, byte* buf, int* index) {
-  String argv[6];
-  parseMessage(cmd, argv);
-
-  //Serial.println(argv[0]);
-  
-  if (argv[0] == "delay") {
-    delay(argv[1].toInt());
-  } else if (argv[0] == "read") {
-    //read data
-    digitalWrite(_ADCchipSelect, LOW);  
-    SPI.transfer(0x12); //transfer read command  
-    byte inByte1 = SPI.transfer(0x00);
-    byte inByte2 = SPI.transfer(0x00);
-    byte inByte3 = SPI.transfer(0x00);
-    delay(1);
-    digitalWrite(_ADCchipSelect, HIGH);
-
-    //save data
-    int i = *index;
-    buf[i] = inByte1;
-    buf[i+1] = inByte2;
-    buf[i+2] = inByte3;
-    *index += 3;
-  } else if (argv[0] == "readout") {
-    //regReadout();
-  } else if (argv[0] == "config") {
-//    burstWriteRegs(argv[1], argv[2].toInt());
-  } else if (argv[0] == "start") {
-    startADC();
-  } else if (argv[0] == "reset") {
-    //Serial.println("resetting");
-    resetADC();
-  } else if (argv[0] == "mosfet") {
-    mosfetV(argv[1].toInt());
-    int i = *index;
-    buf[i] = val1;
-    buf[i+1] = val2;
-    buf[i+2] = val3;
-    *index += 3;
-    Serial.println(-1*dataConvert(val1,val2,val3)); 
-  }
-  
-}
-
-//this function takes one line from the config file
-//and converts it into an executable command
-void KickSat_Sensor::parseMessage(String msg, String arg[]) {
-  int index = 0;
-
-  int wordIndex = 0;
-  int wordStart = 0;
-  while (index < msg.length()) {
-    if (msg.charAt(index) == ' ') {
-      arg[wordIndex] = msg.substring(wordStart, index);
-      wordStart = index + 1;
-      wordIndex++;
-    }
-    index++;
-  }
-  arg[wordIndex] = msg.substring(wordStart, index);
 }
 
 
@@ -342,53 +392,53 @@ void KickSat_Sensor::wakeADC()  {
   digitalWrite(_ADCchipSelect, HIGH);
 }
 
-//void KickSat_Sensor::regReadout(){
-//  Serial.println("------Register Readout------");
-//  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
-//  digitalWrite(_ADCchipSelect, LOW);
-//  delayMicroseconds(1);
-//  SPI.transfer(0x20);   //Send register START location
-//  SPI.transfer(0x12);   //how many registers we want to read (0x12 = all 18)
-//  byte readOut0 = SPI.transfer(0x00);
-//  byte readOut1 = SPI.transfer(0x00);
-//  byte readOut2 = SPI.transfer(0x00);
-//  byte readOut3 = SPI.transfer(0x00);
-//  byte readOut4 = SPI.transfer(0x00);
-//  byte readOut5 = SPI.transfer(0x00);
-//  byte readOut6 = SPI.transfer(0x00);
-//  byte readOut7 = SPI.transfer(0x00);
-//  byte readOut8 = SPI.transfer(0x00);
-//  byte readOut9 = SPI.transfer(0x00);
-//  byte readOut10 = SPI.transfer(0x00);
-//  byte readOut11 = SPI.transfer(0x00);
-//  byte readOut12 = SPI.transfer(0x00);
-//  byte readOut13 = SPI.transfer(0x00);
-//  byte readOut14 = SPI.transfer(0x00);
-//  byte readOut15 = SPI.transfer(0x00);
-//  byte readOut16 = SPI.transfer(0x00);
-//  byte readOut17 = SPI.transfer(0x00);  
-//  delay(1);
-//  digitalWrite(_ADCchipSelect, HIGH);
-//  Serial.print("Register 0x00 (ID):        "), Serial.println(readOut0, HEX);
-//  Serial.print("Register 0x01 (STATUS):    "), Serial.println(readOut1, HEX);
-//  Serial.print("Register 0x02 (INPMUX):    "), Serial.println(readOut2, HEX);
-//  Serial.print("Register 0x03 (PGA):       "), Serial.println(readOut3, HEX);
-//  Serial.print("Register 0x04 (DATARATE):  "), Serial.println(readOut4, HEX);
-//  Serial.print("Register 0x05 (REF):       "), Serial.println(readOut5, HEX);
-//  Serial.print("Register 0x06 (IDACMAG):   "), Serial.println(readOut6, HEX);
-//  Serial.print("Register 0x07 (IDACMUX):   "), Serial.println(readOut7, HEX);
-//  Serial.print("Register 0x08 (VBIAS):     "), Serial.println(readOut8, HEX);
-//  Serial.print("Register 0x09 (SYS):       "), Serial.println(readOut9, HEX);
-//  Serial.print("Register 0x0A (OFCAL0):    "), Serial.println(readOut10, HEX);
-//  Serial.print("Register 0x0B (OFCAL1):    "), Serial.println(readOut11, HEX);
-//  Serial.print("Register 0x0C (OFCAL2):    "), Serial.println(readOut12, HEX);
-//  Serial.print("Register 0x0D (FSCAL0):    "), Serial.println(readOut13, HEX);
-//  Serial.print("Register 0x0E (FSCAL1):    "), Serial.println(readOut14, HEX);
-//  Serial.print("Register 0x0F (FSCAL2):    "), Serial.println(readOut15, HEX);
-//  Serial.print("Register 0x10 (GPIODAT):   "), Serial.println(readOut16, HEX);
-//  Serial.print("Register 0x11 (GPIOCON):   "), Serial.println(readOut17, HEX);
-//  Serial.println("-----------------------------");
-//}
+void KickSat_Sensor::regReadout(){
+  Serial.println("------Register Readout------");
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  digitalWrite(_ADCchipSelect, LOW);
+  delayMicroseconds(1);
+  SPI.transfer(0x20);   //Send register START location
+  SPI.transfer(0x12);   //how many registers we want to read (0x12 = all 18)
+  byte readOut0 = SPI.transfer(0x00);
+  byte readOut1 = SPI.transfer(0x00);
+  byte readOut2 = SPI.transfer(0x00);
+  byte readOut3 = SPI.transfer(0x00);
+  byte readOut4 = SPI.transfer(0x00);
+  byte readOut5 = SPI.transfer(0x00);
+  byte readOut6 = SPI.transfer(0x00);
+  byte readOut7 = SPI.transfer(0x00);
+  byte readOut8 = SPI.transfer(0x00);
+  byte readOut9 = SPI.transfer(0x00);
+  byte readOut10 = SPI.transfer(0x00);
+  byte readOut11 = SPI.transfer(0x00);
+  byte readOut12 = SPI.transfer(0x00);
+  byte readOut13 = SPI.transfer(0x00);
+  byte readOut14 = SPI.transfer(0x00);
+  byte readOut15 = SPI.transfer(0x00);
+  byte readOut16 = SPI.transfer(0x00);
+  byte readOut17 = SPI.transfer(0x00);  
+  delay(1);
+  digitalWrite(_ADCchipSelect, HIGH);
+  Serial.print("Register 0x00 (ID):        "), Serial.println(readOut0, HEX);
+  Serial.print("Register 0x01 (STATUS):    "), Serial.println(readOut1, HEX);
+  Serial.print("Register 0x02 (INPMUX):    "), Serial.println(readOut2, HEX);
+  Serial.print("Register 0x03 (PGA):       "), Serial.println(readOut3, HEX);
+  Serial.print("Register 0x04 (DATARATE):  "), Serial.println(readOut4, HEX);
+  Serial.print("Register 0x05 (REF):       "), Serial.println(readOut5, HEX);
+  Serial.print("Register 0x06 (IDACMAG):   "), Serial.println(readOut6, HEX);
+  Serial.print("Register 0x07 (IDACMUX):   "), Serial.println(readOut7, HEX);
+  Serial.print("Register 0x08 (VBIAS):     "), Serial.println(readOut8, HEX);
+  Serial.print("Register 0x09 (SYS):       "), Serial.println(readOut9, HEX);
+  Serial.print("Register 0x0A (OFCAL0):    "), Serial.println(readOut10, HEX);
+  Serial.print("Register 0x0B (OFCAL1):    "), Serial.println(readOut11, HEX);
+  Serial.print("Register 0x0C (OFCAL2):    "), Serial.println(readOut12, HEX);
+  Serial.print("Register 0x0D (FSCAL0):    "), Serial.println(readOut13, HEX);
+  Serial.print("Register 0x0E (FSCAL1):    "), Serial.println(readOut14, HEX);
+  Serial.print("Register 0x0F (FSCAL2):    "), Serial.println(readOut15, HEX);
+  Serial.print("Register 0x10 (GPIODAT):   "), Serial.println(readOut16, HEX);
+  Serial.print("Register 0x11 (GPIOCON):   "), Serial.println(readOut17, HEX);
+  Serial.println("-----------------------------");
+}
 
 //----- MAX'S CRAP FUNCTIONS -----
 float KickSat_Sensor::dataConvert( byte a, byte b, byte c){
@@ -436,60 +486,60 @@ void KickSat_Sensor::mosfetV(byte pinNum){
   val2 = mosDat2;
   val3 = mosDat3;
 }
-//
-//void KickSat_Sensor::readTemp() {
-//  byte aa, bb, cc = 0;
-//  digitalWrite(_ADCchipSelect, LOW);
-//  delayMicroseconds(1);   
-//  SPI.transfer(0x42);   //Send register START location
-//  SPI.transfer(0x07);   //how many registers to write to
-//  SPI.transfer(0xCC);   //0x42  INPMUX 
-//  SPI.transfer(0x08);   //0x43  PGA
-//  SPI.transfer(0x15);   //0x44  DATARATE
-//  SPI.transfer(0x39);   //0x45  REF
-//  SPI.transfer(0x00);   //0x46  IDACMAG
-//  SPI.transfer(0xFF);   //0x47  IDACMUX
-//  SPI.transfer(0x00);   //0x48  VBIAS
-//  SPI.transfer(0x50);   //0x49  SYS
-//  SPI.transfer(0x0A);   //send stop byte
-//  SPI.transfer(0x08);   //send start byte
-//  delay(50);
-//  SPI.transfer(0x00);   //send NOPS
-//  SPI.transfer(0x00);
-//  SPI.transfer(0x12); //transfer read command  
-//  aa = SPI.transfer(0x00);
-//  bb = SPI.transfer(0x00);
-//  cc = SPI.transfer(0x00);
-//  delay(1);
-//  digitalWrite(_ADCchipSelect, HIGH);  
-//  float temp = dataConvert(aa, bb, cc)*1000.0;
-//  float dd = 0;
-////  Serial.print("Temperature: ");
-//  if (temp < 129){
-////    Serial.print(temp,DEC),Serial.print("  ");
-//    dd = ((-1*(129.00-temp)*0.403)+25);
-////    Serial.print(dd, 2), Serial.println(" degrees C");
-//  }
-//  else {
-////    Serial.print(temp,DEC),Serial.print("  ");
-//    dd = ((-1*(129.00-temp)*0.403)+25);
-////    Serial.print(dd, 2), Serial.println(" degrees C");
-//}
-//  delay(1);  
-//  digitalWrite(_ADCchipSelect, LOW);
-//  delayMicroseconds(1);   
-//  SPI.transfer(0x42);   //Send register START location
-//  SPI.transfer(0x07);   //how many registers to write to
-//  SPI.transfer(0xCC);   //0x42  INPMUX 
-//  SPI.transfer(0x08);   //0x43  PGA
-//  SPI.transfer(0x0C);   //0x44  DATARATE
-//  SPI.transfer(0x39);   //0x45  REF
-//  SPI.transfer(0x00);   //0x46  IDACMAG
-//  SPI.transfer(0xFF);   //0x47  IDACMUX
-//  SPI.transfer(0x00);   //0x48  VBIAS
-//  SPI.transfer(0x00);   //0x49  SYS
-//  delay(1);
-//  digitalWrite(_ADCchipSelect, HIGH);
-//  delay(1);
-//  Serial.println(dd, 2);
-//}
+
+void KickSat_Sensor::readTemp() {
+  byte aa, bb, cc = 0;
+  digitalWrite(_ADCchipSelect, LOW);
+  delayMicroseconds(1);   
+  SPI.transfer(0x42);   //Send register START location
+  SPI.transfer(0x07);   //how many registers to write to
+  SPI.transfer(0xCC);   //0x42  INPMUX 
+  SPI.transfer(0x08);   //0x43  PGA
+  SPI.transfer(0x15);   //0x44  DATARATE
+  SPI.transfer(0x39);   //0x45  REF
+  SPI.transfer(0x00);   //0x46  IDACMAG
+  SPI.transfer(0xFF);   //0x47  IDACMUX
+  SPI.transfer(0x00);   //0x48  VBIAS
+  SPI.transfer(0x50);   //0x49  SYS
+  SPI.transfer(0x0A);   //send stop byte
+  SPI.transfer(0x08);   //send start byte
+  delay(50);
+  SPI.transfer(0x00);   //send NOPS
+  SPI.transfer(0x00);
+  SPI.transfer(0x12); //transfer read command  
+  aa = SPI.transfer(0x00);
+  bb = SPI.transfer(0x00);
+  cc = SPI.transfer(0x00);
+  delay(1);
+  digitalWrite(_ADCchipSelect, HIGH);  
+  float temp = dataConvert(aa, bb, cc)*1000.0;
+  float dd = 0;
+//  Serial.print("Temperature: ");
+  if (temp < 129){
+//    Serial.print(temp,DEC),Serial.print("  ");
+    dd = ((-1*(129.00-temp)*0.403)+25);
+//    Serial.print(dd, 2), Serial.println(" degrees C");
+  }
+  else {
+//    Serial.print(temp,DEC),Serial.print("  ");
+    dd = ((-1*(129.00-temp)*0.403)+25);
+//    Serial.print(dd, 2), Serial.println(" degrees C");
+}
+  delay(1);  
+  digitalWrite(_ADCchipSelect, LOW);
+  delayMicroseconds(1);   
+  SPI.transfer(0x42);   //Send register START location
+  SPI.transfer(0x07);   //how many registers to write to
+  SPI.transfer(0xCC);   //0x42  INPMUX 
+  SPI.transfer(0x08);   //0x43  PGA
+  SPI.transfer(0x0C);   //0x44  DATARATE
+  SPI.transfer(0x39);   //0x45  REF
+  SPI.transfer(0x00);   //0x46  IDACMAG
+  SPI.transfer(0xFF);   //0x47  IDACMUX
+  SPI.transfer(0x00);   //0x48  VBIAS
+  SPI.transfer(0x00);   //0x49  SYS
+  delay(1);
+  digitalWrite(_ADCchipSelect, HIGH);
+  delay(1);
+  Serial.println(dd, 2);
+}

@@ -15,7 +15,8 @@ Note: Saving one entry per minute, allows ~40 years of data entry
 #define KICKSATLOG_h
 
 #include "Arduino.h"
-#include "SD.h"
+#include <SdFat.h>
+
 
 // User-defined file name
 ///////////////////////////////////
@@ -43,6 +44,7 @@ extern struct LogData data; // Structure for all data storage
 
 class LogHandler {
 public:
+  LogHandler(SdFat _sd);
   bool init(void); // Initialize SD card
   bool available(void);// Open (or make, if it doesn't already exist) the log file, verifying that it is read/write capable
   void startSD(void); // Starts communication with the SD card
@@ -52,9 +54,9 @@ public:
   bool read(uint16_t numLines, char *buf); // Read last N lines in the log file
   void resetLogStruct(void); // Sets all data to zero in the Data structure
   bool compileHealth(char *buf); // Function to compile and return health data for beacon
+private:
+  SdFat SD;
 };
-
-extern LogHandler logfile; // Creates an external, global logfile object
 
 
 #endif
