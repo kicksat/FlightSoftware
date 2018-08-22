@@ -67,9 +67,6 @@ bool SD_DataFile::readDataEntry(int index, byte* buf) {
   return false;
 }
 
-//reads a single data entry from a line containing multiple entries
-//reads an entry of length len from line lineNum starting at the specified index
-//the data is stored in buf
 bool SD_DataFile::readLineIndex(int lineNum, int index, int len, byte* buf){
   if (lineNum < _numEntries) {
     SD.begin(_chipSelectPin);
