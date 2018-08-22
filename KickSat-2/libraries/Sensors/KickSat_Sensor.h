@@ -1,5 +1,5 @@
 #include <Arduino.h>
-
+#include <SdFat.h>
 #ifndef KICKSAT_SENSOR_H_
 #define KICKSAT_SENSOR_H_
 
@@ -7,21 +7,24 @@ class KickSat_Sensor
 {
 
   public:
-    KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name);
+    KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name, SdFat _sd);
     void operate(byte* dataOut);
-    void parseMessage(String msg, String arg[]);
+    String getCommand(String data, char separator, int index);
     void handleCommand(String cmd, byte* buf, int* index);
+    void parseMessage(String msg, String arg[]);
+
+    bool rewriteConfigs(byte* buf, int len);
+    bool validateConfigFiles();
+    
     void burstWriteRegs(byte start, uint8_t len, byte* data);
     void startADC();
     void stopADC();
     void resetADC();
     void shutdownADC();
     void wakeADC();
-    //void regReadout();
+    void regReadout();
     void mosfetV(byte pinNum);
-    bool validateConfigFiles();
-    //void readTemp();
-    String getCommand(String data, char separator, int index);
+    void readTemp();
     float dataConvert( byte a, byte b, byte c);
 
   private:
@@ -40,6 +43,7 @@ class KickSat_Sensor
     const float FSR = (refV*2)/pgaGain;
     const float LSBsize = FSR/pow(2,24);
     bool showHex = true;
+    SdFat SD;
 };
 
 #endif /* KICKSAT_SENSOR_H_ */
