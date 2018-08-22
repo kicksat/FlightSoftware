@@ -29,8 +29,8 @@ const byte commandDictArm[NUM_COMMANDS_ARM][COMMAND_WIDTH] = {{'b','r','n'}};
 
 
 uint8_t parseUplink(char* buf);
-uint8_t extractArmedCommand(byte* buf); 
-uint8_t extractCommand(byte* buf); 
+uint8_t extractArmedCommand(byte* buf);
+uint8_t extractCommand(byte* buf);
 int getSensorMetadata(char* buf, char* metadata);
 
 
@@ -58,7 +58,7 @@ uint8_t listenForUplink(char *buf, uint8_t duration){
 uint8_t parseUplink(char* buf){
   ////////////////////////////////////////////////////////
   uint32_t i = 0;
-  SerialUSB.println("read from buffer: ");
+  //SerialUSB.println("read from buffer: ");
   while(SerialUSB.available() > 0) { // Read until the entire buffer has been read
     buf[i] = SerialUSB.read(); // Reads the available char (ASCII)
     SerialUSB.print(buf[i]);
@@ -74,7 +74,7 @@ uint8_t parseUplink(char* buf){
   if (Checksum.evaluateChecksum((byte*)buf, i)) { // If uplink is valid, to be replaced by checksum validation
     SerialUSB.print("ACK:"); // If checksum is valid, respond with ACK
     SerialUSB.println(buf);
-    // radio.send("ACK") // If checksum is valid, respond with ACK // TODO: This function doesn't exist but should    
+    // radio.send("ACK") // If checksum is valid, respond with ACK // TODO: This function doesn't exist but should
     uint8_t command;
     if(configFile.getArmedStatus()){
       command = extractArmedCommand((byte*)buf);
@@ -86,23 +86,23 @@ uint8_t parseUplink(char* buf){
       SerialUSB.print("Command: ");
       for(int f = 0; f < COMMAND_WIDTH; f++){
         SerialUSB.print((char)commandDict[command][f]);
-      } 
+      }
       SerialUSB.println();
 
       return command;
     }
-  } 
+  }
   SerialUSB.print("NACK:");
   SerialUSB.println(buf);
   // radio.send("NACK") // If checksum is not valid, respond with NACK // TODO: This function doesn't exist but should
-  return UINT8_FALSE; // Return unsuccessfull uplink 
+  return UINT8_FALSE; // Return unsuccessfull uplink
   ////////////////////////////////////////////////////////
 }
 
 ///////////////////
 // Parse command //
 ///////////////////
-uint8_t extractCommand(byte* buf) { 
+uint8_t extractCommand(byte* buf) {
   for (int i = 0; i < NUM_COMMANDS; i++) {
     bool flag = true;
     for (int n = 0; n < COMMAND_WIDTH; n++) {
@@ -119,7 +119,7 @@ uint8_t extractCommand(byte* buf) {
   return UINT8_FALSE;
 }
 
-uint8_t extractArmedCommand(byte* buf) { 
+uint8_t extractArmedCommand(byte* buf) {
   for (int i = 0; i < NUM_COMMANDS_ARM; i++) {
     bool flag = true;
     for (int n = 0; n < COMMAND_WIDTH; n++) {
@@ -152,22 +152,22 @@ void processUplink(char* buf, uint8_t command){
       SerialUSB.println("Command: Enter Arming Mode");
       configFile.setArmed(); // Set flag to enter arming mode
       break;
-      
+
     case 2:{// reflash sensor config
       char metadata[METADATA_WIDTH];
       int metadataLen = getSensorMetadata(buf, metadata);
       SerialUSB.println("Command: Uplink Sensor Config");
-      
+
       //TODO: read data from uplink and write new data to sensor config files
       //IMPORTANT: any uplink can be no longer than 64 bytes so configs must be short
      }
       break;
-    
+
     case 3: // No command --> go back to sleep and go through another standby mode loop
       SerialUSB.println("KickSat is alive! going back to sleep");
       // radio.send(ax25("KickSat is alive!")); // Send health data through radio // TODO: This function doesn't exist yet but should and should be syntactically incorrect
-      break;      
-      
+      break;
+
     case 4: {//burn wires
        SerialUSB.println("Command: Burn Wire");
        byte metadata = buf[COMMAND_WIDTH]; //grab the first byte after the command, this is the burn metadata byte

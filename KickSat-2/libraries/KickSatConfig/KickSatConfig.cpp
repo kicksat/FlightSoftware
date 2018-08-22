@@ -376,7 +376,7 @@ bool KickSatConfig::initFile(String fileName){
     fileStatus = true; // Update flag for file status
     char buf[NUM_ENTRIES]; // Creates a default zero array to write to the file
     for(int i = 0; i < NUM_ENTRIES; i++){
-      buf[i] = '0';
+      buf[i] = (byte) 1;
     }
     logFileHandle.seek(0);
     logFileHandle.print(buf); // Print to log file on the SD card
