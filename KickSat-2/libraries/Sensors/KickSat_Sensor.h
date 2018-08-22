@@ -11,7 +11,7 @@ class KickSat_Sensor
     void operate(byte* dataOut);
     void parseMessage(String msg, String arg[]);
     void handleCommand(String cmd, byte* buf, int* index);
-    void burstWriteRegs(byte* data, uint8_t len);
+    void burstWriteRegs(byte start, uint8_t len, byte* data;
     void startADC();
     void stopADC();
     void resetADC();
