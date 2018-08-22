@@ -14,7 +14,7 @@ class BattHandle {
 	public:
 		BattHandle();
 		void read(float buf[]);
-		float readBattVoltage();
+		int readBattVoltage();
 		float readBattCurrent();
 		float readBattChargeCurrent();
 };

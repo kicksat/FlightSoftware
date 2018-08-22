@@ -1,38 +1,48 @@
 /*
 BatteryHandler - Gathers voltage and current data from the battery and its charging circuit
 
-Last update on: 8-13-18
-by: Andrea
+Last update on: 8-22-18
+by: Max
 */
 
 #include "BattHandler.h"
 
 //constructor
 BattHandle::BattHandle() {
+  //configure pins and inputs
+  analogReadResolution(12); //setting 12 bit resolution
+  pinMode(VBATT, INPUT);
+  pinMode(L1_PROG, INPUT);
+  pinMode(I_BATT, INPUT);
 
 }
 
 //calculates VBATT
 float BattHandle::readBattVoltage() {
   int voltagePinValue = analogRead(VBATT);
-  float battVoltage = voltagePinValue * (3.3/1023.0) * (426.0/110.0); //10bit-ADC with a 426/110 voltage divider
+  float battVoltage = voltagePinValue * (3.3/4096.0) * (426.0/110.0); //12bit-ADC with a 426/110 voltage divider
   return battVoltage;
 }
 
-//calculates IBATT, from measure_Ibatt code written by Max
+//calculates I_BATT (in mA)
+// 8mV reading = 8mA 
 float BattHandle::readBattCurrent() { 
   int currentPinValue = analogRead(I_BATT);
-  float battCurrent = currentPinValue * (3.3/1023.0); //10bit-ADC, in volts
-  battCurrent = (battCurrent / (20.0 * 0.02))*1000.0; //calculating actual Ibatt, putting it in mA
+  float battCurrent = currentPinValue * (3.3/4096.0); //12bit-ADC, in volts
+  battCurrent = battCurrent * 1000.0; //putting it in mA
   return battCurrent;
 }
 
 //calculates the charging current in L1_PROG
-//TODO: figure out the math, cant be tested in KMB21
+/*
+  Ichrg= (988 * Vprog)/Rprog
+  Vprog=1.227V during constant current mode, 0.122 during trickle
+  Rprog=6.04K
+*/
 float BattHandle::readBattChargeCurrent() {
   int chargeCurrentPinValue = analogRead(L1_PROG);
-  float battChargeCurrent = chargeCurrentPinValue * (3.3/1023.0); //10bit-ADC, in volts
-  battChargeCurrent = battChargeCurrent * 1000.0; //convert to mA, TODO: Fix math
+  float battChargeCurrent = chargeCurrentPinValue * (3.3/4096.0); //12bit-ADC, in volts
+  battChargeCurrent = ((battChargeCurrent * 988.0) / 6040.0) * 1000.0; //solve for Ichrg, convert to mA, 
   return battChargeCurrent;
 }
 

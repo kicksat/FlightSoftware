@@ -2,13 +2,15 @@
 #include <ATSAMD21_ADC.h>
 #include <BattHandler.h>
 
-int sensorPin = VBATT;    // select the input pin for the potentiometer
 BattHandle power;
 float buff[3];
 
 void setup() {
-  // declare the ledPin as an OUTPUT:
   SerialUSB.begin(115200);
+  delay(2000);
+  BattHandle();
+  delay(200);
+  
 }
 
 void loop() {
@@ -17,20 +19,23 @@ void loop() {
   for(int i = 0; i < 20; i++) {
     float battery = power.readBattVoltage();
     SerialUSB.print("Voltage: ");
-    SerialUSB.println(battery);
+    SerialUSB.println(battery,3);
     delay(500);
-    SerialUSB.print("Current: ");
-    SerialUSB.println(power.readBattCurrent());
+    float battCurr = power.readBattCurrent();
+    SerialUSB.print("Current Draw: ");
+    SerialUSB.println(battCurr);
     delay(500);
-    SerialUSB.print("Charge I: ");
-    SerialUSB.println(power.readBattChargeCurrent());
+    float battChrg = power.readBattChargeCurrent();
+    SerialUSB.print("Charging Current: ");
+    SerialUSB.println(battChrg);
     delay(500);
-    power.read(buff);
-    SerialUSB.print(buff[0]);
-    SerialUSB.print("    ");
-    SerialUSB.print(buff[1]);
-    SerialUSB.print("    ");
-    SerialUSB.println(buff[2]);
-    delay(500);
+//    power.read(buff);
+//    SerialUSB.print(buff[0]);
+//    SerialUSB.print("    ");
+//    SerialUSB.print(buff[1]);
+//    SerialUSB.print("    ");
+//    SerialUSB.println(buff[2]);
+//    delay(500);
   }               
+}
 }
