@@ -33,6 +33,12 @@ bool SD_DataFile::refresh() {
   return false;
 }
 
+//returns the number of entries currently detected in the file
+//NOTE: if refresh() has not been called, this will be incorrect
+int SD_DataFile::size() {
+  return _numEntries;
+}
+
 //writes from the passed array into the next data entry slot on the data file
 //make sure the passed array is the right size
 //returns true if success, false otherwise
