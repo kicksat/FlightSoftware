@@ -1,4 +1,4 @@
-/// sd_datafile.h - Library for reading and writing sensor data to the SD card
+/// sd_log.h - Library for reading from and writing to the log on the SD card
 
 #ifndef SD_DATAFILE_h
 #define SD_DATAFILE_h
