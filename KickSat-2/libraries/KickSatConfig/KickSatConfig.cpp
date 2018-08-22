@@ -2,6 +2,10 @@
 
 String filenames[3] = {"config0.txt", "config1.txt", "config2.txt"};
 
+KickSatConfig::KickSatConfig(SdFat _sd) {
+  SD = _sd;
+}
+
 int KickSatConfig :: checkAntennaTimer(){
   byte buf[NUM_FILES];
   if(readByteFromThree(buf, TIMER_LOC)){
@@ -425,4 +429,4 @@ bool KickSatConfig::errorCorrectContents(){
   return result;
 }
 
-KickSatConfig configFile; // Create config object
+

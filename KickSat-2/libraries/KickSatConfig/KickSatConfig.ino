@@ -1,7 +1,7 @@
 #include "KickSatConfig.h"
 #include <KickSatLog.h>
-//KickSatConfig configFile;
-
+SdFat SD;
+KickSatConfig configFile(SD);
 
 void setup() {
   SerialUSB.begin(9600);

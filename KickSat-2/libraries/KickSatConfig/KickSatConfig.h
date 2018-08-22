@@ -5,8 +5,9 @@
 #define KICKSATCONFIG_h
 
 #include <Arduino.h>
-#include <SD.h>
+#include <SdFat.h>
 #include <KickSatLog.h>
+
 
 #define CS SPI_CS_SD
 #define HOLD_BYTE 'h'//0x1E
@@ -31,6 +32,7 @@
 
 class KickSatConfig {
 public:
+  KickSatConfig(SdFat _sd);
   int checkAntennaTimer();
   void incrementAntennaTimer();
   byte getStatus();
@@ -76,9 +78,10 @@ public:
   bool readByteFromThree(byte data[3], int location);
   bool writeByte(String filename, byte data, int location);
   byte readByte(String filename, int location);
+private:
+  SdFat SD;
 };
 
-extern KickSatConfig configFile; // Create config object
 
 
 #endif
