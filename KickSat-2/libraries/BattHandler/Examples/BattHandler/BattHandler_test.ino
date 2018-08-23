@@ -18,16 +18,19 @@ void loop() {
   SerialUSB.println("Init");
   for(int i = 0; i < 20; i++) {
     float battery = power.readBattVoltage();
-    SerialUSB.print("Voltage: ");
-    SerialUSB.println(battery,3);
+    SerialUSB.print("Battery Voltage:\t");
+    SerialUSB.print(battery,3);
+    SerialUSB.println(" V");
     delay(500);
     float battCurr = power.readBattCurrent();
-    SerialUSB.print("Current Draw: ");
-    SerialUSB.println(battCurr);
+    SerialUSB.print("Current Draw:\t\t");
+    SerialUSB.print(battCurr);
+    SerialUSB.println(" mA");
     delay(500);
     float battChrg = power.readBattChargeCurrent();
-    SerialUSB.print("Charging Current: ");
-    SerialUSB.println(battChrg);
+    SerialUSB.print("Charging Current:\t");
+    SerialUSB.print(battChrg);
+    SerialUSB.println(" mA");
     delay(500);
 //    power.read(buff);
 //    SerialUSB.print(buff[0]);
@@ -36,6 +39,6 @@ void loop() {
 //    SerialUSB.print("    ");
 //    SerialUSB.println(buff[2]);
 //    delay(500);
-  }               
-}
+//  }               
+  }
 }
