@@ -5,50 +5,93 @@ KickSatConfig configFile(SD);
 
 void setup() {
   SerialUSB.begin(9600);
-  delay(1000);
+  delay(1500);
+  SerialUSB.println("serial initialized");
   configFile.init();
-  configFile.errorCorrectOpening();
+  //configFile.writeByteToAll('1', 2);
+  configFile.errorCorrect();
 
-  configFile.setHold();
-  checkConfigStatus();
-  configFile.writeByteToThree((byte)0, TIMER_LOC);
-  for(int i = 0; i < 10; i++){
-    configFile.incrementAntennaTimer();
-    checkConfigStatus();
-  }
 
-  configFile.setAB1Deployed();
-  checkConfigStatus();
+//  for(int i = 60; i > 0; i--){
+//    SerialUSB.println(i);
+//    delay(1000);
+//  }
+//  
+//  SD.begin(CS);
+//  configFile.errorCorrectOpening();
 
-  configFile.setAB2Deployed();
-  checkConfigStatus();
 
-  configFile.setStandby();
-  checkConfigStatus();
+  // configFile.writeByte("config2.txt", (byte)'1', 0);
+  // //configFile.writeByte("config3.txt", (byte)'2', 0);
+  // //configFile.writeByte("config4.txt", (byte)'1', 0);
+  // byte buf[NUM_FILES];
+  // if(configFile.readByteFromAll(buf, 0)){
+  //   SerialUSB.println("read successful!!!");
+  // }else{
+  //   SerialUSB.println("read failed :( ");
+  // }
+  // SerialUSB.println("Bytes:");
+  // for(int i = 0; i < NUM_FILES; i++){
+  //   SerialUSB.println((char)buf[i]);
+  // }
+  // if(configFile.readByteFromAll(buf, 0)){
+  //   SerialUSB.println("read successful!!!");
+  // }else{
+  //   SerialUSB.println("read failed :( ");
+  // }
+  // SerialUSB.println("Bytes:");
+  // for(int i = 0; i < NUM_FILES; i++){
+  //   SerialUSB.println((char)buf[i]);
+  // }
+}
 
-  configFile.setArmed();
-  checkConfigStatus();
 
-  configFile.setDB1Flag();
-  checkConfigStatus();
 
-  configFile.setDB2Flag();
-  checkConfigStatus();
+void loop(){
+   configFile.setHold();
+   checkConfigStatus();
+    
+   for(int i = 0; i < 10; i++){
+     configFile.incrementAntennaTimer();
+     checkConfigStatus();
+   }
+  
+   configFile.setAB1Deployed();
+   checkConfigStatus();
+  
+   configFile.setAB2Deployed();
+   checkConfigStatus();
+  
+   configFile.setStandby();
+   checkConfigStatus();
+  
+   configFile.setArmed();
+   checkConfigStatus();
+  
+   configFile.setDB1Flag();
+   checkConfigStatus();
+  
+   configFile.setDB2Flag();
+   checkConfigStatus();
+  
+   configFile.setDB3Flag();
+   checkConfigStatus();
+  
+   configFile.setDB1Deployed();
+   checkConfigStatus();
+  
+   configFile.setDB2Deployed();
+   checkConfigStatus();
+  
+   configFile.setDB3Deployed();
+   checkConfigStatus();
+  
+   configFile.setDeployed();
+   checkConfigStatus();
+  
+   delay(10000);
 
-  configFile.setDB3Flag();
-  checkConfigStatus();
-
-  configFile.setDB1Deployed();
-  checkConfigStatus();
-
-  configFile.setDB2Deployed();
-  checkConfigStatus();
-
-  configFile.setDB3Deployed();
-  checkConfigStatus();
-
-  configFile.setDeployed();
-  checkConfigStatus();
+   configFile.init();
 
 }
 
@@ -84,8 +127,4 @@ void checkConfigStatus(){
   SerialUSB.println(configFile.checkAntennaTimer());
   SerialUSB.println();
   delay(500);
-}
-
-void loop(){
-
 }
