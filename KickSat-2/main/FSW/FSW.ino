@@ -10,6 +10,7 @@ by: Ralen
 //////////////
 // Includes //
 //////////////
+#include <FSWvariables.h>
 #include <IMUHandler.h>
 #include <KickSatLog.h>
 #include <RTCCounter.h>
@@ -18,20 +19,28 @@ by: Ralen
 #include <KickSatConfig.h>
 #include <BattHandler.h>
 //#include <kickSatGPS.h>
-
+#include <SD_DataFile.h>
 /////////////////
 // Definitions //
 /////////////////
 #define HOLDTIME 10 // Time to hold after initial deployment, in seconds
-#define BEACONTIMER 10000 // Frequency of beacon, in milliseconds
-#define ANTENNAWAITTIME 1000 // Frequency of save to config during antenna wait
+#define BEACONTIMER 10 // Frequency of beacon, in seconds
+#define ANTENNAWAITTIME 1 // Frequency of save to config during antenna wait
 #define BATTERYTHRESHOLD 2.055 // Battery must be above this threshold to exit standby mode
-#define LISTENINGDURATION 5000 // Defined in milliseconds
-#define ARMINGDURATION 15000 // Defined in milliseconds // 3 minutes
-
+#define LISTENINGDURATION 5 // Defined in milliseconds
+#define ARMINGDURATION 15 // Defined in milliseconds // 3 minutes
+#define SENSOR_DATA_WIDTH 3
 ///////////////////////////////////
 // Declaration of global objects //
 ///////////////////////////////////
+SdFat SD;
+//KickSatConfig configFile(SD);
+//LogHandler logfile(SD);
+//SD_DataFile sensorLog1(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl1.txt", SD);
+//SD_DataFile sensorLog2(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl2.txt", SD);
+//SD_DataFile sensorLog3(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl3.txt", SD);
+//SD_DataFile sensorLog4(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl4.txt", SD);
+
 //IMUHandle IMU; // create IMU object
 Counter watchdogTimer; // creates timer object to trigger watchdog
 Counter beaconTimer; // timer object to indicate when it is time to beacon
@@ -146,7 +155,7 @@ void setup() {
 void loop() {
   // Check if the beaconTimer has triggered and the battery is above the threshold voltage
   if (beaconTimer.check() ){ //&& batteryAboveThreshold()) {
-    SerialUSB.println("****************************BEACON TIME***********************************");   
+    SerialUSB.println("****************************BEACON TIME***********************************");
 
     /////////////////////////////////////
     // Read all health and sensor data //
@@ -320,5 +329,3 @@ void checkConfigStatus(){
   SerialUSB.println();
   delay(500);
 }
-
-

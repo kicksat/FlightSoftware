@@ -12,11 +12,12 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 #include <ChecksumHandler.h>
 #include <KickSatConfig.h>
 #include <RTCCounter.h>
+#include <FSWvariables.h>
+
 // #include <ax25.h>
 // #include <RadioHead.h>
 
 
-#define LISTENINGDURATION 1500 // milliseconds
 
 #define NUM_COMMANDS 4//redacted
 #define NUM_COMMANDS_ARM 1
