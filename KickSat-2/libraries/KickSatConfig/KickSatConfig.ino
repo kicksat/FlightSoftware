@@ -1,4 +1,4 @@
-#include "KickSatConfig.h"
+#include <KickSatConfig.h>
 #include <KickSatLog.h>
 SdFat SD;
 KickSatConfig configFile(SD);
@@ -20,29 +20,30 @@ void setup() {
 //  SD.begin(CS);
 //  configFile.errorCorrectOpening();
 
+//To use comment out private: in KickSatConfig.h
 
-  // configFile.writeByte("config2.txt", (byte)'1', 0);
-  // //configFile.writeByte("config3.txt", (byte)'2', 0);
-  // //configFile.writeByte("config4.txt", (byte)'1', 0);
-  // byte buf[NUM_FILES];
-  // if(configFile.readByteFromAll(buf, 0)){
-  //   SerialUSB.println("read successful!!!");
-  // }else{
-  //   SerialUSB.println("read failed :( ");
-  // }
-  // SerialUSB.println("Bytes:");
-  // for(int i = 0; i < NUM_FILES; i++){
-  //   SerialUSB.println((char)buf[i]);
-  // }
-  // if(configFile.readByteFromAll(buf, 0)){
-  //   SerialUSB.println("read successful!!!");
-  // }else{
-  //   SerialUSB.println("read failed :( ");
-  // }
-  // SerialUSB.println("Bytes:");
-  // for(int i = 0; i < NUM_FILES; i++){
-  //   SerialUSB.println((char)buf[i]);
-  // }
+//   configFile.writeByte("config1.txt", (byte)'1', 0);
+//   //configFile.writeByte("config3.txt", (byte)'2', 0);
+//   //configFile.writeByte("config4.txt", (byte)'1', 0);
+//   byte buf[NUM_FILES];
+//   if(configFile.readByteFromAll(buf, 0)){
+//     SerialUSB.println("read successful!!!");
+//   }else{
+//     SerialUSB.println("read failed :( ");
+//   }
+//   SerialUSB.println("Bytes:");
+//   for(int i = 0; i < NUM_FILES; i++){
+//     SerialUSB.println((char)buf[i]);
+//   }
+//   if(configFile.readByteFromAll(buf, 0)){
+//     SerialUSB.println("read successful!!!");
+//   }else{
+//     SerialUSB.println("read failed :( ");
+//   }
+//   SerialUSB.println("Bytes:");
+//   for(int i = 0; i < NUM_FILES; i++){
+//     SerialUSB.println((char)buf[i]);
+//   }
 }
 
 
