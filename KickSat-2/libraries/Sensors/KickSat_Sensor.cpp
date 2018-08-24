@@ -20,7 +20,7 @@ KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_nam
 
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC
 //based on the config file.
-void KickSat_Sensor::operate(byte* dataOut) {
+int KickSat_Sensor::operate(byte* dataOut) {
   //read commands from config file
   if (validateConfigFiles()) {
     SD.begin(_SDchipSelect);
@@ -48,11 +48,12 @@ void KickSat_Sensor::operate(byte* dataOut) {
       handleCommand(getCommand(commandString, '\n', i), dataOut, &bufIndex);
     }
     shutdownADC();
+    return bufIndex/3;
   } else {
     //TODO: handle case in which error correction fails
     Serial.println("Warning: Config files corrupted beyond repair");
   }
-  
+  return 0;
 }
 
 //this function accepts a string of commands, a separator to delimit by, and an index to search for
