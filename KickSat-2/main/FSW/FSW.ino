@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////
 ////////////////// KICKSAT-2 FLIGHT SOFTWARE ////////////////////
 /////////////////////////////////////////////////////////////////
 
@@ -20,6 +20,8 @@ by: Ralen
 #include <BattHandler.h>
 //#include <kickSatGPS.h>
 #include <SD_DataFile.h>
+#include <beacon.h>
+#include <KickSat_Sensor.h>
 /////////////////
 // Definitions //
 /////////////////
@@ -34,12 +36,6 @@ by: Ralen
 // Declaration of global objects //
 ///////////////////////////////////
 SdFat SD;
-//KickSatConfig configFile(SD);
-//LogHandler logfile(SD);
-//SD_DataFile sensorLog1(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl1.txt", SD);
-//SD_DataFile sensorLog2(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl2.txt", SD);
-//SD_DataFile sensorLog3(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl3.txt", SD);
-//SD_DataFile sensorLog4(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl4.txt", SD);
 
 //IMUHandle IMU; // create IMU object
 Counter watchdogTimer; // creates timer object to trigger watchdog
@@ -54,7 +50,12 @@ IMUHandle IMU;
 // Initialize global variables //
 /////////////////////////////////
 char buf[MAXCHARS]; // Create global variable for buffer from SD read function, this can be piped into radio.send()
-//bool armingMode;
+int sensorNum = 0;
+
+extern SD_DataFile sensorLog1(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl1.txt", SD);
+extern SD_DataFile sensorLog2(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl2.txt", SD);
+extern SD_DataFile sensorLog3(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl3.txt", SD);
+extern SD_DataFile sensorLog4(SPI_CS_SD, SENSOR_DATA_WIDTH, "sl4.txt", SD);
 
 ////////////////////
 // Declare Flags //
@@ -160,6 +161,28 @@ void loop() {
     /////////////////////////////////////
     // Read all health and sensor data //
     /////////////////////////////////////
+    byte sensorData[30];
+    int numDataPoints = kSensor1.operate(sensorData);
+    for (int i = 0; i < numDataPoints; i++) {
+      sensorLog1.writeDataEntry(&(sensorData[i*3]));
+    }
+
+    numDataPoints = kSensor2.operate(sensorData);
+    for (int i = 0; i < numDataPoints; i++) {
+      sensorLog2.writeDataEntry(&(sensorData[i*3]));
+    }
+
+//    numDataPoints = kSensor3.operate(sensorData);
+//    for (int i = 0; i < numDataPoints; i++) {
+//      sensorLog3.writeDataEntry(&(sensorData[i*3]));
+//    }
+//
+//    numDataPoints = kSensor4.operate(sensorData);
+//    for (int i = 0; i < numDataPoints; i++) {
+//      sensorLog4.writeDataEntry(&(sensorData[i*3]));
+//    }
+
+    
     createRandomData(); // Temporary solution TODO: Complete data collection for all sensors
     power.read(data.powerData); // Read IMU data TODO: This function doesn't exist but should
     //kickSatGPS.read(data.gpsData); // Read IMU data TODO: This function doesn't exist but should
@@ -178,9 +201,20 @@ void loop() {
     //////////////////////////////////////////
     // Format health data and send to radio //
     //////////////////////////////////////////
-    if(logfile.available()) {
-      logfile.compileHealth(buf);
+    int len = 0;
+    if (sensorNum == 1) {
+      len = beacon(buf, sensorLog1);
+    } else if (sensorNum == 2) {
+      len = beacon(buf, sensorLog2);
+    } else if (sensorNum == 3) {
+      len = beacon(buf, sensorLog3);
+    } else if (sensorNum == 4) {
+      len = beacon(buf, sensorLog4);
     }
+   sensorNum++;
+   if(sensorNum > 3){  //cycles through every sensor
+     sensorNum = 0;
+   }
     // radio.send(ax25(buf)); // Send health data through radio // TODO: This function doesn't exist yet but should
 
     //////////////////////////
@@ -316,14 +350,6 @@ void checkConfigStatus(){
   SerialUSB.print(configFile.getDB2FlagStatus());
   SerialUSB.print(", FB3: ");
   SerialUSB.println(configFile.getDB3FlagStatus());
-//  SerialUSB.print("Hold mode: ");
-//  SerialUSB.print(configFile.getHoldstatus());
-//  SerialUSB.print(", Standby mode: ");
-//  SerialUSB.print(configFile.getStandbyStatus());
-//  SerialUSB.print(", Armed mode: ");
-//  SerialUSB.print(configFile.getArmedStatus());
-//  SerialUSB.print(", Deployed mode: ");
-//  SerialUSB.println(configFile.getDeployedStatus());
   SerialUSB.print("Antenna Timer: ");
   SerialUSB.println(configFile.checkAntennaTimer());
   SerialUSB.println();

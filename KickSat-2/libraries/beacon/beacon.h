@@ -6,7 +6,7 @@
 #include <SdFat.h>
 #include <FSWvariables.h>
 
-#define MAX_PACKET_SIZE 200
+#define MAX_PACKET_SIZE 200 //TODO: look at radiohead and ax25-> radiohead is 255 find how much
 #define DATA_WIDTH 3
 #define BEACONS_PER_DOWNLINK 10
 #define MAX_LOG_SIZE 180
@@ -24,7 +24,7 @@ int beacon(char* output, SD_DataFile sensorLog){
     sensorLog.readDataEntry(currIndex, dataEntry);
     currIndex --;
     for(int j = 0; j < DATA_WIDTH; j++){
-       result += (char)dataEntry[j];    
+       result += (char)dataEntry[j];
     }
   }
   int len = result.length();
@@ -33,7 +33,7 @@ int beacon(char* output, SD_DataFile sensorLog){
 }
 
 
-void downLinkBeacon(SD_DataFile sensorLog, String beacons[]){
+void downLinkBeacon(SD_DataFile sensorLog, String* beacons){
     char buf[BEACONS_PER_DOWNLINK*MAX_LOG_SIZE];
     //String beacons[BEACONS_PER_DOWNLINK];
     logfile.read(BEACONS_PER_DOWNLINK, buf);

@@ -341,7 +341,7 @@ bool KickSatConfig :: init() {
   DB3FlagStatus = FLAG_FALSE;
   statusByte = '0';
   antennaTimer = 1;
-  
+
   return SDStatus; // Returns true if SD card initializes
 }
 
@@ -395,7 +395,7 @@ bool KickSatConfig::writeByteToAll(byte data, int location){
   the array will be the correct byte. If the read failed it will return the
   data it read- several different bytes
 */
-bool KickSatConfig::readByteFromAll(byte data[NUM_FILES], int location){
+bool KickSatConfig::readByteFromAll(byte* data, int location){
   if(location > NUM_ENTRIES){ //can't read beyond num_entries because all values must be initialized when using sd seek
     return false;
   }
@@ -558,7 +558,7 @@ bool KickSatConfig::errorCorrect(){
     return contentsFine;
   }else if (numTrue >= (NUM_FILES/2)){ //more than half of the files open but some don't ->  make a new file, reinitialize then copy other files contents into it
     SerialUSB.println("fixable");
-    for(int i = 0; i < NUM_FILES; i++){ 
+    for(int i = 0; i < NUM_FILES; i++){
       if(!canOpen[i]){                     //if file couldn't open
         int dashIndex = configFilenames[i].indexOf('-');
         String newName = configFilenames[i].substring(0, 7); //rename config file
@@ -573,7 +573,7 @@ bool KickSatConfig::errorCorrect(){
           newName += num;
         }
         newName += ".txt";
-        configFilenames[i] = newName; 
+        configFilenames[i] = newName;
         initFile(configFilenames[i]); //reinitialize
       }
     }

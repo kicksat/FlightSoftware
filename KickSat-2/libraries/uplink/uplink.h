@@ -158,6 +158,18 @@ void processUplink(char* buf, uint8_t command){
       char metadata[METADATA_WIDTH];
       int metadataLen = getSensorMetadata(buf, metadata);
       SerialUSB.println("Command: Uplink Sensor Config");
+      SerialUSB.println("Command: Uplink Sensor Config");
+
+      uint8_t sensor_num = metadata[0]; //the first byte of metadata is the number of the sensor board we're rewriting to
+      if (sensor_num == 1) {
+        kSensor1.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      } else if (sensor_num == 2) {
+        kSensor2.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      } else if (sensor_num == 3) {
+        kSensor3.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      } else if (sensor_num == 4) {
+        kSensor4.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      }
 
       //TODO: read data from uplink and write new data to sensor config files
       //IMPORTANT: any uplink can be no longer than 64 bytes so configs must be short
