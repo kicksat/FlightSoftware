@@ -8,7 +8,7 @@ class KickSat_Sensor
 
   public:
     KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name, SdFat _sd);
-    void operate(byte* dataOut);
+    int operate(byte* dataOut);
     String getCommand(String data, char separator, int index);
     void handleCommand(String cmd, byte* buf, int* index);
     void parseMessage(String msg, String arg[]);
