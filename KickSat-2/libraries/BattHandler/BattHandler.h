@@ -1,7 +1,7 @@
 /*
 BatteryHandler - Gathers voltage and current data from the battery and its charging circuit
 
-Last update on: 8-13-18
+Last update on: 24-8-18
 by: Andrea
 */
 
@@ -14,7 +14,7 @@ class BattHandle {
 	public:
 		BattHandle();
 		void read(float buf[]);
-		int readBattVoltage();
+		float readBattVoltage();
 		float readBattCurrent();
 		float readBattChargeCurrent();
 };
