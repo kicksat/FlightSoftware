@@ -298,7 +298,7 @@ void KickSatConfig :: setDeployed(){
 
 
 // Initialize SD card
-bool KickSatConfig :: init() {
+bool KickSatConfig :: init() { //TODO: don't set to zero if file already exists
  if (!SDStatus) { // If the SD card is not initialized (this is an exern variable in the kicksat log class)
    pinMode(CS, OUTPUT); // Set pinmode for the SD card CS to output
    startSD(); // Starts communication with the SD card
@@ -311,7 +311,7 @@ bool KickSatConfig :: init() {
  }
  for(int i = 0; i < NUM_FILES; i++){  //inititalize all of the files, set default values
   if(!initFile(configFilenames[i])){ //if file cannot initialize
-   SDStatus = false;                 //set SD status false TODO: add error correct opening
+   SDStatus = false;                 //set SD status false 
    SerialUSB.println("File initialization failed");
   }
  }

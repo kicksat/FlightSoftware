@@ -21,7 +21,7 @@ by: Ralen
 //#include <kickSatGPS.h>
 #include <SD_DataFile.h>
 #include <beacon.h>
-#include <KickSat_Sensor.h>
+//#include <KickSat_Sensor.h>
 /////////////////
 // Definitions //
 /////////////////
@@ -91,19 +91,22 @@ void setup() {
   SerialUSB.println("SerialUSB Initialized");
   delay(5000); // Provides user with time to open SerialUSB Monitor or upload before sleep
 
+  SD.begin(SPI_CS_SD);
+  
   // Init objects
-  if(configFile.init()) { // Initialize SD card and config file
-    SerialUSB.println("Config File Initialized");
-  } else {
-    SerialUSB.println("Config File Not Initialized");
-  }
-
+  
   if(logfile.init()) { // Initialize log file
     SerialUSB.println("Log Card Initialized");
   } else {
     SerialUSB.println("Log Card Not Initialized");
   }
-
+  
+  if(configFile.init()) { // Initialize SD card and config file
+    SerialUSB.println("Config File Initialized");
+  } else {
+    SerialUSB.println("Config File Not Initialized");
+  }
+  
   if(IMU.begin()){ // Initialize IMU
     SerialUSB.println("IMU Intialized");
   } else {
@@ -161,16 +164,16 @@ void loop() {
     /////////////////////////////////////
     // Read all health and sensor data //
     /////////////////////////////////////
-    byte sensorData[30];
-    int numDataPoints = kSensor1.operate(sensorData);
-    for (int i = 0; i < numDataPoints; i++) {
-      sensorLog1.writeDataEntry(&(sensorData[i*3]));
-    }
-
-    numDataPoints = kSensor2.operate(sensorData);
-    for (int i = 0; i < numDataPoints; i++) {
-      sensorLog2.writeDataEntry(&(sensorData[i*3]));
-    }
+//    byte sensorData[30];
+//    int numDataPoints = kSensor1.operate(sensorData);
+//    for (int i = 0; i < numDataPoints; i++) {
+//      sensorLog1.writeDataEntry(&(sensorData[i*3]));
+//    }
+//
+//    numDataPoints = kSensor2.operate(sensorData);
+//    for (int i = 0; i < numDataPoints; i++) {
+//      sensorLog2.writeDataEntry(&(sensorData[i*3]));
+//    }
 
 //    numDataPoints = kSensor3.operate(sensorData);
 //    for (int i = 0; i < numDataPoints; i++) {
@@ -215,6 +218,11 @@ void loop() {
    if(sensorNum > 3){  //cycles through every sensor
      sensorNum = 0;
    }
+   SerialUSB.print("Beacon: ");
+   for(int i = 0; i < len; i++){
+    SerialUSB.print(buf[i]);
+   }
+   SerialUSB.println();
     // radio.send(ax25(buf)); // Send health data through radio // TODO: This function doesn't exist yet but should
 
     //////////////////////////
@@ -278,6 +286,46 @@ void createRandomData() { // Temporary until we are     createRandomData(); // T
   }
   for(uint8_t i = 0; i < 9; i++){
     data.imuData[i] = random(0,100)/9.123;
+  }
+  char filler = 'A';
+  for(int i = 0; i < 50; i++){
+    sensorLog1.refresh();
+    byte buf[DATA_WIDTH];
+    buf[0] = (byte)filler;
+    buf[1] = (byte)filler;
+    buf[2] = (byte)filler;
+    sensorLog1.writeDataEntry(buf);
+    filler++;
+  }
+  filler = 'A';
+  for(int i = 0; i < 50; i++){
+    sensorLog1.refresh();
+    byte buf[DATA_WIDTH];
+    buf[0] = (byte)filler;
+    buf[1] = (byte)filler;
+    buf[2] = (byte)filler;
+    sensorLog2.writeDataEntry(buf);
+    filler++;
+  }
+  filler = 'A';
+  for(int i = 0; i < 50; i++){
+    sensorLog1.refresh();
+    byte buf[DATA_WIDTH];
+    buf[0] = (byte)filler;
+    buf[1] = (byte)filler;
+    buf[2] = (byte)filler;
+    sensorLog3.writeDataEntry(buf);
+    filler++;
+  }
+  filler = 'A';
+  for(int i = 0; i < 50; i++){
+    sensorLog1.refresh();
+    byte buf[DATA_WIDTH];
+    buf[0] = (byte)filler;
+    buf[1] = (byte)filler;
+    buf[2] = (byte)filler;
+    sensorLog4.writeDataEntry(buf);
+    filler++;
   }
 }
 

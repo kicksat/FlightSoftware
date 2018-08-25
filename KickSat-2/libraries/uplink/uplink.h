@@ -13,7 +13,7 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 #include <KickSatConfig.h>
 #include <RTCCounter.h>
 #include <FSWvariables.h>
-
+#include <beacon.h>
 // #include <ax25.h>
 // #include <RadioHead.h>
 
@@ -28,6 +28,7 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 const byte commandDict[NUM_COMMANDS][COMMAND_WIDTH] = {{'d','o','g'},{'c','a','t'},{'p','i','g'},{'o','w','l'}/* REDACTED */};
 const byte commandDictArm[NUM_COMMANDS_ARM][COMMAND_WIDTH] = {{'b','r','n'}};
 
+String beacons[BEACONS_PER_DOWNLINK];
 
 uint8_t parseUplink(char* buf);
 uint8_t extractArmedCommand(byte* buf);
@@ -143,10 +144,22 @@ uint8_t extractArmedCommand(byte* buf) {
 ////////////////////
 void processUplink(char* buf, uint8_t command){
   switch(command) { // respond to the command
-    case 0: // Downlink
+    case 0:{ // Downlink
       SerialUSB.println("Command: Start Downlink");
-      //TODO: increase the frequency of beacons and begin sending older log data
-      //NOTE: this is its own function, which shits out a bunch of data
+      // uint8_t sensor_num = metadata[0]; //the first byte of metadata is the number of the sensor board we're rewriting to
+      //  if (sensor_num == 1) {
+      //    downLinkBeacon(sensorLog1, beacons);
+      //  } else if (sensor_num == 2) {
+      //    downLinkBeacon(sensorLog2, beacons);
+      //  } else if (sensor_num == 3) {
+      //    downLinkBeacon(sensorLog3, beacons);
+      //  } else if (sensor_num == 4) {
+      //    downLinkBeacon(sensorLog4, beacons);
+      //  }
+      //  for(int i = 0; i < BEACONS_PER_DOWNLINK; i++){
+      //    SerialUSB.println(beacons[i]);
+      //  }
+     }
       break;
 
     case 1: // set Arming mode
@@ -158,18 +171,16 @@ void processUplink(char* buf, uint8_t command){
       char metadata[METADATA_WIDTH];
       int metadataLen = getSensorMetadata(buf, metadata);
       SerialUSB.println("Command: Uplink Sensor Config");
-      SerialUSB.println("Command: Uplink Sensor Config");
-
-      uint8_t sensor_num = metadata[0]; //the first byte of metadata is the number of the sensor board we're rewriting to
-      if (sensor_num == 1) {
-        kSensor1.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
-      } else if (sensor_num == 2) {
-        kSensor2.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
-      } else if (sensor_num == 3) {
-        kSensor3.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
-      } else if (sensor_num == 4) {
-        kSensor4.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
-      }
+      // uint8_t sensor_num = metadata[0]; //the first byte of metadata is the number of the sensor board we're rewriting to
+      // if (sensor_num == 1) {
+      //   kSensor1.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      // } else if (sensor_num == 2) {
+      //   kSensor2.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      // } else if (sensor_num == 3) {
+      //   kSensor3.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      // } else if (sensor_num == 4) {
+      //   kSensor4.rewriteConfigs((byte*)&(metadata[1]), metadataLen - 1);
+      // }
 
       //TODO: read data from uplink and write new data to sensor config files
       //IMPORTANT: any uplink can be no longer than 64 bytes so configs must be short
