@@ -2,6 +2,11 @@
 
 String configFilenames[NUM_FILES] = {"config0.txt", "config1.txt", "config2.txt"};
 
+byte buf[NUM_FILES];
+int votes[NUM_FILES]; //represents the number of times each byte is represented
+char entryBuf[NUM_ENTRIES]; // Creates a default zero array to write to the file
+bool boolBuf[NUM_FILES];
+
 KickSatConfig::KickSatConfig(SdFat _sd) {
  SD = _sd;
 }

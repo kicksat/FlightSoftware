@@ -36,11 +36,6 @@
 #define NUM_FILES 3 //number of files
 #define NUM_ENTRIES 10 //number of bytes in each file
 
-byte buf[NUM_FILES];
-int votes[NUM_FILES]; //represents the number of times each byte is represented
-char entryBuf[NUM_ENTRIES]; // Creates a default zero array to write to the file
-bool boolBuf[NUM_FILES];
-
 class KickSatConfig {
 public:
  KickSatConfig(SdFat _sd);
