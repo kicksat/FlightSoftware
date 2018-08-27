@@ -223,6 +223,8 @@ void loop() {
     SerialUSB.print(buf[i]);
    }
    SerialUSB.println();
+//   int len = result.length(); TODO: can use these 2 lines of code to convert string to char array, needed to use radio.send(const uint8_t* data, uint8_t len)
+//   result.toCharArray(output, len);
     // radio.send(ax25(buf)); // Send health data through radio // TODO: This function doesn't exist yet but should
 
     //////////////////////////
