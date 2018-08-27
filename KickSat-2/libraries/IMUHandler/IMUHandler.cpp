@@ -1,10 +1,10 @@
 /*
 IMUHandler - Gathers and formats LSM9DS1Sensor data from the LSM9DS1 using the SparkFunLSM9DS1 lib
 
-Last update on: 8-11-18
-by: Ralen
+Last update on: 27-8-18
+by: Andrea
 */
-
+//TODO: remove SerialUSB pritnlns in final version of code
 #include "IMUHandler.h"
 #include "SparkFunLSM9DS1.h"
 #include "RTCCounter.h"
@@ -37,7 +37,7 @@ void IMUHandle::getGyro(float buf[]) {
   }
 
   LSM9DS1Sensor.settings.mag.operatingMode = 1; // Single data sample mode
-  timeout.start(1000); // Start timeout
+  timeout.start(1); // Start timeout
   while(!LSM9DS1Sensor.gyroAvailable()){
     if (timeout.triggered()) { // Checks time for timeout
       SerialUSB.println("GYROSCOPE TIMEOUT");

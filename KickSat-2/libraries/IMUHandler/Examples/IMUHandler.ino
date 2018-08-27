@@ -1,3 +1,7 @@
+/*
+ * IMUHandler test - tests the IMU, reads data from the IMU every 5 seconds and prints to Serial Monitor
+ */
+
 #include "IMUHandler.h"
 #include <Wire.h>
 #include <SPI.h>
@@ -27,7 +31,7 @@ void setup() {
   } else {
     SerialUSB.println("IMU Intialized");
   }
-  readIMUTimer.init(5000); // timer delay, seconds
+  readIMUTimer.init(5); // timer delay, seconds
 }
 
 void loop() {
