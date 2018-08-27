@@ -1,6 +1,7 @@
 //**********************************************************
 // burn.c
 //**********************************************************
+//TODO: test this library with correct duration, dutyCycle and pulseFrequency values and with real components
 
 #include "Arduino.h"
 #include <RTCCounter.h>
@@ -8,14 +9,14 @@
 
 void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency){ // duration(ms), dutyCycle(%), Frequency (Hz)
 
-  SerialUSB.println(relay);
+  SerialUSB.println(relay); //TODO: remove SerialUSB printlns for final code version
   SerialUSB.println(burnwire);
   SerialUSB.println(duration);
   SerialUSB.println(dutyCycle);
   SerialUSB.println(pulseFrequency);
   SerialUSB.println();
 
-  // pinMode(burnwire, OUTPUT);
+  // pinMode(burnwire, OUTPUT); //TODO: comment burnwire and relay settings back in for final code version
   // digitalWrite(relay, HIGH);
   float  cycleTime = 1/pulseFrequency;
   timeout.start(duration);
@@ -41,15 +42,15 @@ void Burn::burnAntennaTwo() {
 }
 
 void Burn::burnSpriteOne() {
-  burn(BURN_RELAY_B, BURN_SPRITE_1, ANTENNA_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
+  burn(BURN_RELAY_B, BURN_SPRITE_1, SPRITE_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
 }
 
 void Burn::burnSpriteTwo() {
-  burn(BURN_RELAY_B, BURN_SPRITE_2, ANTENNA_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
+  burn(BURN_RELAY_B, BURN_SPRITE_2, SPRITE_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
 }
 
 void Burn::burnSpriteThree(){
-  burn(BURN_RELAY_B, BURN_SPRITE_3, ANTENNA_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
+  burn(BURN_RELAY_B, BURN_SPRITE_3, SPRITE_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
 }
 
 void Burn::burnAntenna() {
