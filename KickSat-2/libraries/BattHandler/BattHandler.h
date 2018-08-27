@@ -13,7 +13,7 @@ by: Andrea
 class BattHandle {
 	public:
 		BattHandle();
-		void read(float buf[]);
+		void read(float buf[]); //read battery voltage, current, and charging current and stores them on a buffer
 		float readBattVoltage();
 		float readBattCurrent();
 		float readBattChargeCurrent();
