@@ -31,7 +31,7 @@ void setup() {
   } else {
     SerialUSB.println("IMU Intialized");
   }
-  readIMUTimer.init(5); // timer delay, seconds
+  readIMUTimer.init(5000); // timer delay, milliseconds
 }
 
 void loop() {
