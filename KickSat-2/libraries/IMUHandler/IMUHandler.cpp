@@ -37,7 +37,7 @@ void IMUHandle::getGyro(float buf[]) {
   }
 
   LSM9DS1Sensor.settings.mag.operatingMode = 1; // Single data sample mode
-  timeout.start(1); // Start timeout
+  timeout.start(1000); // Start timeout (milliseconds)
   while(!LSM9DS1Sensor.gyroAvailable()){
     if (timeout.triggered()) { // Checks time for timeout
       SerialUSB.println("GYROSCOPE TIMEOUT");
