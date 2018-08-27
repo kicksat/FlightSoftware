@@ -94,7 +94,7 @@ private:
  bool writeByteToAll(byte data, int location); //writes a single byte to all three files
  bool readByteFromAll(byte* data, int location);//reads a byte from all three files, automatically error corrects if one is different
  bool writeByte(String filename, byte data, int location); //writes a single byte to a single file
- bool readByte(String filename, int location, byte* buf); //reads a single byte from a single file
+ bool readByte(String filename, int location, byte* configBuf); //reads a single byte from a single file
 
  SdFat SD;
  byte AB1status;

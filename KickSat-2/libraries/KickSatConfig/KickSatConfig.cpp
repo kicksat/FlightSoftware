@@ -2,7 +2,7 @@
 
 String configFilenames[NUM_FILES] = {"config0.txt", "config1.txt", "config2.txt"};
 
-byte buf[NUM_FILES];
+byte configBuf[NUM_FILES];
 int votes[NUM_FILES]; //represents the number of times each byte is represented
 char entryBuf[NUM_ENTRIES]; // Creates a default zero array to write to the file
 bool boolBuf[NUM_FILES];
@@ -12,13 +12,13 @@ KickSatConfig::KickSatConfig(SdFat _sd) {
 }
 
 int KickSatConfig :: checkAntennaTimer(){
- if(readByteFromAll(buf, TIMER_LOC)){
-   uint8_t result = buf[0];
+ if(readByteFromAll(configBuf, TIMER_LOC)){
+   uint8_t result = configBuf[0];
    return (int)result;
- }else{
+ } else {
    errorCorrect();
-   if(readByteFromAll(buf, TIMER_LOC)){
-     return (int)buf[0];
+   if(readByteFromAll(configBuf, TIMER_LOC)){
+     return (int)configBuf[0];
    }
  }
  return antennaTimer;
@@ -36,89 +36,89 @@ void  KickSatConfig :: incrementAntennaTimer(){
 }
 
 bool KickSatConfig :: getHoldstatus(){
- if(!readByteFromAll(buf, STATUS_LOC)){
+ if(!readByteFromAll(configBuf, STATUS_LOC)){
    errorCorrect();
-   if(!readByteFromAll(buf, STATUS_LOC)){
-     buf[0] = statusByte;
+   if(!readByteFromAll(configBuf, STATUS_LOC)){
+     configBuf[0] = statusByte;
    }
  }
- if(buf[0] == HOLD_BYTE){
+ if(configBuf[0] == HOLD_BYTE){
      return true;
  }
  return false;
 }
 
 byte KickSatConfig :: getStatus(){
- if(!readByteFromAll(buf, STATUS_LOC)){
+ if(!readByteFromAll(configBuf, STATUS_LOC)){
    errorCorrect();
-   if(!readByteFromAll(buf, STATUS_LOC)){
-     buf[0] = statusByte;
+   if(!readByteFromAll(configBuf, STATUS_LOC)){
+     configBuf[0] = statusByte;
    }
  }
- return buf[0];
+ return configBuf[0];
 }
 
 
 bool KickSatConfig :: getAB1status(){
- if(!readByteFromAll(buf, AB1_LOC)){
+ if(!readByteFromAll(configBuf, AB1_LOC)){
    errorCorrect();
-   if(!readByteFromAll(buf, AB1_LOC)){
-     buf[0] = AB1status;
+   if(!readByteFromAll(configBuf, AB1_LOC)){
+     configBuf[0] = AB1status;
    }
  }
- if(buf[0] == FLAG_TRUE){
+ if(configBuf[0] == FLAG_TRUE){
      return true;
  }
  return false;
 }
 
 bool KickSatConfig :: getAB2status(){
- if(!readByteFromAll(buf, AB2_LOC)){
+ if(!readByteFromAll(configBuf, AB2_LOC)){
    errorCorrect();
-   if(!readByteFromAll(buf, AB2_LOC)){
-     buf[0] = AB2status;
+   if(!readByteFromAll(configBuf, AB2_LOC)){
+     configBuf[0] = AB2status;
    }
  }
- if(buf[0] == FLAG_TRUE){
+ if(configBuf[0] == FLAG_TRUE){
      return true;
  }
  return false;
 }
 
 bool KickSatConfig :: getDB1status(){
-  if(!readByteFromAll(buf, DB1_LOC)){
+  if(!readByteFromAll(configBuf, DB1_LOC)){
     errorCorrect();
-    if(!readByteFromAll(buf, DB1_LOC)){
-     buf[0] = DB1status;
+    if(!readByteFromAll(configBuf, DB1_LOC)){
+     configBuf[0] = DB1status;
    }
   }
-  if(buf[0] == FLAG_TRUE){
+  if(configBuf[0] == FLAG_TRUE){
       return true;
     }
   return false;
 }
 
 bool KickSatConfig :: getDB2status(){
-  if(!readByteFromAll(buf, DB2_LOC)){
+  if(!readByteFromAll(configBuf, DB2_LOC)){
     errorCorrect();
-    if(!readByteFromAll(buf, DB2_LOC)){
-     buf[0] = DB2status;
+    if(!readByteFromAll(configBuf, DB2_LOC)){
+     configBuf[0] = DB2status;
    }
   }
-  if(buf[0] == FLAG_TRUE){
+  if(configBuf[0] == FLAG_TRUE){
       return true;
     }
   return false;
 }
 
 bool KickSatConfig :: getDB3status(){
-  if(!readByteFromAll(buf, DB3_LOC)){
+  if(!readByteFromAll(configBuf, DB3_LOC)){
     errorCorrect();
-    if(!readByteFromAll(buf, DB3_LOC)){
-     buf[0] = DB3status;
+    if(!readByteFromAll(configBuf, DB3_LOC)){
+     configBuf[0] = DB3status;
    }
   }
-  if(buf[0] == FLAG_TRUE){
+  if(configBuf[0] == FLAG_TRUE){
       return true;
     }
   return false;
@@ -126,52 +126,52 @@ bool KickSatConfig :: getDB3status(){
 }
 
 bool KickSatConfig :: getDB1FlagStatus(){
-  if(!readByteFromAll(buf, DB1_FLAG_LOC)){
+  if(!readByteFromAll(configBuf, DB1_FLAG_LOC)){
     errorCorrect();
-    if(!readByteFromAll(buf, DB1_FLAG_LOC)){
-     buf[0] = DB1FlagStatus;
+    if(!readByteFromAll(configBuf, DB1_FLAG_LOC)){
+     configBuf[0] = DB1FlagStatus;
    }
   }
-  if(buf[0] == FLAG_TRUE){
+  if(configBuf[0] == FLAG_TRUE){
       return true;
     }
   return false;
 }
 
 bool KickSatConfig :: getDB2FlagStatus(){
-  if(!readByteFromAll(buf, DB2_FLAG_LOC)){
+  if(!readByteFromAll(configBuf, DB2_FLAG_LOC)){
     errorCorrect();
-    if(!readByteFromAll(buf, DB2_FLAG_LOC)){
-     buf[0] = DB2FlagStatus;
+    if(!readByteFromAll(configBuf, DB2_FLAG_LOC)){
+     configBuf[0] = DB2FlagStatus;
    }
   }
-  if(buf[0] == FLAG_TRUE){
+  if(configBuf[0] == FLAG_TRUE){
       return true;
     }
   return false;
 }
 
 bool KickSatConfig :: getDB3FlagStatus(){
-  if(!readByteFromAll(buf, DB3_FLAG_LOC)){
+  if(!readByteFromAll(configBuf, DB3_FLAG_LOC)){
     errorCorrect();
-    if(!readByteFromAll(buf, DB3_FLAG_LOC)){
-     buf[0] = DB3FlagStatus;
+    if(!readByteFromAll(configBuf, DB3_FLAG_LOC)){
+     configBuf[0] = DB3FlagStatus;
    }
   }
-  if(buf[0] == FLAG_TRUE){
+  if(configBuf[0] == FLAG_TRUE){
       return true;
     }
   return false;
 }
 
 bool KickSatConfig :: getStandbyStatus(){
- if(!readByteFromAll(buf, STATUS_LOC)){
+ if(!readByteFromAll(configBuf, STATUS_LOC)){
    errorCorrect();
-   if(!readByteFromAll(buf, STATUS_LOC)){
-     buf[0] = statusByte;
+   if(!readByteFromAll(configBuf, STATUS_LOC)){
+     configBuf[0] = statusByte;
    }
  }
- if(buf[0] == STANDBY_BYTE){
+ if(configBuf[0] == STANDBY_BYTE){
      return true;
    }
  return false;
@@ -179,26 +179,26 @@ bool KickSatConfig :: getStandbyStatus(){
 }
 
 bool KickSatConfig :: getArmedStatus(){
- if(!readByteFromAll(buf, STATUS_LOC)){
+ if(!readByteFromAll(configBuf, STATUS_LOC)){
    errorCorrect();
-   if(!readByteFromAll(buf, STATUS_LOC)){
-     buf[0] = statusByte;
+   if(!readByteFromAll(configBuf, STATUS_LOC)){
+     configBuf[0] = statusByte;
    }
  }
- if(buf[0] == ARMED_BYTE){
+ if(configBuf[0] == ARMED_BYTE){
      return true;
    }
  return false;
 }
 
 bool KickSatConfig :: getDeployedStatus(){
- if(!readByteFromAll(buf, STATUS_LOC)){
+ if(!readByteFromAll(configBuf, STATUS_LOC)){
    errorCorrect();
-   if(!readByteFromAll(buf, STATUS_LOC)){
-     buf[0] = statusByte;
+   if(!readByteFromAll(configBuf, STATUS_LOC)){
+     configBuf[0] = statusByte;
    }
  }
- if(buf[0] == DEPLOYED_BYTE){
+ if(configBuf[0] == DEPLOYED_BYTE){
      return true;
  }
  return false;
@@ -309,19 +309,20 @@ bool KickSatConfig :: init() { //TODO: don't set to zero if file already exists
    startSD(); // Starts communication with the SD card
    SDStatus = SD.begin(CS); // Record initialization of the SD card
  }
- if(SDStatus){
+ if(SDStatus) {
     SerialUSB.println("SD initialized");
- }else{
+ } else {
    SerialUSB.println("SD initialization failed");
  }
  for(int i = 0; i < NUM_FILES; i++){  //inititalize all of the files, set default values
   if(!initFile(configFilenames[i])){ //if file cannot initialize
-   SDStatus = false;                 //set SD status false 
+   SDStatus = false;                 //set SD status false
    SerialUSB.println("File initialization failed");
   }
  }
  endSD(); // Ends communication with the SD card
 
+ // Default config values if the SD card is not working
  AB1status = FLAG_FALSE;
  AB2status = FLAG_FALSE;
  DB1status = FLAG_FALSE;
@@ -330,10 +331,11 @@ bool KickSatConfig :: init() { //TODO: don't set to zero if file already exists
  DB1FlagStatus = FLAG_FALSE;
  DB2FlagStatus = FLAG_FALSE;
  DB3FlagStatus = FLAG_FALSE;
- statusByte = '0';
+ statusByte = STANDBY_BYTE; // Sets initial mode as standby
  antennaTimer = 1;
 
  return SDStatus; // Returns true if SD card initializes
+
 }
 
 
@@ -390,26 +392,26 @@ bool KickSatConfig::readByteFromAll(byte* data, int location){
    return false;
  }
  for(int i = 0; i < NUM_FILES; i++){
-    if(!readByte(configFilenames[i], location, buf)){ //may be due to improper initialization- reinitialize and try again
+    if(!readByte(configFilenames[i], location, configBuf)){ //may be due to improper initialization- reinitialize and try again
       initFile(configFilenames[i]);
-      if(!readByte(configFilenames[i], location, buf)){
+      if(!readByte(configFilenames[i], location, configBuf)){
        return false;
       }
     }
-    data[i] = buf[0];
+    data[i] = configBuf[0];
  }
  for(int i = 0; i < NUM_FILES; i++){ //initialize votes to zero
    votes[i] = 0;
  }
 
- buf[0] = data[0]; //set the first byte option to the first output of data
+ configBuf[0] = data[0]; //set the first byte option to the first output of data
  for(int i = 0; i < NUM_FILES; i++){ //go through every data entry
    for(int j = 0; j < NUM_FILES; j++){ //compare to all byte options
-     if(data[i] == buf[j]){ //if data entry equal to an existing byte option
+     if(data[i] == configBuf[j]){ //if data entry equal to an existing byte option
        votes[j]++;                  //increase the number of votes
        break;
      }else if(votes[j] == 0){  //if there are no votes, this is a byte we haven't seen before
-       buf[j] = data[i]; //set the byte option to the current data entry
+       configBuf[j] = data[i]; //set the byte option to the current data entry
        votes[j]++;               // add a vote to indicate that one of this byte has been found
        break;
      }
@@ -428,7 +430,7 @@ bool KickSatConfig::readByteFromAll(byte* data, int location){
 //    SerialUSB.println((char)byteOptions[i]);
    if(votes[i] > numIdentical){
      numIdentical = votes[i];
-     correctByte = buf[i];
+     correctByte = configBuf[i];
    }
  }
 
@@ -449,7 +451,7 @@ bool KickSatConfig::readByteFromAll(byte* data, int location){
 bool KickSatConfig::readByte(String filename, int location, byte* output){
  bool fileStatus = false; // Flag to record status of file, returns true if the file can be opened
  startSD(); // Starts communication with the SD card
- //byte buf[1]; //byte array to
+ //byte configBuf[1]; //byte array to
  File logFileHandle = SD.open(filename, FILE_READ); // Open file for reading
  if (logFileHandle) { // If the file can be opened
    fileStatus = true; // Update flag for file status
@@ -463,7 +465,7 @@ bool KickSatConfig::readByte(String filename, int location, byte* output){
    }
    logFileHandle.read(output, 1);
    //SerialUSB.print("0x");
-   //SerialUSB.println((char)buf[0]); // Print to SerialUSB
+   //SerialUSB.println((char)configBuf[0]); // Print to SerialUSB
    logFileHandle.close(); // Close file
  }
  endSD(); // Ends communication with the SD card
@@ -500,24 +502,36 @@ bool KickSatConfig::writeByte(String filename, byte data, int location){
 //Initializes a single file with default values- this allows you to skip to the nth line in the file right away,
 //if you don't set default values it will give you an error when trying to read from a location in the file that doesn't exist yet
 bool KickSatConfig::initFile(String fileName){
- bool fileStatus = false; // Flag to record status of file, returns true if the file can be opened
- startSD(); // Starts communication with the SD card
- File logFileHandle = SD.open(fileName, FILE_WRITE); // Open file for writing
- if (logFileHandle) { // If the file can be opened
-   fileStatus = true; // Update flag for file status
-   for(int i = 0; i < NUM_ENTRIES; i++){
-     entryBuf[i] = FLAG_FALSE;  //defaults everything to false- including the status byte
-   }
-   entryBuf[TIMER_LOC] = (byte) 1; //sets timer to 1 so it can count up from there- Don't set to zero because weird error with a null character
-   logFileHandle.seek(0);
-   logFileHandle.print(entryBuf); // Print buffer to file on the SD card
-   SerialUSB.println(entryBuf); // Print to SerialUSB
-   logFileHandle.close(); // Close file
- }
- endSD(); // Ends communication with the SD card
- return fileStatus; // Returns file status
+  char* fileNameChar; // Define an empty char array
+  fileName.toCharArray(fileNameChar,fileName.length()); // Convert the string fileName to a char array for exists() function call
+  bool fileStatus = false; // Flag to record status of file, returns true if the file can be opened
+  startSD(); // Starts communication with the SD card
+  if (!SD.exists(fileNameChar)) { // If the config file doesn't exist, create it with default values
+    File logFileHandle = SD.open(fileName, FILE_WRITE); // Open file for writing
+    if (logFileHandle) { // If the file can be opened
+      fileStatus = true; // Update flag for file status
+      for(int i = 0; i < NUM_ENTRIES; i++){
+        entryBuf[i] = FLAG_FALSE;  //defaults everything to false- including the status byte
+      }
+      entryBuf[TIMER_LOC] = (byte) 1; //sets timer to 1 so it can count up from there- Don't set to zero because weird error with a null character
+      logFileHandle.seek(0);
+      logFileHandle.print(entryBuf); // Print buffer to file on the SD card
+      SerialUSB.println(entryBuf); // Print to SerialUSB
+      logFileHandle.close(); // Close file
+      writeByte(fileName, HOLD_BYTE, STATUS_LOC); // Set status byte to hold mode only if the sd card can be read and the config file does not already exist (e.g. initial boot)
+    }
+  } else { // If the SD file does exist, check if the file can be opened
+    File logFileHandle = SD.open(fileName, FILE_WRITE); // Open file for writing
+    if (logFileHandle) { // If the file can be opened
+      fileStatus = true;
+      logFileHandle.close(); // Close file
+    } else {
+      fileStatus = false;
+    }
+  }
+  endSD(); // Ends communication with the SD card
+  return fileStatus; // Returns file status
 }
-
 
 
 //checks whether the files can open and that contents are the same
@@ -572,7 +586,7 @@ bool KickSatConfig::errorCorrect(){
 bool KickSatConfig::errorCorrectContents(){
  bool result;
  for(int i = 0; i < NUM_ENTRIES; i++){
-   result = result && readByteFromAll(buf, i);
+   result = result && readByteFromAll(configBuf, i);
  }
 
  return result;

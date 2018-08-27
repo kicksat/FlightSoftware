@@ -17,19 +17,22 @@ Purpose: Library for handling the reading and processing of uplink to the satell
 // #include <ax25.h>
 // #include <RadioHead.h>
 
-
-
 #define NUM_COMMANDS 4//redacted
 #define NUM_COMMANDS_ARM 1
 #define COMMAND_WIDTH 3//redacted
+#define UINT8_TRUE 0
 #define UINT8_FALSE 255
 #define METADATA_WIDTH 255
 
-const byte commandDict[NUM_COMMANDS][COMMAND_WIDTH] = {{'d','o','g'},{'c','a','t'},{'p','i','g'},{'o','w','l'}/* REDACTED */};
+const byte commandDict[NUM_COMMANDS][COMMAND_WIDTH] = {{'d','o','g'},{'c','a','t'},{'p','i','g'},{'o','w','l'}/* REDACTED */}; // TODO: replace redacted section
 const byte commandDictArm[NUM_COMMANDS_ARM][COMMAND_WIDTH] = {{'b','r','n'}};
 
 String beacons[BEACONS_PER_DOWNLINK];
 
+void processUplink(char* buf, uint8_t command);
+uint8_t parseUplink(char* buf);
+uint8_t listenForUplink(char *buf, uint8_t duration);
+uint8_t listenForUplinkArmingMode(char *buf, uint8_t duration);
 uint8_t parseUplink(char* buf);
 uint8_t extractArmedCommand(byte* buf);
 uint8_t extractCommand(byte* buf);
@@ -38,11 +41,12 @@ int getSensorMetadata(char* buf, char* metadata);
 
 ///////////////////////
 // Listen for uplink //
-//////////////////////////////////////////////////////////////////////////////
-uint8_t listenForUplink(char *buf, uint8_t duration){
+///////////////////////
+uint8_t listenForUplink(char *buf, uint8_t duration) {
   //SerialUSB.println("Listening for uplink...");
   timeout.start(duration);
   while(1) { // Wait for uplink, retreive from buffer
+    // if (radio.available()) { // TODO: This function needs to be created and replaces if (SerialUSB.available())
     if (SerialUSB.available()) { // TODO: change if radio is available, not serial
       uint8_t command = parseUplink(buf);
       if (command != UINT8_FALSE) {
@@ -57,8 +61,37 @@ uint8_t listenForUplink(char *buf, uint8_t duration){
 }
 
 
-uint8_t parseUplink(char* buf){
-  ////////////////////////////////////////////////////////
+/////////////////////////////////////
+// Listen for uplink in armingmode //
+/////////////////////////////////////
+uint8_t listenForUplinkArmingMode(char *buf, uint8_t duration) {
+  timeout.start(duration); // Start timeout timer for the listening duration
+  while(1) { // Wait for uplink, retreive from buffer
+    // if (radio.available()) { // TODO: change if radio is available, not serial
+    if (SerialUSB.available()) { // If data is in buffer to be read
+      uint8_t command = parseUplink(buf); // Read from buffer and validate uplink
+      processUplink(buf, command); // Process uplink while in arming mode
+    }
+    if (configFile.getDB1status() && configFile.getDB2status() && configFile.getDB3status()) {
+      return UINT8_TRUE;
+    }
+    if (timeout.triggered()) { // Checks time for timeout
+      SerialUSB.println("Uplink Timeout");
+      break;
+    }
+  }
+  if (configFile.getDB1status() || configFile.getDB2status() || configFile.getDB3status()) {
+    return UINT8_TRUE;
+  } else {
+    return UINT8_FALSE;
+  }
+}
+
+
+//////////////////
+// Parse uplink //
+//////////////////
+uint8_t parseUplink(char* buf) {
   uint32_t i = 0;
   //SerialUSB.println("read from buffer: ");
   while(SerialUSB.available() > 0) { // Read until the entire buffer has been read
@@ -142,9 +175,15 @@ uint8_t extractArmedCommand(byte* buf) {
 ////////////////////
 // Process uplink //
 ////////////////////
-void processUplink(char* buf, uint8_t command){
+void processUplink(char* buf, uint8_t command) {
+
+  char metadata[METADATA_WIDTH];
+  int metadataLen;
+  byte metadataByte;
+
   switch(command) { // respond to the command
-    case 0:{ // Downlink
+
+    case 0: // Downlink
       SerialUSB.println("Command: Start Downlink");
       // uint8_t sensor_num = metadata[0]; //the first byte of metadata is the number of the sensor board we're rewriting to
       //  if (sensor_num == 1) {
@@ -159,17 +198,15 @@ void processUplink(char* buf, uint8_t command){
       //  for(int i = 0; i < BEACONS_PER_DOWNLINK; i++){
       //    SerialUSB.println(beacons[i]);
       //  }
-     }
-      break;
+    break;
 
     case 1: // set Arming mode
       SerialUSB.println("Command: Enter Arming Mode");
       configFile.setArmed(); // Set flag to enter arming mode
-      break;
+    break;
 
-    case 2:{// reflash sensor config
-      char metadata[METADATA_WIDTH];
-      int metadataLen = getSensorMetadata(buf, metadata);
+    case 2: // reflash sensor config
+      metadataLen = getSensorMetadata(buf, metadata);
       SerialUSB.println("Command: Uplink Sensor Config");
       // uint8_t sensor_num = metadata[0]; //the first byte of metadata is the number of the sensor board we're rewriting to
       // if (sensor_num == 1) {
@@ -184,36 +221,34 @@ void processUplink(char* buf, uint8_t command){
 
       //TODO: read data from uplink and write new data to sensor config files
       //IMPORTANT: any uplink can be no longer than 64 bytes so configs must be short
-     }
-      break;
+    break;
 
     case 3: // No command --> go back to sleep and go through another standby mode loop
       SerialUSB.println("KickSat is alive! going back to sleep");
-      // radio.send(ax25("KickSat is alive!")); // Send health data through radio // TODO: This function doesn't exist yet but should and should be syntactically incorrect
-      break;
+      // radio.send(ax25("KickSat is alive!")); // Send health data through radio // TODO: This function doesn't exist yet but should and also is currently probably syntactically incorrect
+    break;
 
-    case 4: {//burn wires
-       SerialUSB.println("Command: Burn Wire");
-       byte metadata = buf[COMMAND_WIDTH]; //grab the first byte after the command, this is the burn metadata byte
-       if (metadata == (byte)'1') { // Burn wire one
+    case 4: // Burn wires
+      SerialUSB.println("Command: Burn Wire");
+      metadataByte = buf[COMMAND_WIDTH]; //grab the first byte after the command, this is the burn metadata byte
+      if (metadataByte == (byte)'1') { // Burn wire one
         configFile.setDB1Flag();
-       } else if (metadata == (byte)'2') { // Burn wire two
+      } else if (metadataByte == (byte)'2') { // Burn wire two
         configFile.setDB2Flag();
-       } else if (metadata == (byte)'3') { // Burn wire three
+      } else if (metadataByte == (byte)'3') { // Burn wire three
         configFile.setDB3Flag();
-       } else if (metadata == (byte)'a') { // Burn all wires
+      } else if (metadataByte == (byte)'a') { // Burn all wires
         configFile.setDB1Flag();
         configFile.setDB2Flag();
         configFile.setDB3Flag();
       }
-     }
-     break;
-
+    break;
 
     default: // No command --> go back to sleep and go through another standby mode loop
       //could potentially trigger due to failed command read
       SerialUSB.println("Doing no command... going to sleep");
-      break;
+    break;
+    
   }
 }
 

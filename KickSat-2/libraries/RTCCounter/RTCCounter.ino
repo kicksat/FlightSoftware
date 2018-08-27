@@ -26,12 +26,12 @@ void loop() {
   if (beaconTimer.check()) { // Checks time for interrupt
     SerialUSB.println("Beacon things!");
   }
-  timeout.start(2000); // start a timeout timer delay, milliseconds
+  timeout.start(5000); // start a timeout timer delay, milliseconds
   while(1) {
     if (timeout.triggered()) { // Checks time for timeout
       SerialUSB.println("TIMEOUT");
       break;
     }
   }
-  sleepTimer.sleep(); // Go into sleep mode until next interrupt
+  // sleepTimer.sleep(); // Go into sleep mode until next interrupt
 }

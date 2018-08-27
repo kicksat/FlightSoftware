@@ -1,7 +1,6 @@
 //SD_DataFile.cpp
 
 #include "SD_DataFile.h"
-#include <SDFat.h>
 
 #define Serial SerialUSB
 
@@ -12,7 +11,7 @@ SD_DataFile::SD_DataFile(int cs_pin, uint16_t dw, String fn, SdFat _sd) {
   _fileName = fn;
   _numEntries = 0;
   SD = _sd;
-  
+
   pinMode(_chipSelectPin, OUTPUT);
   digitalWrite(_chipSelectPin, HIGH);
 }
