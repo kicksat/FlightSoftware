@@ -1,9 +1,15 @@
+/*
+ * ChecksumHandler test - test the function of the ckecksum handler
+ *                        the code introduces an error in a message, so the evaluateChecksum function should return 0
+ *                        change line 27 to alter the introduce error in the message, or remove the error to have evaluateCkechsum return 1
+ */
+
 #include "ChecksumHandler.h"
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial) {}
-  Serial.println("Serial Connected.");
+  SerialUSB.begin(115200);
+  while (!SerialUSB) {}
+  SerialUSB.println("SerialUSB Connected.");
 }
 
 void loop() {
@@ -25,11 +31,11 @@ void loop() {
   result = Checksum.evaluateChecksum(data, message.length() + 1);
 
   //print results
-  Serial.print("Checksum: ");
-  Serial.println(before);
-  Serial.print("After Error: ");
-  Serial.println(after);
-  Serial.println(result);
+  SerialUSB.print("Checksum: ");
+  SerialUSB.println(before);
+  SerialUSB.print("After Error: ");
+  SerialUSB.println(after);
+  SerialUSB.println(result);
 }
 
 void strToBytes(String msg, byte* data) {
