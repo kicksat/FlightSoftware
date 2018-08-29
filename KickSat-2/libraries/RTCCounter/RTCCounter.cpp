@@ -94,7 +94,7 @@ void Timer::enable() { // Enables timer
 }
 
 void Timer::set(uint32_t time) { // Sets new trigger time for timer
-  timerTrigger[_timerID] = time;//(time/CLOCKMATCH >= 1) ? round(time/CLOCKMATCH) : 1; // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
+  timerTrigger[_timerID] = (uint32_t)(((double)time/(double)CLOCKMATCH >= 1) ? round((double)time/(double)CLOCKMATCH) : 1); // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
 }
 
 void Timer::setCallback(voidFuncPtr callback) { // Stores callback function
@@ -120,7 +120,7 @@ void Counter::init(uint32_t time, voidFuncPtr callback) { // Initializes timer
   _timerID = numberOfTimers; // Defines ID of timer
   numberOfTimers++; // Iterates number of timers initialized
   timerCounter[_timerID] = 0; // Iterating counter for each timer, in seconds
-  timerTrigger[_timerID] = time;//(time/CLOCKMATCH >= 1) ? round(time/CLOCKMATCH) : 1; // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
+  timerTrigger[_timerID] = (uint32_t)(((double)time/(double)CLOCKMATCH >= 1) ? round((double)time/(double)CLOCKMATCH) : 1); // User defined triggers, any requested time below the CLOCKMATCH are rounded up to equal the frequency of the CLOCKMATCH
   timerLast[_timerID] = 0; // Time since last trigger, in seconds
   timerOverflow[_timerID] = 0; // Sets overflow to 0, only to be used in case of an overflow, in seconds
   overflowed[_timerID] = 0; // flag for overflow
