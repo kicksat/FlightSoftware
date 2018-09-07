@@ -51,10 +51,8 @@ bool RHGenericDriver::waitAvailableTimeout(uint16_t timeout)
 
 bool RHGenericDriver::waitPacketSent()
 {
-	SerialUSB.println("we get stuck here");
     while (_mode == RHModeTx)
 	YIELD; // Wait for any previous transmit to finish
-	SerialUSB.println("done");
     return true;
 }
 
