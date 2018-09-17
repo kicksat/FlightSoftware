@@ -3,12 +3,13 @@
  * 
  * Components to test: WDT, SD Card, Radio, IMU, Battery readings
  * 
- * Last updated: 5-9-2018
+ * Last updated: 16-9-2018
  *           By: Andrea 
  */
 
 //Includes
 #include <BattHandler.h>
+#include <GyroHandler.h>
 #include <IMUHandler.h>
 #include <RH_RF22.h>  
 #include <RTCCounter.h>
@@ -19,6 +20,7 @@
 BattHandle power;
 Counter watchdogTimer;
 IMUHandle IMU;
+GyroHandle gyroscope;
 SdFat SD;
 
 //Radio 
@@ -80,7 +82,7 @@ void setup() {
 
   // Initialize Serial
   SerialUSB.begin(115200); // Restart SerialUSB
-  //while(!SerialUSB); // Wait for SerialUSB USB port to open
+  while(!SerialUSB); // Wait for SerialUSB USB port to open
   SerialUSB.println("SerialUSB Initialized");
   delay(2500); // Provides user with time to open SerialUSB Monitor or upload before sleep
 
@@ -97,6 +99,13 @@ void setup() {
     SerialUSB.println("IMU Intialized");
   } else {
     SerialUSB.println("IMU Could Not Be Intialized");
+  }
+
+  
+  if(gyroscope.begin()){ // Initialize gyro
+    SerialUSB.println("Gyro Intialized");
+  } else {
+    SerialUSB.println("Gyro Could Not Be Intialized");
   }
 
   if(SD.begin(SPI_CS_SD)) { //Initialize SD Card
@@ -124,6 +133,9 @@ void loop() { //check all parts of the board
 
   //Check IMU
   checkIMUHandler();
+
+  //Check Gyro
+  checkGyroHandler();
 
   //Check SD card 
   checkSDCard();
@@ -160,6 +172,18 @@ void checkIMUHandler() {
   for(int i = 0; i < 9; i++) { // Print to Serial IMU data
     SerialUSB.print(i);SerialUSB.print(": ");SerialUSB.print(imuData[i]);SerialUSB.print("\t");
   }
+  SerialUSB.println("\n");
+}
+
+
+void checkGyroHandler() {
+  SerialUSB.println("******Testing the Gyro******");
+  float gyroData[3];
+  gyroscope.read(gyroData); // Read IMU data
+  SerialUSB.print("X: "); SerialUSB.print(gyroData[0]); SerialUSB.print("  ");
+  SerialUSB.print("Y: "); SerialUSB.print(gyroData[1]); SerialUSB.print("  ");
+  SerialUSB.print("Z: "); SerialUSB.print(gyroData[2]); SerialUSB.print("  ");
+  SerialUSB.println("rad/s ");
   SerialUSB.println("\n");
 }
 
