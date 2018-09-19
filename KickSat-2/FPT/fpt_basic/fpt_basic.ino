@@ -1,9 +1,9 @@
 /*
  * Basic FPT - goes through each of the components in KMB and checks whether they are all responsive
  * 
- * Components to test: WDT, SD Card, Radio, IMU, Battery readings
+ * Components to test: WDT, SD Card, Radio, IMU, Battery readings, Gyro, Relays
  * 
- * Last updated: 16-9-2018
+ * Last updated: 19-9-2018
  *           By: Andrea 
  */
 
@@ -64,7 +64,9 @@ uint8_t packet[] = {
 
 //Global variables
 int SDWrites = 0;
+int WDTCounter = 1;
 unsigned int radioPackets = 1;
+File filetest;
 
 //Flags
 bool LEDSTATE = false; // to toggle LED, helps us test whether the board is alive
@@ -75,6 +77,8 @@ void setup() {
   pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
   pinMode(RF_SDN, OUTPUT);
   pinMode(SPI_CS_SD, OUTPUT);
+  pinMode(BURN_RELAY_A, OUTPUT);
+  pinMode(BURN_RELAY_B, OUTPUT);
   digitalWrite(WDT_WDI, LOW);
 
   // Begin timers
@@ -101,7 +105,6 @@ void setup() {
     SerialUSB.println("IMU Could Not Be Intialized");
   }
 
-  
   if(gyroscope.begin()){ // Initialize gyro
     SerialUSB.println("Gyro Intialized");
   } else {
@@ -128,26 +131,64 @@ void setup() {
 
 void loop() { //check all parts of the board
 
-  //Check battery readings
-  checkBattHandler();
+  printMenu();
+  
+  while(SerialUSB.available() == 0); //wait for user input
+  int option = SerialUSB.read();
+  delay(200);
 
-  //Check IMU
-  checkIMUHandler();
+  if(option == '1') {
+    SerialUSB.println("******Testing the Power Readings******");
+    for(int i = 0; i < 3; i++) {
+      checkBattHandler();
+      delay(100);
+    }
+  } else if (option == '2') {
+    SerialUSB.println("******Testing the IMU******");
+    for(int i = 0; i < 3; i++) {
+      checkIMUHandler();
+      delay(100);
+    }
+  } else if (option == '3') {
+    SerialUSB.println("******Testing the Gyro******");
+    for(int i = 0; i < 5; i++) {
+      checkGyroHandler();
+      delay(100);
+    }
+  } else if (option == '4') {   
+    checkSDCard();
+  } else if (option == '5') {
+    //Check radio chriping
+    SerialUSB.println("******Testing the Radio******");
+    for(int i = 0; i < 5; i++) {
+      checkRadio();
+      delay(750);
+    }       
+  } else if (option == '6') {
+    //remove file from SD card
+    removeFile();
+  } else if (option == '7') {
+    //toggle relays
+    checkRelays(); 
+  } else {
+    SerialUSB.println("Invalid option");
+  }
 
-  //Check Gyro
-  checkGyroHandler();
+  delay(1000);
+}
 
-  //Check SD card 
-  checkSDCard();
-
-  //Check radio chriping
-  checkRadio();
-
-  delay(5000);
+void printMenu() {
+  SerialUSB.println("******Please enter a number to choose a test: ******");
+  SerialUSB.println("1: Battery test");
+  SerialUSB.println("2: IMU test");
+  SerialUSB.println("3: Gyro test");
+  SerialUSB.println("4: SD read/write test");
+  SerialUSB.println("5: Radio test");
+  SerialUSB.println("6: SD remove test file");
+  SerialUSB.println("7: Relay test");
 }
 
 void checkBattHandler() { //read battery current draw, voltage, and charging current
-  SerialUSB.println("******Testing the Power Readings******");
   float battCurr = power.readBattCurrent();
   SerialUSB.print("Current Draw:\t\t");
   SerialUSB.print(battCurr);
@@ -165,8 +206,7 @@ void checkBattHandler() { //read battery current draw, voltage, and charging cur
   SerialUSB.println("");
 }
 
-void checkIMUHandler() {
-  SerialUSB.println("******Testing the IMU******");
+void checkIMUHandler() { //read accelerometer, magnometer, and gyroscope in imu
   float imuData[9];
   IMU.read(imuData); // Read IMU data
   for(int i = 0; i < 9; i++) { // Print to Serial IMU data
@@ -175,11 +215,9 @@ void checkIMUHandler() {
   SerialUSB.println("\n");
 }
 
-
-void checkGyroHandler() {
-  SerialUSB.println("******Testing the Gyro******");
+void checkGyroHandler() { //gets data from the gyro
   float gyroData[3];
-  gyroscope.read(gyroData); // Read IMU data
+  gyroscope.read(gyroData); // Read gyro data
   SerialUSB.print("X: "); SerialUSB.print(gyroData[0]); SerialUSB.print("  ");
   SerialUSB.print("Y: "); SerialUSB.print(gyroData[1]); SerialUSB.print("  ");
   SerialUSB.print("Z: "); SerialUSB.print(gyroData[2]); SerialUSB.print("  ");
@@ -189,7 +227,7 @@ void checkGyroHandler() {
 
 void checkSDCard() { //read and writes to the SD Card
   SerialUSB.println("******Testing the SD Card******");
-  File filetest = SD.open("TestSD.txt", FILE_WRITE); //first open the file to write
+  filetest = SD.open("TestSD.txt", FILE_WRITE); //first open the file to write
   if(filetest) { //if the file exists, print one new line on the file
     SerialUSB.print("Writing to SD card...");
     filetest.print(SDWrites);
@@ -215,7 +253,6 @@ void checkSDCard() { //read and writes to the SD Card
 }
 
 void checkRadio() { //sends a radio packet 
-  SerialUSB.println("******Testing the Radio******");
   spi.begin();
   SerialUSB.print("Status byte: 0x");
   SerialUSB.print(radio.statusRead(), HEX);
@@ -223,6 +260,42 @@ void checkRadio() { //sends a radio packet
   radio.send(packet, 95);
   radio.waitPacketSent(500);
   SerialUSB.println(radioPackets++);
+  SerialUSB.println("");
+}
+
+void removeFile() { //removes the test file (to delete any other file, replace the text file name in lines 268, 269 to the file youd like to remove)
+  SerialUSB.println("******Removing TestSD.txt******");
+  if(SD.exists("TestSD.txt")) {
+    if(SD.remove("TestSD.txt")) {
+      SerialUSB.println("Test file removed");
+      SDWrites = 0; //reset line counter for test file
+    } else { 
+      SerialUSB.println("Couldn't remove test file");
+    }
+  } else {
+    SerialUSB.println("TestSD.txt file doesnt exist");
+  }
+  SerialUSB.println("");
+}
+
+void checkRelays() { //toggles both relays to check if they are clicking or not
+  SerialUSB.println("******Testing Relays******");
+  SerialUSB.println("Toggling relay A (used for antenna deployment)");
+  for(int i = 0; i < 3; i++) {
+    digitalWrite(BURN_RELAY_A, HIGH);
+    delay(1000);
+    digitalWrite(BURN_RELAY_A, LOW);
+    delay(1000);
+  }
+  SerialUSB.println("Relay A was toggled on and off 3 times");
+  SerialUSB.println("Toggling relay B (used for sprite deployment)");
+  for(int i = 0; i < 3; i++) {
+    digitalWrite(BURN_RELAY_B, HIGH);
+    delay(1000);
+    digitalWrite(BURN_RELAY_B, LOW);
+    delay(1000);
+  }
+  SerialUSB.println("Relay B was toggled on and off 3 times");
   SerialUSB.println("");
 }
 
@@ -236,5 +309,7 @@ void watchdog() { // Function that runs every time watchdog timer triggers
     digitalWrite(LED_BUILTIN, LOW);
   }
   LEDSTATE = !LEDSTATE;
-  SerialUSB.println("Toggled WDT");
+  SerialUSB.print("Toggled WDT "); SerialUSB.print(WDTCounter); SerialUSB.println(" time(s)");
+  WDTCounter++;
 }
+
