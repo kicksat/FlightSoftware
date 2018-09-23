@@ -310,14 +310,14 @@ bool KickSat_Sensor::validateConfigFiles() {
 void KickSat_Sensor::burstWriteRegs(byte start, uint8_t len, byte* data) {
   Serial.println("------Writing ADC Config------");
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
-  digitalWrite(_SDchipSelect, LOW);
+  digitalWrite(_ADCchipSelect, LOW);
   SPI.transfer(start);   //Send register START location
   SPI.transfer(len - 1);   //how many registers to write to (must be len-1 as the ADC considers 0x00 to be 1, 0x01 is 2, ect)
   for (int i = 0; i < len; i++) {
     SPI.transfer(data[i]);
   }
   delay(1);
-  digitalWrite(_SDchipSelect, HIGH);
+  digitalWrite(_ADCchipSelect, HIGH);
 }
 
 //brings the ADC from STANDBY mode into CONVERSION mode
