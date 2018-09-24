@@ -1,9 +1,9 @@
 /*
  * Basic FPT - goes through each of the components in KMB and checks whether they are all responsive
  * 
- * Components to test: WDT, SD Card, Radio, IMU, Battery readings, Gyro, Relays
+ * Components to test: WDT, SD Card, Radio, IMU, Battery readings, Gyro, Relays, Sensors
  * 
- * Last updated: 19-9-2018
+ * Last updated: 23-9-2018
  *           By: Andrea 
  */
 
@@ -11,6 +11,7 @@
 #include <BattHandler.h>
 #include <GyroHandler.h>
 #include <IMUHandler.h>
+#include <KickSat_Sensor.h>
 #include <RH_RF22.h>  
 #include <RTCCounter.h>
 #include <SdFat.h>
@@ -22,6 +23,10 @@ Counter watchdogTimer;
 IMUHandle IMU;
 GyroHandle gyroscope;
 SdFat SD;
+
+KickSat_Sensor kSensor1(SPI_CS_XTB1, XTB_RESET, SPI_CS_SD, "sc1.txt", SD);
+KickSat_Sensor kSensor2(SPI_CS_XTB2, XTB_RESET, SPI_CS_SD, "sc2.txt", SD);
+KickSat_Sensor kSensor3(SPI_CS_XTB3, XTB_RESET, SPI_CS_SD, "sc3.txt", SD);
 
 //Radio 
 RHHardwareSPI spi;
@@ -73,13 +78,7 @@ bool LEDSTATE = false; // to toggle LED, helps us test whether the board is aliv
 
 void setup() {
   // Define pin modes
-  pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
-  pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
-  pinMode(RF_SDN, OUTPUT);
-  pinMode(SPI_CS_SD, OUTPUT);
-  pinMode(BURN_RELAY_A, OUTPUT);
-  pinMode(BURN_RELAY_B, OUTPUT);
-  digitalWrite(WDT_WDI, LOW);
+  setPins();
 
   // Begin timers
   watchdogTimer.init(1000, watchdog); // timer delay, milliseconds
@@ -96,6 +95,8 @@ void setup() {
   delay(2000);
   digitalWrite(RF_SDN, LOW);
   delay(500);
+
+  SPI.begin(); //for sensors
 
   BattHandle(); //initializes battery pins
 
@@ -170,11 +171,47 @@ void loop() { //check all parts of the board
   } else if (option == '7') {
     //toggle relays
     checkRelays(); 
+  } else if (option == '8') {
+    //test XTBs
+    checkXTB();
+  } else if (option == '9') {
+    //burn a burn wire
+    burnWire();
   } else {
     SerialUSB.println("Invalid option");
   }
+  
+//  kSensor1.resetADC();
+//  kSensor1.startADC();
+//  delay(200);
+//  kSensor1.regReadout();
 
   delay(1000);
+}
+
+void setPins() {
+  pinMode(LED_BUILTIN, OUTPUT); // Defines builtin LED pin mode to output
+  pinMode(WDT_WDI, OUTPUT); // Set watchdog pin mode to output
+  pinMode(RF_SDN, OUTPUT);
+  pinMode(BURN_RELAY_A, OUTPUT);
+  pinMode(BURN_RELAY_B, OUTPUT);
+  digitalWrite(WDT_WDI, LOW);
+  //turn off all SPI devices
+  pinMode(SPI_CS_RFM, OUTPUT);
+  digitalWrite(SPI_CS_RFM, HIGH);
+  pinMode(SPI_CS_XTB1, OUTPUT);
+  digitalWrite(SPI_CS_XTB1, HIGH);
+  pinMode(SPI_CS_XTB2, OUTPUT);
+  digitalWrite(SPI_CS_XTB2, HIGH);
+  pinMode(SPI_CS_XTB3, OUTPUT);
+  digitalWrite(SPI_CS_XTB3, HIGH);
+  pinMode(SPI_CS_XTB4, OUTPUT);
+  digitalWrite(SPI_CS_XTB4, HIGH);
+  pinMode(SPI_CS_SD, OUTPUT);
+  digitalWrite(SPI_CS_SD, HIGH);
+  pinMode(SPI_CS_MRAM, OUTPUT);
+  digitalWrite(SPI_CS_MRAM, HIGH);
+
 }
 
 void printMenu() {
@@ -186,6 +223,8 @@ void printMenu() {
   SerialUSB.println("5: Radio test");
   SerialUSB.println("6: SD remove test file");
   SerialUSB.println("7: Relay test");
+  SerialUSB.println("8: Sensor test");
+  SerialUSB.println("9: Burn wire test (Not ready yet)");
 }
 
 void checkBattHandler() { //read battery current draw, voltage, and charging current
@@ -297,6 +336,91 @@ void checkRelays() { //toggles both relays to check if they are clicking or not
   }
   SerialUSB.println("Relay B was toggled on and off 3 times");
   SerialUSB.println("");
+}
+
+void checkXTB() {
+  SerialUSB.println("******Testing XTBs******");
+  SerialUSB.println("Testing XTB1");
+  kSensor1.resetADC();
+  delay(200);
+  kSensor1.startADC();
+  delay(200);
+  kSensor1.regReadout();
+  delay(500);
+  SerialUSB.println("Testing XTB2");
+  kSensor2.resetADC();
+  delay(200);
+  kSensor2.startADC();
+  delay(200);
+  kSensor2.regReadout();
+  delay(500);
+  SerialUSB.println("Testing XTB3");
+  kSensor3.resetADC();
+  delay(200);
+  kSensor3.startADC();
+  delay(200);
+  kSensor3.regReadout();
+  delay(500);
+  SerialUSB.println("");
+}
+
+void burnWire() { //burn a burn wire
+  SerialUSB.println("Are you sure you want to burn a wire? (Enter y to confirm)");
+  while(SerialUSB.available() == 0); //wait for user input
+  int choice = SerialUSB.read();
+  delay(200);
+  if (choice != 'y') return; //exit if user doesnt confirm burn command
+
+  SerialUSB.println("******Testing Burnwire******");
+  int relay; int enable; //relay and enable to be chosen by user
+  SerialUSB.println("Choose a relay, enter A for antenna relay or B for sprite relay");
+  while(1) {
+    while(SerialUSB.available() == 0); //wait for user input
+    choice = SerialUSB.read();
+    delay(200);
+    if (choice == 'A') {
+      SerialUSB.println("You chose relay A");
+      relay = BURN_RELAY_A;
+      break;
+    } else if (choice == 'B') {
+      SerialUSB.println("You chose relay B");
+      relay = BURN_RELAY_B;
+      break;
+    } else {
+      SerialUSB.println("Not valid input, try again");
+    }
+  }
+  
+  SerialUSB.println("Choose an enable, enter 1 for antenna 1, 2 for antenna 2, 3 for deploy 1, 4 for deploy 2, or 5 for deploy 3");
+  while(1) {
+    while(SerialUSB.available() == 0); //wait for user input
+    choice = SerialUSB.read();
+    delay(200);
+    if (choice == '1') {
+      SerialUSB.println("You chose antenna 1");
+      enable = ENAB_BURN2;
+      break;
+    } else if (choice == '2') {
+      SerialUSB.println("You chose antenna 2");
+      enable = ENAB_BURN1;
+      break;
+    } else if (choice == '3') {
+      SerialUSB.println("You chose deploy 1");
+      enable = ENAB_BURN3;
+      break;
+    } else if (choice == '4') {
+      SerialUSB.println("You chose deploy 2");
+      enable = ENAB_BURN5;
+      break;
+    } else if (choice == '5') {
+      SerialUSB.println("You chose deploy 3");
+      enable = ENAB_BURN4;
+      break;
+    } else {
+      SerialUSB.println("Not valid input, try again");
+    }
+  }
+  //TODO: Finish this test, need to know desired duty cycle, frequency, and duration of burn
 }
 
 void watchdog() { // Function that runs every time watchdog timer triggers
