@@ -1,5 +1,8 @@
 #include "KickSat_Sensor.h"
 #include <SPI.h>
+#include <SdFat.h>
+SdFat SD;
+File datafile3;
 
 //constructor, sets up this sensor object with the corresponding config file
 KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst) {
@@ -12,7 +15,8 @@ KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst) {
 }
 
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config writeable.
-void KickSat_Sensor::operate(float* dataOut, String board) {
+void KickSat_Sensor::operate(String board) {
+  float dataOut[4];
   wakeADC();
   delay(500);
   resetADC();
@@ -88,6 +92,16 @@ void KickSat_Sensor::operate(float* dataOut, String board) {
     // GPIO(0x00, 0x00);    
   }  
   shutdownADC();
+  for (uint8_t i=0; i<4; i++){
+    Serial.println(dataOut[i],8);
+  }
+  if (SD.begin(SD_CS)) {
+    datafile3 = SD.open(board+"4.dat", FILE_WRITE);
+    Serial.println("SDcard initalized");
+  } 
+  datafile3.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save buf to SD card as bytes (4B per float)
+  datafile3.close();
+  delay(2000);
 }
 
 //==================== Register Commands ====================//
@@ -368,3 +382,19 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   voltageApplied += voltageApp;  
   return reading;
 }
+
+void KickSat_Sensor::readoutData(String board){
+  if (datafile3.isOpen()) {
+    datafile3.close();
+  }
+  datafile3 = SD.open(board+"4.dat", FILE_READ);
+  struct datastore testData;
+  datafile3.read((uint8_t *)&testData, sizeof(testData));
+  Serial.println(testData.dat1,8);
+  Serial.println(testData.dat2,8);
+  Serial.println(testData.dat3,8);
+  Serial.println(testData.dat4,8);
+  datafile3.close();
+  while(1);
+}
+
