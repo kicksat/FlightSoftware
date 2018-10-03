@@ -393,7 +393,7 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   return reading;
 }
 
-void KickSat_Sensor::sensorData(String board, float* data, uint8_t len){
+void KickSat_Sensor::sensorData(String board, byte* data, uint8_t len){
   if (datafile.isOpen()) {
     datafile.close();
   }
@@ -403,5 +403,11 @@ void KickSat_Sensor::sensorData(String board, float* data, uint8_t len){
 //  datafile.read((uint8_t *)&dataPac, sizeof(dataPac));
   datafile.read(data,len*4);
   datafile.close();
+}
+
+float KickSat_Sensor::getFloat(byte packet[], uint8_t i){
+    float out;
+    memcpy(&out, &packet[i], sizeof(float));
+    return out;
 }
 

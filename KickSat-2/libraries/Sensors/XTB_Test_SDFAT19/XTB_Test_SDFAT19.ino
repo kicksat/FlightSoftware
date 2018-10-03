@@ -14,16 +14,16 @@ void setup() {
 
 /*---------------LOOP---------------*/
 void loop() {
+  uint8_t len=4;
+  byte dataArray[len*4];
   
   kSensor.operate("xtb1"); //operate the specified sensor board (automatically stores data)
   
   delay(2000);
   
   // example of accessing stored board data and printing it out as a float
-  float data[4]; 
-  kSensor.sensorData("xtb1", data, 4); //read data for xtb1, store as float in data array
-  Serial.println("printing data:");
-  for (uint8_t i = 0; i < 4; i++) {
-    Serial.println(data[i],8);    
-  } 
+  kSensor.sensorData("xtb1", dataArray, len); //read data for xtb1, data is provided as byte array (4 bytes per float!)
+  for (uint8_t i = 0; i <= len*4; i+=4) {
+    Serial.println(kSensor.getFloat(dataArray,i),8); //casting bytes back in to float
+  }
 }

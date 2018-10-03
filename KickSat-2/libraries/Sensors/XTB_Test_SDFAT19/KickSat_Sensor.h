@@ -21,7 +21,8 @@ class KickSat_Sensor
     void regReadout();
     void GPIO(byte pins, byte state);
     void writeReg(byte start, byte value);
-    void sensorData(String board, float* data, uint8_t len);
+    void sensorData(String board, byte* data, uint8_t len);
+    float getFloat(byte packet[], uint8_t i);
     float readTemp();
     float readPins(byte pinNums, byte idacPin, byte vbPin, int wait, int bufflen, byte idacMag);    
     float hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t idacMux, uint8_t vb, int delayT);    
