@@ -2,10 +2,9 @@
 #include <SPI.h>
 
 //constructor, sets up this sensor object with the corresponding config file
-KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst, uint8_t sd_cs) {
+KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst) {
   _ADCchipSelect = adc_cs;
   _ADCreset = adc_rst;
-  _SDchipSelect = sd_cs;
   pinMode(_ADCchipSelect, OUTPUT);
   pinMode(_ADCreset, OUTPUT);
   digitalWrite(_ADCchipSelect, HIGH);
@@ -14,15 +13,50 @@ KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst, uint8_t sd_cs) {
 
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config writeable.
 void KickSat_Sensor::operate(float* dataOut, String board) {
-
   wakeADC();
   delay(500);
   resetADC();
   delay(100);
   startADC();
   delay(100);
-
   if (board== "xtb1"){
+    Serial.println(board);
+    dataOut[0] = readTemp();
+    GPIO(0x00,0x02);
+    dataOut[1] +=    hallGen(8, 4, 0x03, 5, 9, 50);
+    GPIO(0x00,0x00);
+    dataOut[1] +=    hallGen(9, 5, 0x03, 8, 4, 50);
+    dataOut[1] += -1*hallGen(8, 4, 0x03, 9, 5, 50);
+    GPIO(0x00,0x01);
+    dataOut[1] += -1*hallGen(9, 5, 0x03, 4, 8, 50); 
+    GPIO(0x00,0x00);  
+    dataOut[2] = (voltageApplied/4);
+    voltageApplied = 0;
+    dataOut[3] +=    hallGen(0, 2, 0x03, 3, 1, 50);
+    dataOut[3] +=    hallGen(1, 3, 0x03, 0, 2, 50);
+    dataOut[3] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
+    dataOut[3] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
+    dataOut[4] = (voltageApplied/4);
+    voltageApplied = 0;  
+  }
+  else if (board=="xtb2"){
+    Serial.println(board);
+    // readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
+    // readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
+    // readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
+    // GPIO(0x00, 0x04);
+    // readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
+    // GPIO(0x00, 0x00);
+    // delay(50);
+    // GPIO(0x00, 0x02);
+    // readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
+    // GPIO(0x00, 0x00);
+    // readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
+    // GPIO(0x00, 0x01);
+    // readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
+    // GPIO(0x00, 0x00);
+  }
+  else if (board=="xtb3"){
     Serial.println(board);
     dataOut[0] = readTemp();     
     dataOut[1] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
@@ -32,7 +66,6 @@ void KickSat_Sensor::operate(float* dataOut, String board) {
     dataOut[5] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
     dataOut[6] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
     dataOut[7] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func
-
     // readPins(0x7C, 0xF7, 0x80, 200, 100, 0x03);
     // readPins(0x4C, 0xF4, 0x80, 200, 100, 0x03);
     // readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
@@ -52,47 +85,7 @@ void KickSat_Sensor::operate(float* dataOut, String board) {
     // delay(50);
     // GPIO(0x00, 0x08);
     // readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
-    // GPIO(0x00, 0x00);
-  }
-
-  else if (board=="xtb2"){
-    Serial.println(board);
-    // readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
-    // readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
-    // readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
-    // GPIO(0x00, 0x04);
-    // readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
-    // GPIO(0x00, 0x00);
-    // delay(50);
-    // GPIO(0x00, 0x02);
-    // readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
-    // GPIO(0x00, 0x00);
-    // readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
-    // GPIO(0x00, 0x01);
-    // readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
-    // GPIO(0x00, 0x00);
-
-  }
-  else if (board=="xtb3"){
-    Serial.println(board);
-    dataOut[0] = readTemp();
-    GPIO(0x00,0x02);
-    dataOut[1] +=    hallGen(8, 4, 0x03, 5, 9, 50);
-    GPIO(0x00,0x00);
-    dataOut[1] +=    hallGen(9, 5, 0x03, 8, 4, 50);
-    dataOut[1] += -1*hallGen(8, 4, 0x03, 9, 5, 50);
-    GPIO(0x00,0x01);
-    dataOut[1] += -1*hallGen(9, 5, 0x03, 4, 8, 50); 
-    GPIO(0x00,0x00);  
-    dataOut[2] = (voltageApplied/4);
-    voltageApplied = 0;
-    dataOut[3] +=    hallGen(0, 2, 0x03, 3, 1, 50);
-    dataOut[3] +=    hallGen(1, 3, 0x03, 0, 2, 50);
-    dataOut[3] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
-    dataOut[3] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
-    dataOut[4] = (voltageApplied/4);
-    voltageApplied = 0;  
-  
+    // GPIO(0x00, 0x00);    
   }  
   shutdownADC();
 }
@@ -104,14 +97,14 @@ void KickSat_Sensor::operate(float* dataOut, String board) {
 void KickSat_Sensor::burstWriteRegs(byte start, uint8_t len, byte* data) {
   Serial.println("------Writing ADC Config------");
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
-  digitalWrite(_SDchipSelect, LOW);
+  digitalWrite(_ADCchipSelect, LOW);
   SPI.transfer(start);   //Send register START location
   SPI.transfer(len - 1);   //how many registers to write to (must be len-1 as the ADC considers 0x00 to be 1, 0x01 is 2, ect)
   for (uint8_t i = 0; i < len; i++) {
     SPI.transfer(data[i]);
   }
   delay(1);
-  digitalWrite(_SDchipSelect, HIGH);
+  digitalWrite(_ADCchipSelect, HIGH);
 }
 
 //brings the ADC from STANDBY mode into CONVERSION mode
