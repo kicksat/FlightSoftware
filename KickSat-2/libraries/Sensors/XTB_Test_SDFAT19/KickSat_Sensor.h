@@ -33,12 +33,12 @@ class KickSat_Sensor
     void wakeADC();
     void regReadout();
     void mosfetV(byte pinNum);
-    void readTemp(bool save);
+    float readTemp();
     void CreateFile();
     void writeHeader();
     void hallSpinC(byte idacmag);
     void hallSpinD(byte idacmag);
-    float readPins(byte pinNums, byte idacPin, byte vbPin, bool save, int wait, int bufflen, byte idacMag, String label);
+    float readPins(byte pinNums, byte idacPin, byte vbPin, bool save, int wait, int bufflen, byte idacMag);
     void BatteryVoltage(bool save);
     void GPIO(byte pins, byte state);
     void SFOCAL();        
@@ -49,7 +49,6 @@ class KickSat_Sensor
     float dataConvert( byte a, byte b, byte c);
     float mosData;
      
-    float tempData;
     float voltageApplied;
     bool writeable = false;
     int cnt = 0;

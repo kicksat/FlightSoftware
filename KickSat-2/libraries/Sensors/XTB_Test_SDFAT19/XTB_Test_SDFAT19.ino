@@ -40,9 +40,12 @@ void setup() {
 
 /*---------------LOOP---------------*/
 void loop() {
-  float buf[9];
+  float buf[8];
   kSensor.operate(buf, "xtb1");  
   blink(GREEN,1); 
+  for (int i=0; i<8; i++){
+    Serial.println(buf[i],8);
+  }
   delay(10000);
                                                              
 }
