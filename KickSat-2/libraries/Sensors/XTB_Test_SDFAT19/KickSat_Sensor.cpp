@@ -1,38 +1,18 @@
 #include "KickSat_Sensor.h"
 #include <SPI.h>
-extern SdFat SD;
-File configFile; 
 
 //constructor, sets up this sensor object with the corresponding config file
-KickSat_Sensor::KickSat_Sensor(int adc_cs, int adc_rst, int sd_cs, String cf_name) {
+KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst, uint8_t sd_cs) {
   _ADCchipSelect = adc_cs;
   _ADCreset = adc_rst;
   _SDchipSelect = sd_cs;
-  _configFileName = cf_name;
   pinMode(_ADCchipSelect, OUTPUT);
   pinMode(_ADCreset, OUTPUT);
   digitalWrite(_ADCchipSelect, HIGH);
   digitalWrite(_ADCreset, HIGH);
 }
 
-
-// function to split a string into an array of commands
-String getCommand(String data, char separator, int index)
-{
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length()-1;
-  for(int i=0; i<=maxIndex && found<=index; i++){
-    if(data.charAt(i)==separator || i==maxIndex){
-        found++;
-        strIndex[0] = strIndex[1]+1;
-        strIndex[1] = (i == maxIndex) ? i+1 : i;
-    }
-  }
-  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
-
-//this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config file.
+//this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config writeable.
 void KickSat_Sensor::operate(float* dataOut, String board) {
 
   wakeADC();
@@ -44,106 +24,77 @@ void KickSat_Sensor::operate(float* dataOut, String board) {
 
   if (board== "xtb1"){
     Serial.println(board);
-    dataOut[0] = readTemp(); 
-    
-    dataOut[1] = readPins(0x1C, 0xFF, 0x82, false, 200, 100, 0x03); //test func
-    
-    dataOut[2] = readPins(0x1C, 0xFF, 0x82, false, 200, 100, 0x03); //test func
-    
-    dataOut[3] = readPins(0x1C, 0xFF, 0x82, false, 200, 100, 0x03); //test func
-    
-    dataOut[4] = readPins(0x1C, 0xFF, 0x82, false, 200, 100, 0x03); //test func
-    
-    dataOut[5] = readPins(0x1C, 0xFF, 0x82, false, 200, 100, 0x03); //test func
-    
-    dataOut[6] = readPins(0x1C, 0xFF, 0x82, false, 200, 100, 0x03); //test func
-    
-    dataOut[7] = readPins(0x1C, 0xFF, 0x82, false, 200, 100, 0x03); //test func
+    dataOut[0] = readTemp();     
+    dataOut[1] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
+    dataOut[2] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
+    dataOut[3] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
+    dataOut[4] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
+    dataOut[5] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
+    dataOut[6] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
+    dataOut[7] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func
 
-    // readPins(0x7C, 0xF7, 0x80, false, 200, 100, 0x03, "P1");
-    // readPins(0x4C, 0xF4, 0x80, false, 200, 100, 0x03, "P2");
-    // readPins(0x3C, 0xF3, 0x80, false, 200, 100, 0x03, "N1");
-    // readPins(0x2C, 0xF2, 0x80, false, 200, 100, 0x03, "N2");
-    // readPins(0xCC, 0xFF, 0x80, false, 20, 1, 0x01, "");
+    // readPins(0x7C, 0xF7, 0x80, 200, 100, 0x03);
+    // readPins(0x4C, 0xF4, 0x80, 200, 100, 0x03);
+    // readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
+    // readPins(0x2C, 0xF2, 0x80, 200, 100, 0x03);
+    // readPins(0xCC, 0xFF, 0x80, 20, 1, 0x01);
     // GPIO(0x00, 0x01);
-    // readPins(0x58, 0xF5, 0x80, false, 200, 100, 0x01, "R1A");
+    // readPins(0x58, 0xF5, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x00);
     // delay(50);
     // GPIO(0x00, 0x02);
-    // readPins(0x59, 0xF5, 0x80, false, 200, 100, 0x01, "R1B");
+    // readPins(0x59, 0xF5, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x00);
     // delay(50);
     // GPIO(0x00, 0x04);
-    // readPins(0x0A, 0xF0, 0x80, false, 200, 100, 0x01, "R2A");
+    // readPins(0x0A, 0xF0, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x00);
     // delay(50);
     // GPIO(0x00, 0x08);
-    // readPins(0x0B, 0xF0, 0x80, false, 200, 100, 0x01, "R2B");
+    // readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x00);
   }
 
   else if (board=="xtb2"){
-    // readPins(0x6C, 0xF6, 0x80, false, 200, 100, 0x03, "Z1");
-    // readPins(0x3C, 0xF3, 0x80, false, 200, 100, 0x03, "Z2");
-    // readPins(0x2C, 0xF6, 0x80, false, 200, 100, 0x03, "Z1");
+    Serial.println(board);
+    // readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
+    // readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
+    // readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
     // GPIO(0x00, 0x04);
-    // readPins(0x1A, 0xF1, 0x80, false, 200, 100, 0x03, "Z2");
+    // readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
     // GPIO(0x00, 0x00);
     // delay(50);
     // GPIO(0x00, 0x02);
-    // readPins(0x49, 0xF4, 0x80, false, 200, 100, 0x01, "ZA");
+    // readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x00);
-    // readPins(0x5C, 0xF5, 0x80, false, 200, 100, 0x01, "ZB");
+    // readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x01);
-    // readPins(0x78, 0xF7, 0x80, false, 200, 100, 0x01, "ZA");
+    // readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x00);
 
   }
   else if (board=="xtb3"){
+    Serial.println(board);
+    dataOut[0] = readTemp();
+    GPIO(0x00,0x02);
+    dataOut[1] +=    hallGen(8, 4, 0x03, 5, 9, 50);
+    GPIO(0x00,0x00);
+    dataOut[1] +=    hallGen(9, 5, 0x03, 8, 4, 50);
+    dataOut[1] += -1*hallGen(8, 4, 0x03, 9, 5, 50);
+    GPIO(0x00,0x01);
+    dataOut[1] += -1*hallGen(9, 5, 0x03, 4, 8, 50); 
+    GPIO(0x00,0x00);  
+    dataOut[2] = (voltageApplied/4);
+    voltageApplied = 0;
+    dataOut[3] +=    hallGen(0, 2, 0x03, 3, 1, 50);
+    dataOut[3] +=    hallGen(1, 3, 0x03, 0, 2, 50);
+    dataOut[3] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
+    dataOut[3] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
+    dataOut[4] = (voltageApplied/4);
+    voltageApplied = 0;  
   
-  }
-  
+  }  
   shutdownADC();
-}
-
-//this function takes a command from parseMessage and executes it
-void KickSat_Sensor::handleCommand(String cmd, float* buf, int* index) {
-  String argv[11];
-  bool save = false; 
-  parseMessage(cmd, argv);
-  
-}
-
-//this function takes one line from the config file
-//and converts it into an executable command
-void KickSat_Sensor::parseMessage(String msg, String arg[]) {
-  int index = 0;
-  int wordIndex = 0;
-  int wordStart = 0;
-  while (index < msg.length()) {
-    if (msg.charAt(index) == ' ') {
-      arg[wordIndex] = msg.substring(wordStart, index);
-//      Serial.println(arg[wordIndex]);
-//      Serial.println(arg[wordIndex]);
-      wordStart = index + 1;
-      wordIndex++;
-    }
-    index++;
-  }
-  arg[wordIndex] = msg.substring(wordStart, index);
-}
-
-void KickSat_Sensor::BatteryVoltage(bool save) {                //Measure the battery voltage at pin 9(A7)
-  float measuredvbat;
-  measuredvbat = analogRead(VBATPIN);   
-  measuredvbat *= 2;                    // resistor divider by 2,
-  measuredvbat *= 3.3;                  // Multiply by 3.3V
-  measuredvbat /= 1024;                 // convert to voltage
-  Serial.print("Battery Voltage: ");
-  Serial.println(measuredvbat, 3);
-  if (save){
-    logfile.println("B,"+String(micros())+","+String(measuredvbat,3)); 
-  }
 }
 
 //==================== Register Commands ====================//
@@ -156,7 +107,7 @@ void KickSat_Sensor::burstWriteRegs(byte start, uint8_t len, byte* data) {
   digitalWrite(_SDchipSelect, LOW);
   SPI.transfer(start);   //Send register START location
   SPI.transfer(len - 1);   //how many registers to write to (must be len-1 as the ADC considers 0x00 to be 1, 0x01 is 2, ect)
-  for (int i = 0; i < len; i++) {
+  for (uint8_t i = 0; i < len; i++) {
     SPI.transfer(data[i]);
   }
   delay(1);
@@ -223,6 +174,29 @@ void KickSat_Sensor::wakeADC()  {
   digitalWrite(_ADCchipSelect, HIGH);
 }
 
+void KickSat_Sensor::GPIO(byte pins, byte state){
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  digitalWrite(_ADCchipSelect, LOW);
+  delayMicroseconds(1); 
+  SPI.transfer(0x50);  
+  SPI.transfer(0x01); 
+  SPI.transfer(pins);
+  SPI.transfer(state); 
+  delay(1);
+  digitalWrite(_ADCchipSelect, HIGH); 
+}
+
+void KickSat_Sensor::writeReg(byte start, byte value){
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  digitalWrite(_ADCchipSelect, LOW);
+  delayMicroseconds(1); 
+  SPI.transfer(start);  
+  SPI.transfer(0x00); 
+  SPI.transfer(value);
+  delay(1);
+  digitalWrite(_ADCchipSelect, HIGH); 
+}
+
 void KickSat_Sensor::regReadout(){
   Serial.println("------Register Readout------");
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
@@ -230,44 +204,29 @@ void KickSat_Sensor::regReadout(){
   delayMicroseconds(1);
   SPI.transfer(0x20);   //Send register START location
   SPI.transfer(0x12);   //how many registers we want to read (0x12 = all 18)
-  byte readOut0 = SPI.transfer(0x00);
-  byte readOut1 = SPI.transfer(0x00);
-  byte readOut2 = SPI.transfer(0x00);
-  byte readOut3 = SPI.transfer(0x00);
-  byte readOut4 = SPI.transfer(0x00);
-  byte readOut5 = SPI.transfer(0x00);
-  byte readOut6 = SPI.transfer(0x00);
-  byte readOut7 = SPI.transfer(0x00);
-  byte readOut8 = SPI.transfer(0x00);
-  byte readOut9 = SPI.transfer(0x00);
-  byte readOut10 = SPI.transfer(0x00);
-  byte readOut11 = SPI.transfer(0x00);
-  byte readOut12 = SPI.transfer(0x00);
-  byte readOut13 = SPI.transfer(0x00);
-  byte readOut14 = SPI.transfer(0x00);
-  byte readOut15 = SPI.transfer(0x00);
-  byte readOut16 = SPI.transfer(0x00);
-  byte readOut17 = SPI.transfer(0x00);  
+  for (uint8_t i = 0; i <= 17; i++) {
+    readOut[i] = SPI.transfer(0x00);
+  }
   delay(1);
   digitalWrite(_ADCchipSelect, HIGH);
-  Serial.print("Register 0x00 (ID):        "), Serial.println(readOut0, HEX);
-  Serial.print("Register 0x01 (STATUS):    "), Serial.println(readOut1, HEX);
-  Serial.print("Register 0x02 (INPMUX):    "), Serial.println(readOut2, HEX);
-  Serial.print("Register 0x03 (PGA):       "), Serial.println(readOut3, HEX);
-  Serial.print("Register 0x04 (DATARATE):  "), Serial.println(readOut4, HEX);
-  Serial.print("Register 0x05 (REF):       "), Serial.println(readOut5, HEX);
-  Serial.print("Register 0x06 (IDACMAG):   "), Serial.println(readOut6, HEX);
-  Serial.print("Register 0x07 (IDACMUX):   "), Serial.println(readOut7, HEX);
-  Serial.print("Register 0x08 (VBIAS):     "), Serial.println(readOut8, HEX);
-  Serial.print("Register 0x09 (SYS):       "), Serial.println(readOut9, HEX);
-  Serial.print("Register 0x0A (OFCAL0):    "), Serial.println(readOut10, HEX);
-  Serial.print("Register 0x0B (OFCAL1):    "), Serial.println(readOut11, HEX);
-  Serial.print("Register 0x0C (OFCAL2):    "), Serial.println(readOut12, HEX);
-  Serial.print("Register 0x0D (FSCAL0):    "), Serial.println(readOut13, HEX);
-  Serial.print("Register 0x0E (FSCAL1):    "), Serial.println(readOut14, HEX);
-  Serial.print("Register 0x0F (FSCAL2):    "), Serial.println(readOut15, HEX);
-  Serial.print("Register 0x10 (GPIODAT):   "), Serial.println(readOut16, HEX);
-  Serial.print("Register 0x11 (GPIOCON):   "), Serial.println(readOut17, HEX);
+  Serial.print("Register 0x00 (ID):        "), Serial.println(readOut[0], HEX);
+  Serial.print("Register 0x01 (STATUS):    "), Serial.println(readOut[1], HEX);
+  Serial.print("Register 0x02 (INPMUX):    "), Serial.println(readOut[2], HEX);
+  Serial.print("Register 0x03 (PGA):       "), Serial.println(readOut[3], HEX);
+  Serial.print("Register 0x04 (DATARATE):  "), Serial.println(readOut[4], HEX);
+  Serial.print("Register 0x05 (REF):       "), Serial.println(readOut[5], HEX);
+  Serial.print("Register 0x06 (IDACMAG):   "), Serial.println(readOut[6], HEX);
+  Serial.print("Register 0x07 (IDACMUX):   "), Serial.println(readOut[7], HEX);
+  Serial.print("Register 0x08 (VBIAS):     "), Serial.println(readOut[8], HEX);
+  Serial.print("Register 0x09 (SYS):       "), Serial.println(readOut[9], HEX);
+  Serial.print("Register 0x0A (OFCAL0):    "), Serial.println(readOut[10], HEX);
+  Serial.print("Register 0x0B (OFCAL1):    "), Serial.println(readOut[11], HEX);
+  Serial.print("Register 0x0C (OFCAL2):    "), Serial.println(readOut[12], HEX);
+  Serial.print("Register 0x0D (FSCAL0):    "), Serial.println(readOut[13], HEX);
+  Serial.print("Register 0x0E (FSCAL1):    "), Serial.println(readOut[14], HEX);
+  Serial.print("Register 0x0F (FSCAL2):    "), Serial.println(readOut[15], HEX);
+  Serial.print("Register 0x10 (GPIODAT):   "), Serial.println(readOut[16], HEX);
+  Serial.print("Register 0x11 (GPIOCON):   "), Serial.println(readOut[17], HEX);
   Serial.println("-----------------------------");
 }
 
@@ -286,35 +245,6 @@ float KickSat_Sensor::dataConvert( byte a, byte b, byte c){
   return dataOUT;
 }
 
-void KickSat_Sensor::mosfetV(byte pinNum){
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
-  byte mosDat1, mosDat2, mosDat3 = 0;
-  byte IDACpin = pinNum | 0xF0;
-//  byte mosfetVCOM[9]{pinNum, 0x08, 0x0C, 0x39, 0x04, IDACpin, 0x00, 0x0A, 0x08};
-  pinNum |= 0xC0;
-  digitalWrite(_ADCchipSelect, LOW);
-  delayMicroseconds(1);   
-  SPI.transfer(0x42);   //Send register START location
-  SPI.transfer(0x06);   //how many registers to write to
-  SPI.transfer(pinNum); //0x42  INPMUX 
-  SPI.transfer(0x08);   //0x43  PGA
-  SPI.transfer(0x1C);   //0x44  DATARATE
-  SPI.transfer(0x39);   //0x45  REF
-  SPI.transfer(0x04);   //0x46  IDACMAG
-  SPI.transfer(IDACpin);//0x47  IDACMUX
-  SPI.transfer(0x00);   //0x48  VBIAS 
-  delay(5);
-  SPI.transfer(0x00);   //NOP to get rid of junk?
-  SPI.transfer(0x12); //transfer read command  
-  mosDat1 = SPI.transfer(0x00);
-  mosDat2 = SPI.transfer(0x00);
-  mosDat3 = SPI.transfer(0x00);
-  delay(1);
-  digitalWrite(_ADCchipSelect, HIGH);
-  mosData = -1*dataConvert(mosDat1,mosDat2,mosDat3);
-  Serial.println(mosData);
-}
-
 /*
   Read pin command
   in config file w/o quotes:
@@ -327,7 +257,7 @@ void KickSat_Sensor::mosfetV(byte pinNum){
           logs the data to the SD card,
           and waits for 5 ms between measurements
 */
-float KickSat_Sensor::readPins(byte pinNums, byte idacPin, byte vbPin, bool save, int wait, int bufflen, byte idacMag){
+float KickSat_Sensor::readPins(byte pinNums, byte idacPin, byte vbPin, int wait, int bufflen, byte idacMag){
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   byte pinDat1, pinDat2, pinDat3 = 0;
   float pinData = 0; 
@@ -357,18 +287,6 @@ float KickSat_Sensor::readPins(byte pinNums, byte idacPin, byte vbPin, bool save
   digitalWrite(_ADCchipSelect, HIGH);
   pinData = pinData/bufflen;
   return pinData;
-}
-
-void KickSat_Sensor::GPIO(byte pins, byte state){
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
-  digitalWrite(_ADCchipSelect, LOW);
-  delayMicroseconds(1); 
-  SPI.transfer(0x50);  
-  SPI.transfer(0x01); 
-  SPI.transfer(pins);
-  SPI.transfer(state); 
-  delay(1);
-  digitalWrite(_ADCchipSelect, HIGH); 
 }
 
 float KickSat_Sensor::readTemp() {
@@ -406,82 +324,7 @@ float KickSat_Sensor::readTemp() {
   return dd;
 }
 
-void KickSat_Sensor::CreateFile() {
-  strcpy(filename, "DATA0000.CSV");                       // Template for file name, characters 6 & 7 get set automatically later   
-  if (!SD.begin(SD_CS)) {                 // see if the card is present and can be initialized:
-    pinMode(RED, OUTPUT);
-    digitalWrite(RED,HIGH);                // ERROR card not present- light up RED LED
-    while (1){};                           // stay in this while loop to prevent data loss
-  }
-  
-  for (uint8_t i = 0; i < 100; i++) {     //ensure the filename is unique  
-    filename[6] = '0' + i/10;
-    filename[7] = '0' + i%10;    
-    if (! SD.exists(filename)) {          // create if does not exist, do not open existing, write, sync after write      
-      break;
-    }
-  }  
-  logfile = SD.open(filename, FILE_WRITE);
-  writeable = true;
-  if( ! logfile ) {
-    pinMode(RED, OUTPUT);
-    digitalWrite(RED,HIGH);                // ERROR unable to write SD file
-    while (1){};                           // stay in this while loop to prevent data loss
-  }
-}
-
-void KickSat_Sensor::writeHeader() {
-  logfile.println("Data Label, Time (micro sec), var[1], var[2], var[3], etc...");
-  logfile.println("#,XTB_Arduino,v3a,2018-09-30,M.Holliday");
-}
-
-
-/* ------- HALL SPIN DEVICE C ------- */
-/* ------- PINS: 5 | 9 | 8 | 4 ------ */
-void KickSat_Sensor::hallSpinC(byte idacmag) {
-  String label = "H2";
-  
-  GPIO(0x00,0x02);
-  float phase1 = hallGen(8, 4, idacmag, 5, 9, 50, label);
-  GPIO(0x00,0x00);
-  float phase2 = hallGen(9, 5, idacmag, 8, 4, 50, label);
-  float phase7 = hallGen(8, 4, idacmag, 9, 5, 50, label);
-  GPIO(0x00,0x01);
-  float phase8 = hallGen(9, 5, idacmag, 4, 8, 50, label); 
-  GPIO(0x00,0x00);
-  
-  float dataSpin = (phase1+phase2+(-1*phase7)+(-1*phase8))/4;
-  float vApplied = (voltageApplied/4);
-  voltageApplied = 0; 
-}
-
-/* ------- HALL SPIN DEVICE D ------- */
-/* ------ PINS: 3 | 1 | 0 | 2 ----- */
-void KickSat_Sensor::hallSpinD(byte idacmag) {
-  String label = "H1";
-  
-  float phase1 = hallGen(0, 2, idacmag, 3, 1, 50, label);
-  float phase2 = hallGen(1, 3, idacmag, 0, 2, 50, label);
-  float phase7 = hallGen(0, 2, idacmag, 1, 3, 50, label);
-  float phase8 = hallGen(1, 3, idacmag, 2, 0, 50, label); 
-  
-  float dataSpin = (phase1+phase2+(-1*phase7)+(-1*phase8))/4;
-  float vApplied = (voltageApplied/4);
-  voltageApplied = 0; 
-}
-
-void KickSat_Sensor::SFOCAL() {
-  Serial.println("Self Calibration");
-  digitalWrite(_ADCchipSelect, LOW);
-  delayMicroseconds(1);
-  SPI.transfer(0x19); //send self offset command
-  delay(1);
-  digitalWrite(_ADCchipSelect, HIGH);
-  delay(100);
-}
-
-
-float KickSat_Sensor::hallGen(int inp, int inn, byte idacMag, int idacMux, int vb, int delayT, String label) {
+float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t idacMux, uint8_t vb, int delayT) {
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   byte inByteA, inByteB, inByteC, vbPin, inByteD, inByteE, inByteF = 0;
   byte inpMux = ((inp << 4) | inn);
