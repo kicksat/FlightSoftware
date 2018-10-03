@@ -20,8 +20,8 @@ class KickSat_Sensor
     void wakeADC();
     void regReadout();
     void GPIO(byte pins, byte state);
-    void writeReg(byte start, byte value);    
-    void readoutData(String board);
+    void writeReg(byte start, byte value);
+    void sensorData(String board, float* data, uint8_t len);
     float readTemp();
     float readPins(byte pinNums, byte idacPin, byte vbPin, int wait, int bufflen, byte idacMag);    
     float hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t idacMux, uint8_t vb, int delayT);    
@@ -29,11 +29,15 @@ class KickSat_Sensor
     float voltageApplied;
     uint8_t bufflen = 0;
     
+    
     struct datastore {
       float dat1;
       float dat2;
       float dat3;
       float dat4;
+    };
+    struct sensorPayload {
+      float d[100];
     };
   
   private:

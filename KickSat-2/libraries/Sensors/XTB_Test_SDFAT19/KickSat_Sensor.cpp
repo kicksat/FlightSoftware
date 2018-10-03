@@ -2,7 +2,7 @@
 #include <SPI.h>
 #include <SdFat.h>
 SdFat SD;
-File datafile3;
+File datafile;
 
 //constructor, sets up this sensor object with the corresponding config file
 KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst) {
@@ -16,7 +16,10 @@ KickSat_Sensor::KickSat_Sensor(uint8_t adc_cs, uint8_t adc_rst) {
 
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config writeable.
 void KickSat_Sensor::operate(String board) {
-  float dataOut[4];
+  
+  if (SD.begin(SD_CS)) {
+    datafile = SD.open(board+".dat", FILE_WRITE);
+  }
   wakeADC();
   delay(500);
   resetADC();
@@ -24,6 +27,7 @@ void KickSat_Sensor::operate(String board) {
   startADC();
   delay(100);
   if (board== "xtb1"){
+    float dataOut[4];
     Serial.println(board);
     dataOut[0] = readTemp();
     GPIO(0x00,0x02);
@@ -41,9 +45,14 @@ void KickSat_Sensor::operate(String board) {
     dataOut[3] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
     dataOut[3] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
     dataOut[4] = (voltageApplied/4);
-    voltageApplied = 0;  
+    voltageApplied = 0;
+    datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
+    for (uint8_t i=0; i<4; i++){
+     Serial.println(dataOut[i],8);
+    }  
   }
   else if (board=="xtb2"){
+    float dataOut[4];
     Serial.println(board);
     // readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
     // readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
@@ -59,8 +68,13 @@ void KickSat_Sensor::operate(String board) {
     // GPIO(0x00, 0x01);
     // readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
     // GPIO(0x00, 0x00);
+    // datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
+    // for (uint8_t i=0; i<4; i++){
+    //   Serial.println(dataOut[i],8);
+    // } 
   }
   else if (board=="xtb3"){
+    float dataOut[8];
     Serial.println(board);
     dataOut[0] = readTemp();     
     dataOut[1] = readPins(0x1C, 0xFF, 0x82, 200, 100, 0x03); //test func    
@@ -89,18 +103,14 @@ void KickSat_Sensor::operate(String board) {
     // delay(50);
     // GPIO(0x00, 0x08);
     // readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
-    // GPIO(0x00, 0x00);    
+    // GPIO(0x00, 0x00);
+    // datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);    
+    // for (uint8_t i=0; i<4; i++){
+    //   Serial.println(dataOut[i],8);
+    // }
   }  
-  shutdownADC();
-  for (uint8_t i=0; i<4; i++){
-    Serial.println(dataOut[i],8);
-  }
-  if (SD.begin(SD_CS)) {
-    datafile3 = SD.open(board+"4.dat", FILE_WRITE);
-    Serial.println("SDcard initalized");
-  } 
-  datafile3.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save buf to SD card as bytes (4B per float)
-  datafile3.close();
+  shutdownADC();  
+  datafile.close();
   delay(2000);
 }
 
@@ -383,18 +393,15 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   return reading;
 }
 
-void KickSat_Sensor::readoutData(String board){
-  if (datafile3.isOpen()) {
-    datafile3.close();
+void KickSat_Sensor::sensorData(String board, float* data, uint8_t len){
+  if (datafile.isOpen()) {
+    datafile.close();
   }
-  datafile3 = SD.open(board+"4.dat", FILE_READ);
-  struct datastore testData;
-  datafile3.read((uint8_t *)&testData, sizeof(testData));
-  Serial.println(testData.dat1,8);
-  Serial.println(testData.dat2,8);
-  Serial.println(testData.dat3,8);
-  Serial.println(testData.dat4,8);
-  datafile3.close();
-  while(1);
+  datafile = SD.open(board+".dat", FILE_READ);
+  struct sensorPayload dataPac;
+  datafile.seek(datafile.size()-len*4);
+//  datafile.read((uint8_t *)&dataPac, sizeof(dataPac));
+  datafile.read(data,len*4);
+  datafile.close();
 }
 
