@@ -389,18 +389,24 @@ void burnWire() { //burnwire test
   } else if (choice == 'y'){
       if (type == 'a'){ //antenna uses RELAYA, ENAB_BURN1, ENAB_BURN2
         pinMode(ENAB_BURN1, OUTPUT);
+        pinMode(ENAB_BURN2, OUTPUT);
+        digitalWrite(ENAB_BURN1, LOW);
+        digitalWrite(ENAB_BURN2, LOW);
         SerialUSB.println("Burning antenna wires (#1, #2) for 30 sec each at 30% duty cycle");
+        SerialUSB.print("Starting Battery Voltage:\t");
+        SerialUSB.print(power.readBattVoltage(),3);
+        SerialUSB.println("V");
         SerialUSB.println("\tBurning wire 1...");
         int counter = millis();
         digitalWrite(BURN_RELAY_A, HIGH);
-        while(millis()-counter > burnTime ) {          
+        while((millis()-counter) > burnTime ) {          
           digitalWrite(ENAB_BURN1, HIGH);
           delayMicroseconds(dutyCycle);
           digitalWrite(ENAB_BURN1, LOW);
           delayMicroseconds(1000); 
         }
         SerialUSB.println("\t\tBurning wire 2...");
-        while(millis()-counter > burnTime*2 ) {
+        while((millis()-counter) > burnTime*2 ) {
           digitalWrite(ENAB_BURN2, HIGH);
           delayMicroseconds(dutyCycle);
           digitalWrite(ENAB_BURN2, LOW);
@@ -408,34 +414,54 @@ void burnWire() { //burnwire test
         }
         SerialUSB.println("\t\t\tAntenna burn finished");
         digitalWrite(BURN_RELAY_A, LOW);
+        digitalWrite(ENAB_BURN1, LOW);
+        digitalWrite(ENAB_BURN2, LOW);
+        SerialUSB.print("Final Battery Voltage:\t");
+        SerialUSB.print(power.readBattVoltage(),3);
+        SerialUSB.println("V");
         return;
       } else if (type == 's'){ //sprites use RELAYB, ENAB_BURN3, ENAB_BURN4, ENAB_BURN5
-          SerialUSB.println("Burning sprite wires (#3, #4, #5) for 30 sec each at 30% duty cycle");
-          SerialUSB.println("\tBurning wire 3...");
-          int counter = millis();
-          digitalWrite(BURN_RELAY_B, HIGH);
-          while(millis()-counter > burnTime ) {
-            digitalWrite(ENAB_BURN3, HIGH);
-            delayMicroseconds(dutyCycle);
-            digitalWrite(ENAB_BURN3, LOW);
-            delayMicroseconds(1000); 
-          }
-          SerialUSB.println("\t\tBurning wire 4...");
-          while(millis()-counter > burnTime*2 ) {
-            digitalWrite(ENAB_BURN4, HIGH);
-            delayMicroseconds(dutyCycle);
-            digitalWrite(ENAB_BURN4, LOW);
-            delayMicroseconds(1000); 
+        pinMode(ENAB_BURN3, OUTPUT);
+        pinMode(ENAB_BURN4, OUTPUT);
+        pinMode(ENAB_BURN5, OUTPUT);
+        digitalWrite(ENAB_BURN3, LOW);
+        digitalWrite(ENAB_BURN4, LOW);
+        digitalWrite(ENAB_BURN5, LOW);
+        SerialUSB.println("Burning sprite wires (#3, #4, #5) for 30 sec each at 30% duty cycle");
+        SerialUSB.print("Starting Battery Voltage:\t");
+        SerialUSB.print(power.readBattVoltage(),3);
+        SerialUSB.println("V");
+        SerialUSB.println("\tBurning wire 3...");
+        int counter = millis();
+        digitalWrite(BURN_RELAY_B, HIGH);
+        while((millis()-counter) > burnTime ) {
+          digitalWrite(ENAB_BURN3, HIGH);
+          delayMicroseconds(dutyCycle);
+          digitalWrite(ENAB_BURN3, LOW);
+          delayMicroseconds(1000); 
         }
-          SerialUSB.println("\t\t\tBurning wire 5...");
-          while(millis()-counter > burnTime*3 ) {
-            digitalWrite(ENAB_BURN5, HIGH);
-            delayMicroseconds(dutyCycle);
-            digitalWrite(ENAB_BURN5, LOW);
-            delayMicroseconds(1000); 
+        SerialUSB.println("\t\tBurning wire 4...");
+        while((millis()-counter) > burnTime*2 ) {
+          digitalWrite(ENAB_BURN4, HIGH);
+          delayMicroseconds(dutyCycle);
+          digitalWrite(ENAB_BURN4, LOW);
+          delayMicroseconds(1000); 
+        }
+        SerialUSB.println("\t\t\tBurning wire 5...");
+        while((millis()-counter) > burnTime*3 ) {
+          digitalWrite(ENAB_BURN5, HIGH);
+          delayMicroseconds(dutyCycle);
+          digitalWrite(ENAB_BURN5, LOW);
+          delayMicroseconds(1000); 
         }
         SerialUSB.println("\t\t\t\tSprite burn finished");
         digitalWrite(BURN_RELAY_B, LOW);
+        digitalWrite(ENAB_BURN3, LOW);
+        digitalWrite(ENAB_BURN4, LOW);
+        digitalWrite(ENAB_BURN5, LOW);
+        SerialUSB.print("Final Battery Voltage:\t");
+        SerialUSB.print(power.readBattVoltage(),3);
+        SerialUSB.println("V");
         return;
       }
   } else {
