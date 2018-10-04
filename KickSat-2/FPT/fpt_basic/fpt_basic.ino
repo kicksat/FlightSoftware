@@ -227,7 +227,7 @@ void printMenu() {
   SerialUSB.println("6: SD remove test file");
   SerialUSB.println("7: Relay test");
   SerialUSB.println("8: Sensor test");
-  SerialUSB.println("9: Burn wire test (Not ready yet)");
+  SerialUSB.println("9: Depolyment test (Antenna or Sprites)");
 }
 
 void checkBattHandler() { //read battery current draw, voltage, and charging current
