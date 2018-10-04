@@ -377,9 +377,11 @@ void burnWire() { //burnwire test
   delay(200);
   if (type != 's' || type != 'a'){
     return; //exit if user doesnt confirm burn command
-  } else {
-    SerialUSB.println("Not valid input, try again");
-  }  
+  } else if (type == 's'){
+    SerialUSB.println("Selected: sprites");
+  } else if (type == 'a'){
+    SerialUSB.println("Selected: antenna");
+  } 
   SerialUSB.println("Are you sure? Enter 'y' to continue or 'n' to cancel");
   while(SerialUSB.available() == 0); //wait for user input
   char choice = SerialUSB.read();
@@ -399,14 +401,14 @@ void burnWire() { //burnwire test
         SerialUSB.println("\tBurning wire 1...");
         int counter = millis();
         digitalWrite(BURN_RELAY_A, HIGH);
-        while((millis()-counter) > burnTime ) {          
+        while((millis()-counter) < burnTime ) {          
           digitalWrite(ENAB_BURN1, HIGH);
           delayMicroseconds(dutyCycle);
           digitalWrite(ENAB_BURN1, LOW);
           delayMicroseconds(1000); 
         }
         SerialUSB.println("\t\tBurning wire 2...");
-        while((millis()-counter) > burnTime*2 ) {
+        while((millis()-counter) < burnTime*2 ) {
           digitalWrite(ENAB_BURN2, HIGH);
           delayMicroseconds(dutyCycle);
           digitalWrite(ENAB_BURN2, LOW);
@@ -434,21 +436,21 @@ void burnWire() { //burnwire test
         SerialUSB.println("\tBurning wire 3...");
         int counter = millis();
         digitalWrite(BURN_RELAY_B, HIGH);
-        while((millis()-counter) > burnTime ) {
+        while((millis()-counter) < burnTime ) {
           digitalWrite(ENAB_BURN3, HIGH);
           delayMicroseconds(dutyCycle);
           digitalWrite(ENAB_BURN3, LOW);
           delayMicroseconds(1000); 
         }
         SerialUSB.println("\t\tBurning wire 4...");
-        while((millis()-counter) > burnTime*2 ) {
+        while((millis()-counter) < burnTime*2 ) {
           digitalWrite(ENAB_BURN4, HIGH);
           delayMicroseconds(dutyCycle);
           digitalWrite(ENAB_BURN4, LOW);
           delayMicroseconds(1000); 
         }
         SerialUSB.println("\t\t\tBurning wire 5...");
-        while((millis()-counter) > burnTime*3 ) {
+        while((millis()-counter) < burnTime*3 ) {
           digitalWrite(ENAB_BURN5, HIGH);
           delayMicroseconds(dutyCycle);
           digitalWrite(ENAB_BURN5, LOW);
