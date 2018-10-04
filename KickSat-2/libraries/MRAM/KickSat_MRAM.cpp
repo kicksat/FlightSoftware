@@ -15,20 +15,22 @@ KickSat_MRAM::KickSat_MRAM(int8_t cs){
   _cs = cs;
   _clk = _mosi = _miso = -1;
   _mramInitialised = false;
+  
 }
 
 boolean KickSat_MRAM::begin(int8_t cs, uint8_t nAddressSizeBytes){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   _cs = cs;
   setAddressSize(nAddressSizeBytes);
   pinMode(_cs, OUTPUT);
   digitalWrite(_cs, HIGH);
   SPI.begin();
-  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   _mramInitialised = true;
   return true;
 }
 
 void KickSat_MRAM::writeEnable (bool enable){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   digitalWrite(_cs, LOW);
   if (enable) {
     SPItransfer(OPCODE_WREN);
@@ -40,6 +42,7 @@ void KickSat_MRAM::writeEnable (bool enable){
 }
 
 void KickSat_MRAM::write8 (uint32_t addr, uint8_t value){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   digitalWrite(_cs, LOW);
   SPItransfer(OPCODE_WRITE);
   writeAddress(addr);
@@ -48,6 +51,11 @@ void KickSat_MRAM::write8 (uint32_t addr, uint8_t value){
 }
 
 void KickSat_MRAM::write (uint32_t addr, const uint8_t *values, size_t count){
+  if (MRAMsleeping){
+    Serial.println("MRAM asleep, waking now...");
+    wake();
+  } else {
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   digitalWrite(_cs, LOW);
   SPItransfer(OPCODE_WRITE);
   writeAddress(addr);
@@ -55,9 +63,11 @@ void KickSat_MRAM::write (uint32_t addr, const uint8_t *values, size_t count){
     SPItransfer(values[i]);
   }
   digitalWrite(_cs, HIGH);
+  }
 }
 
 uint8_t KickSat_MRAM::read8 (uint32_t addr){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   digitalWrite(_cs, LOW);
   SPItransfer(OPCODE_READ);
   writeAddress(addr);
@@ -67,6 +77,7 @@ uint8_t KickSat_MRAM::read8 (uint32_t addr){
 }
 
 void KickSat_MRAM::read (uint32_t addr, uint8_t *values, size_t count){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   digitalWrite(_cs, LOW);
   SPItransfer(OPCODE_READ);
   writeAddress(addr);
@@ -78,6 +89,7 @@ void KickSat_MRAM::read (uint32_t addr, uint8_t *values, size_t count){
 }
 
 uint8_t KickSat_MRAM::getStatusRegister(void){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   uint8_t reg = 0;
   digitalWrite(_cs, LOW);
   SPItransfer(OPCODE_RDSR);
@@ -87,6 +99,7 @@ uint8_t KickSat_MRAM::getStatusRegister(void){
 }
 
 void KickSat_MRAM::setStatusRegister(uint8_t value){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   digitalWrite(_cs, LOW);
   SPItransfer(OPCODE_WRSR);
   SPItransfer(value);
@@ -108,4 +121,20 @@ void KickSat_MRAM::writeAddress(uint32_t addr){
   	SPItransfer((uint8_t)(addr >> 16));
   SPItransfer((uint8_t)(addr >> 8));
   SPItransfer((uint8_t)(addr & 0xFF));
+}
+
+void KickSat_MRAM::sleep(){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
+  digitalWrite(_cs, LOW);
+  SPItransfer(OPCODE_SLEEP);
+  digitalWrite(_cs, HIGH);
+  MRAMsleeping = true;
+}
+
+void KickSat_MRAM::wake(){
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
+  digitalWrite(_cs, LOW);
+  SPItransfer(OPCODE_WAKE);
+  digitalWrite(_cs, HIGH);
+  MRAMsleeping = false;
 }

@@ -22,7 +22,9 @@ typedef enum opcodes_e
   OPCODE_WRSR   = 0x01,     /* Write Status Register */
   OPCODE_READ   = 0x03,     /* Read Memory */
   OPCODE_WRITE  = 0x02,     /* Write Memory */
-  OPCODE_RDID   = 0x48      /* Read Device ID */
+  OPCODE_RDID   = 0x48,      /* Read Device ID */
+  OPCODE_SLEEP  = 0xB9,
+  OPCODE_WAKE   = 0xAB
 } opcodes_t;
 
 class KickSat_MRAM {
@@ -37,6 +39,9 @@ class KickSat_MRAM {
   uint8_t  getStatusRegister(void);
   void     setStatusRegister(uint8_t value);
   void     setAddressSize(uint8_t nAddressSize);
+  void     sleep();
+  void     wake();
+  bool     MRAMsleeping = false;
 
  private:
   uint8_t  SPItransfer(uint8_t x);

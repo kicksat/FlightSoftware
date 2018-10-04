@@ -15,19 +15,20 @@ void setup(void) {
     Serial.println("NO MRAM found ...");
     while (1);
   }
-  uint8_t data[4] = { 0x01, 0x02, 0x03, 0xFF };
-  uint8_t checkDat[4] = { 0, 0, 0, 0 };
+  uint8_t data[100];
+  uint8_t checkDat[100];
+  for (uint8_t i = 0; i < 100; i++)  {
+    data[i]=i;
+  }
 
-  mram.writeEnable(true);
-  Serial.println("WEL set!");  
-  mram.write(0x001,data, sizeof(data));
-  mram.writeEnable(false);
+//  mram.writeEnable(true);
+//  Serial.println("WEL set!");  
+//  mram.write(0x001,data, sizeof(data));
+//  mram.writeEnable(false);
   mram.read(0x001, checkDat, sizeof(checkDat));
-  Serial.println("Reading: 4 bytes to starting at: 0x001");
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    Serial.print(checkDat[i], HEX);
-    Serial.print(", ");
+  Serial.println("Reading: 100 bytes to starting at: 0x001");
+  for (uint8_t i = 0; i < 100; i++)  {
+    Serial.println(checkDat[i], HEX);
   }
   Serial.println("");  
 }
