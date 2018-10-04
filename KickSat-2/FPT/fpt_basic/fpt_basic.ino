@@ -372,7 +372,7 @@ void burnWire() { //burnwire test
   int burnTime = 15000; //15 seconds per wire
   SerialUSB.println("Which would you like to deploy? Enter 'a' for antenna or 's' for sprites");
   while(SerialUSB.available() == 0); //wait for user input
-  int type = SerialUSB.read();
+  char type = SerialUSB.read();
   delay(200);
   if (type != 's' || type != 'a'){
     return; //exit if user doesnt confirm burn command
