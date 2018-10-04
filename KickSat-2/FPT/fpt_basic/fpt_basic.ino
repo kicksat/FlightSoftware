@@ -3,7 +3,7 @@
  * 
  * Components to test: WDT, SD Card, Radio, IMU, Battery readings, Gyro, Relays, Sensors, burnwires
  * 
- * Last updated: 3-10-2018
+ * Last updated: 4-10-2018
  *           By: M.Holliday 
  */
 
@@ -227,7 +227,7 @@ void printMenu() {
   SerialUSB.println("6: SD remove test file");
   SerialUSB.println("7: Relay test");
   SerialUSB.println("8: Sensor test");
-  SerialUSB.println("9: Depolyment test (Antenna or Sprites)");
+  SerialUSB.println("9: Deployment test (Antenna or Sprites)");
 }
 
 void checkBattHandler() { //read battery current draw, voltage, and charging current
@@ -375,13 +375,14 @@ void burnWire() { //burnwire test
   while(SerialUSB.available() == 0); //wait for user input
   char type = SerialUSB.read();
   delay(200);
-  if (type != 's' || type != 'a'){
-    return; //exit if user doesnt confirm burn command
-  } else if (type == 's'){
+  if (type == 's'){
     SerialUSB.println("Selected: sprites");
   } else if (type == 'a'){
     SerialUSB.println("Selected: antenna");
-  } 
+  } else {
+    SerialUSB.println("Deployment test aborted");
+    return; //exit if user doesnt confirm burn command
+  }
   SerialUSB.println("Are you sure? Enter 'y' to continue or 'n' to cancel");
   while(SerialUSB.available() == 0); //wait for user input
   char choice = SerialUSB.read();
