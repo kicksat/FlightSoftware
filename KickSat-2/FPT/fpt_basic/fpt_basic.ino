@@ -368,9 +368,10 @@ void checkXTB() {
 }
 
 void burnWire() { //burnwire test
-  int dutyCycle = 200;
-  int burnTime = 15000; //15 seconds per wire
+  int dutyCycle = 300;
+  int burnTime = 30000; //15 seconds per wire
   SerialUSB.println("Which would you like to deploy? Enter 'a' for antenna or 's' for sprites");
+  SerialUSB.println("(current burn values are 30% duty cycle for 30 seconds per wire)");
   while(SerialUSB.available() == 0); //wait for user input
   char type = SerialUSB.read();
   delay(200);
@@ -388,7 +389,7 @@ void burnWire() { //burnwire test
   } else if (choice == 'y'){
       if (type == 'a'){ //antenna uses RELAYA, ENAB_BURN1, ENAB_BURN2
         pinMode(ENAB_BURN1, OUTPUT);
-        SerialUSB.println("Burning antenna wires (#1, #2) for 15 sec each at 20% duty cycle");
+        SerialUSB.println("Burning antenna wires (#1, #2) for 30 sec each at 30% duty cycle");
         SerialUSB.println("\tBurning wire 1...");
         int counter = millis();
         digitalWrite(BURN_RELAY_A, HIGH);
@@ -409,7 +410,7 @@ void burnWire() { //burnwire test
         digitalWrite(BURN_RELAY_A, LOW);
         return;
       } else if (type == 's'){ //sprites use RELAYB, ENAB_BURN3, ENAB_BURN4, ENAB_BURN5
-          SerialUSB.println("Burning sprite wires (#3, #4, #5) for 15 sec each at 20% duty cycle");
+          SerialUSB.println("Burning sprite wires (#3, #4, #5) for 30 sec each at 30% duty cycle");
           SerialUSB.println("\tBurning wire 3...");
           int counter = millis();
           digitalWrite(BURN_RELAY_B, HIGH);

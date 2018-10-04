@@ -8,14 +8,9 @@
 #include "Arduino.h"
 #include <RTCCounter.h>
 
-#define ANTENNA_BURN_TIME   2000 // milliseconds
-#define SPRITE_BURN_TIME   12000 // milliseconds
+#define BURN_TIME   30000
+#define DUTY_CYCLE 300 
 
-#define ANTENNADUTYCYCLE 10 // %
-#define SPRITEDUTYCYCLE 30 // %
-
-#define ANTENNABURNFREQUENCY 10000 // Hz
-#define SPRITEBURNFREQUENCY 10000 // Hz
 
 typedef enum { // Relay options
   BURN_ANTENNA_1 = ENAB_BURN1,
@@ -34,7 +29,7 @@ public:
   void burnSpriteTwo();
   void burnSpriteThree();
 private:
-  void burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency); // duration(s), dutyCycle(%), Frequency (Hz)
+  void burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle); // duration(s), dutyCycle(%), Frequency (Hz)
 };
 
 extern Burn burn;

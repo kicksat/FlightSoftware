@@ -43,8 +43,9 @@ void KickSat_Sensor::operate() {
   startADC();
   delay(100);
   if (board== "xtb1"){ //H.ALPERT devices
-    float dataOut[4];
-    dataOut[0] = readTemp();
+    float dataOut[8];
+    //DEVICE B
+    dataOut[0] =     readTemp();
     GPIO(0x00,0x02);
     dataOut[1] +=    hallGen(8, 4, 0x03, 5, 9, 50);
     GPIO(0x00,0x00);
@@ -55,14 +56,25 @@ void KickSat_Sensor::operate() {
     GPIO(0x00,0x00);  
     dataOut[2] = (voltageApplied/4);
     voltageApplied = 0;
+    //DEVICE A
     dataOut[3] +=    hallGen(0, 2, 0x03, 3, 1, 50);
     dataOut[3] +=    hallGen(1, 3, 0x03, 0, 2, 50);
     dataOut[3] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
     dataOut[3] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
     dataOut[4] = (voltageApplied/4);
     voltageApplied = 0;
+    //DEVICE C
+    dataOut[5] +=    hallGen(7, 12, 0x03, 6, 12, 50);
+    dataOut[5] +=    hallGen(12, 6, 0x03, 7, 12, 50);
+    dataOut[6] = (voltageApplied/2);
+    voltageApplied = 0;
+    //DEVICE D
+    dataOut[7] +=    hallGen(10, 12, 0x03, 11, 12, 50);
+    dataOut[7] +=    hallGen(11, 12, 0x03, 10, 12, 50);
+    dataOut[8] = (voltageApplied/2);
+    voltageApplied = 0;    
     datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
-    for (uint8_t i=0; i<4; i++){
+    for (uint8_t i=0; i<8; i++){
      Serial.println(dataOut[i],8);
     }  
   }

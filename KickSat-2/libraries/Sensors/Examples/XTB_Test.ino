@@ -21,9 +21,9 @@ void loop() {
   sensor3.operate(); //operate sensor2 and automatically record data  
   
   // example of accessing stored sensor data and printing it out as a float
-  byte dataArray1[4*4]; //data array must be 4X bigger due to floats
-  sensor1.sensorData(dataArray1, 4); //read data for sensor1, data is provided as byte array (4 bytes per float!)
-  for (uint8_t i = 0; i <= 4*4; i+=4) {
+  byte dataArray1[8*4]; //data array must be 4X bigger due to floats
+  sensor1.sensorData(dataArray1, 8); //read data for sensor1, data is provided as byte array (4 bytes per float!)
+  for (uint8_t i = 0; i <= 8*4; i+=4) {
     Serial.println(sensor1.getFloat(dataArray1,i),8); //casting bytes back in to float
   }
   byte dataArray2[7*4]; //data array must be 4X bigger due to floats

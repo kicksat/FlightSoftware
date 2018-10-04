@@ -1,56 +1,45 @@
 //**********************************************************
 // burn.c
+// updated 2018-10-03	M.Holliday
 //**********************************************************
-//TODO: test this library with correct duration, dutyCycle and pulseFrequency values and with real components
+//TO DO: verify this behaves properly with hardware. Then incorporate into FPT/flight code
 
 #include "Arduino.h"
 #include <RTCCounter.h>
 #include "burn.h"
 
-void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle, uint8_t pulseFrequency){ // duration(ms), dutyCycle(%), Frequency (Hz)
-
-  SerialUSB.println(relay); //TODO: remove SerialUSB printlns for final code version
-  SerialUSB.println(burnwire);
-  SerialUSB.println(duration);
-  SerialUSB.println(dutyCycle);
-  SerialUSB.println(pulseFrequency);
-  SerialUSB.println();
-
-  // pinMode(burnwire, OUTPUT); //TODO: comment burnwire and relay settings back in for final code version
-  // digitalWrite(relay, HIGH);
-  float  cycleTime = 1/pulseFrequency;
-  timeout.start(duration);
-  while(1) {
-    // digitalWrite(burnwire, HIGH);
-    delayMicroseconds(cycleTime*dutyCycle/100);
-    // digitalWrite(burnwire, LOW);
-    delayMicroseconds(cycleTime*(1-dutyCycle/100));
-    if (timeout.triggered()) { // Checks time for timeout
-      break;
-    }
+void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle){ // duration(ms), dutyCycle(%), Frequency (Hz)
+  digitalWrite(relay, HIGH);
+  delay(1000)
+  int counter = millis();  
+  while(millis()-counter > duration ) {          
+	digitalWrite(burnwire, HIGH);
+	delayMicroseconds(dutyCycle);
+	digitalWrite(burnwire, LOW);
+	delayMicroseconds(1000); 
   }
-  // digitalWrite(relay, LOW);
+  digitalWrite(relay, LOW);
 
 }
 
 void Burn::burnAntennaOne() {
-  burn(BURN_RELAY_A, BURN_ANTENNA_1, ANTENNA_BURN_TIME, ANTENNADUTYCYCLE, ANTENNABURNFREQUENCY);
+  burn(BURN_RELAY_A, BURN_ANTENNA_1, BURN_TIME, DUTY_CYCLE);
 }
 
 void Burn::burnAntennaTwo() {
-  burn(BURN_RELAY_A, BURN_ANTENNA_2, ANTENNA_BURN_TIME, ANTENNADUTYCYCLE, ANTENNABURNFREQUENCY);
+  burn(BURN_RELAY_A, BURN_ANTENNA_2, BURN_TIME, DUTY_CYCLE);
 }
 
 void Burn::burnSpriteOne() {
-  burn(BURN_RELAY_B, BURN_SPRITE_1, SPRITE_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
+  burn(BURN_RELAY_B, BURN_SPRITE_1, BURN_TIME, DUTY_CYCLE);
 }
 
 void Burn::burnSpriteTwo() {
-  burn(BURN_RELAY_B, BURN_SPRITE_2, SPRITE_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
+  burn(BURN_RELAY_B, BURN_SPRITE_2, BURN_TIME, DUTY_CYCLE);
 }
 
 void Burn::burnSpriteThree(){
-  burn(BURN_RELAY_B, BURN_SPRITE_3, SPRITE_BURN_TIME, SPRITEDUTYCYCLE, SPRITEBURNFREQUENCY);
+  burn(BURN_RELAY_B, BURN_SPRITE_3, BURN_TIME, DUTY_CYCLE);
 }
 
 void Burn::burnAntenna() {
