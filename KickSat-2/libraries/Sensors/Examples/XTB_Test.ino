@@ -1,5 +1,6 @@
 #include "KickSat_Sensor.h"
 #include <SPI.h>
+#define Serial SerialUSB
 
 KickSat_Sensor sensor1("xtb1");
 KickSat_Sensor sensor2("xtb2");

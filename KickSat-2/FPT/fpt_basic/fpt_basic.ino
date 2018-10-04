@@ -1,21 +1,22 @@
 /*
  * Basic FPT - goes through each of the components in KMB and checks whether they are all responsive
  * 
- * Components to test: WDT, SD Card, Radio, IMU, Battery readings, Gyro, Relays, Sensors
+ * Components to test: WDT, SD Card, Radio, IMU, Battery readings, Gyro, Relays, Sensors, burnwires
  * 
- * Last updated: 23-9-2018
- *           By: Andrea 
+ * Last updated: 3-10-2018
+ *           By: M.Holliday 
  */
 
 //Includes
+#include <KickSat_Sensor.h>
 #include <BattHandler.h>
 #include <GyroHandler.h>
 #include <IMUHandler.h>
-#include <KickSat_Sensor.h>
 #include <RH_RF22.h>  
 #include <RTCCounter.h>
 #include <SdFat.h>
 #include <SPI.h> 
+
 
 //Global objects
 BattHandle power;
@@ -24,9 +25,9 @@ IMUHandle IMU;
 GyroHandle gyroscope;
 SdFat SD;
 
-KickSat_Sensor kSensor1(SPI_CS_XTB1, XTB_RESET, SPI_CS_SD, "sc1.txt", SD);
-KickSat_Sensor kSensor2(SPI_CS_XTB2, XTB_RESET, SPI_CS_SD, "sc2.txt", SD);
-KickSat_Sensor kSensor3(SPI_CS_XTB3, XTB_RESET, SPI_CS_SD, "sc3.txt", SD);
+KickSat_Sensor kSensor1("xtb1");
+KickSat_Sensor kSensor2("xtb2");
+KickSat_Sensor kSensor3("xtb3");
 
 //Radio 
 RHHardwareSPI spi;
@@ -181,10 +182,10 @@ void loop() { //check all parts of the board
     SerialUSB.println("Invalid option");
   }
   
-//  kSensor1.resetADC();
-//  kSensor1.startADC();
-//  delay(200);
-//  kSensor1.regReadout();
+  kSensor1.resetADC();
+  kSensor1.startADC();
+  delay(200);
+  kSensor1.regReadout();
 
   delay(1000);
 }
@@ -195,6 +196,8 @@ void setPins() {
   pinMode(RF_SDN, OUTPUT);
   pinMode(BURN_RELAY_A, OUTPUT);
   pinMode(BURN_RELAY_B, OUTPUT);
+  digitalWrite(BURN_RELAY_A, LOW);
+  digitalWrite(BURN_RELAY_B, LOW);
   digitalWrite(WDT_WDI, LOW);
   //turn off all SPI devices
   pinMode(SPI_CS_RFM, OUTPUT);
@@ -364,63 +367,79 @@ void checkXTB() {
   SerialUSB.println("");
 }
 
-void burnWire() { //burn a burn wire
-  SerialUSB.println("Are you sure you want to burn a wire? (Enter y to confirm)");
+void burnWire() { //burnwire test
+  int dutyCycle = 200;
+  int burnTime = 15000; //15 seconds per wire
+  SerialUSB.println("Which would you like to deploy? Enter 'a' for antenna or 's' for sprites");
   while(SerialUSB.available() == 0); //wait for user input
-  int choice = SerialUSB.read();
+  int type = SerialUSB.read();
   delay(200);
-  if (choice != 'y') return; //exit if user doesnt confirm burn command
-
-  SerialUSB.println("******Testing Burnwire******");
-  int relay; int enable; //relay and enable to be chosen by user
-  SerialUSB.println("Choose a relay, enter A for antenna relay or B for sprite relay");
-  while(1) {
-    while(SerialUSB.available() == 0); //wait for user input
-    choice = SerialUSB.read();
-    delay(200);
-    if (choice == 'A') {
-      SerialUSB.println("You chose relay A");
-      relay = BURN_RELAY_A;
-      break;
-    } else if (choice == 'B') {
-      SerialUSB.println("You chose relay B");
-      relay = BURN_RELAY_B;
-      break;
-    } else {
-      SerialUSB.println("Not valid input, try again");
+  if (type != 's' || type != 'a'){
+    return; //exit if user doesnt confirm burn command
+  } else {
+    SerialUSB.println("Not valid input, try again");
+  }  
+  SerialUSB.println("Are you sure? Enter 'y' to continue or 'n' to cancel");
+  while(SerialUSB.available() == 0); //wait for user input
+  char choice = SerialUSB.read();
+  delay(200);  
+  if (choice == 'n'){
+    return; //exit if user doesnt confirm burn command
+  } else if (choice == 'y'){
+      if (type == 'a'){ //antenna uses RELAYA, ENAB_BURN1, ENAB_BURN2
+        pinMode(ENAB_BURN1, OUTPUT);
+        SerialUSB.println("Burning antenna wires (#1, #2) for 15 sec each at 20% duty cycle");
+        SerialUSB.println("\tBurning wire 1...");
+        int counter = millis();
+        digitalWrite(BURN_RELAY_A, HIGH);
+        while(millis()-counter > burnTime ) {          
+          digitalWrite(ENAB_BURN1, HIGH);
+          delayMicroseconds(dutyCycle);
+          digitalWrite(ENAB_BURN1, LOW);
+          delayMicroseconds(1000); 
+        }
+        SerialUSB.println("\t\tBurning wire 2...");
+        while(millis()-counter > burnTime*2 ) {
+          digitalWrite(ENAB_BURN2, HIGH);
+          delayMicroseconds(dutyCycle);
+          digitalWrite(ENAB_BURN2, LOW);
+          delayMicroseconds(1000); 
+        }
+        SerialUSB.println("\t\t\tAntenna burn finished");
+        digitalWrite(BURN_RELAY_A, LOW);
+        return;
+      } else if (type == 's'){ //sprites use RELAYB, ENAB_BURN3, ENAB_BURN4, ENAB_BURN5
+          SerialUSB.println("Burning sprite wires (#3, #4, #5) for 15 sec each at 20% duty cycle");
+          SerialUSB.println("\tBurning wire 3...");
+          int counter = millis();
+          digitalWrite(BURN_RELAY_B, HIGH);
+          while(millis()-counter > burnTime ) {
+            digitalWrite(ENAB_BURN3, HIGH);
+            delayMicroseconds(dutyCycle);
+            digitalWrite(ENAB_BURN3, LOW);
+            delayMicroseconds(1000); 
+          }
+          SerialUSB.println("\t\tBurning wire 4...");
+          while(millis()-counter > burnTime*2 ) {
+            digitalWrite(ENAB_BURN4, HIGH);
+            delayMicroseconds(dutyCycle);
+            digitalWrite(ENAB_BURN4, LOW);
+            delayMicroseconds(1000); 
+        }
+          SerialUSB.println("\t\t\tBurning wire 5...");
+          while(millis()-counter > burnTime*3 ) {
+            digitalWrite(ENAB_BURN5, HIGH);
+            delayMicroseconds(dutyCycle);
+            digitalWrite(ENAB_BURN5, LOW);
+            delayMicroseconds(1000); 
+        }
+        SerialUSB.println("\t\t\t\tSprite burn finished");
+        digitalWrite(BURN_RELAY_B, LOW);
+        return;
+      }
+  } else {
+    SerialUSB.println("Not valid input, try again");
     }
-  }
-  
-  SerialUSB.println("Choose an enable, enter 1 for antenna 1, 2 for antenna 2, 3 for deploy 1, 4 for deploy 2, or 5 for deploy 3");
-  while(1) {
-    while(SerialUSB.available() == 0); //wait for user input
-    choice = SerialUSB.read();
-    delay(200);
-    if (choice == '1') {
-      SerialUSB.println("You chose antenna 1");
-      enable = ENAB_BURN2;
-      break;
-    } else if (choice == '2') {
-      SerialUSB.println("You chose antenna 2");
-      enable = ENAB_BURN1;
-      break;
-    } else if (choice == '3') {
-      SerialUSB.println("You chose deploy 1");
-      enable = ENAB_BURN3;
-      break;
-    } else if (choice == '4') {
-      SerialUSB.println("You chose deploy 2");
-      enable = ENAB_BURN5;
-      break;
-    } else if (choice == '5') {
-      SerialUSB.println("You chose deploy 3");
-      enable = ENAB_BURN4;
-      break;
-    } else {
-      SerialUSB.println("Not valid input, try again");
-    }
-  }
-  //TODO: Finish this test, need to know desired duty cycle, frequency, and duration of burn
 }
 
 void watchdog() { // Function that runs every time watchdog timer triggers

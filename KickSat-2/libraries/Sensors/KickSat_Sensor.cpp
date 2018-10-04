@@ -4,10 +4,10 @@
 //TODO: test with all 3 boards on flight unit
 
 
-#include "KickSat_Sensor.h"
+#include <KickSat_Sensor.h>
 #include <SPI.h>
-#include <SdFat.h>
-SdFat SD;
+#define Serial SerialUSB
+extern SdFat SD;
 File datafile;
 
 //constructor, sets up this sensor object with the corresponding config file

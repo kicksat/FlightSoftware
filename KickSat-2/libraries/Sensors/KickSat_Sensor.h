@@ -4,17 +4,15 @@
 //TODO:
 
 #include <Arduino.h>
+#include <SdFat.h>
 
 #ifndef KICKSAT_SENSOR_H_
 #define KICKSAT_SENSOR_H_
-#define ADC_CS A2
-
 
 class KickSat_Sensor
 {
   public:
     KickSat_Sensor(String boardfile);
-    String cf_list = "";
     void operate();
     void burstWriteRegs(byte start, uint8_t len, byte* data);
     void startADC();
@@ -55,5 +53,6 @@ class KickSat_Sensor
     const float pgaGain = 1;
     const float FSR = (refV*2)/pgaGain;
     const float LSBsize = FSR/pow(2,24);
+    
 };
 #endif /* KICKSAT_SENSOR_H_ */
