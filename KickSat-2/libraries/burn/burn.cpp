@@ -1,65 +1,103 @@
 //**********************************************************
 // burn.c
-// updated 2018-10-03	M.Holliday
+// updated 2018-10-06	M.Holliday
+// testing and working with NDP6020P mosfets
 //**********************************************************
-//TO DO: verify this behaves properly with hardware. Then incorporate into FPT/flight code
+//TO DO: 
 
 #include "Arduino.h"
-#include <RTCCounter.h>
 #include "burn.h"
 
-void Burn::burn(const uint8_t relay, BURNWIRE burnwire, uint8_t duration, uint8_t dutyCycle){ // duration(ms), dutyCycle(%), Frequency (Hz)
-  pinMode(relay, OUTPUT);
-  digitalWrite(relay, HIGH);
-  delay(1000)
-  int counter = millis();  
-  while((millis()-counter) > duration ) {          
-	digitalWrite(burnwire, HIGH);
-	delayMicroseconds(dutyCycle);
-	digitalWrite(burnwire, LOW);
-	delayMicroseconds(1000); 
-  }
-  digitalWrite(relay, LOW);
-  digitalWrite(burnwire, LOW);
-}
-
-void Burn::burnAntennaOne() {
+void burn::burnAntennaOne() {
+  pinMode(BURN_RELAY_A, OUTPUT);
+  digitalWrite(BURN_RELAY_A, HIGH);
   pinMode(ENAB_BURN1, OUTPUT);
   digitalWrite(ENAB_BURN1, LOW);
-  burn(BURN_RELAY_A, BURN_ANTENNA_1, BURN_TIME, DUTY_CYCLE);
+
+  int counter = millis();  
+  while((millis()-counter) < 2000 ) {
+    digitalWrite(ENAB_BURN1, HIGH);
+    delay(2);
+    digitalWrite(ENAB_BURN1, LOW);
+    delay(48); 
+  }
+  digitalWrite(ENAB_BURN1, HIGH);
+  delay(2);
+  digitalWrite(BURN_RELAY_A, LOW);
+  digitalWrite(ENAB_BURN1, LOW);
 }
 
-void Burn::burnAntennaTwo() {
+void burn::burnAntennaTwo() {
+  pinMode(BURN_RELAY_A, OUTPUT);
+  digitalWrite(BURN_RELAY_A, HIGH);
   pinMode(ENAB_BURN2, OUTPUT);
   digitalWrite(ENAB_BURN2, LOW);
-  burn(BURN_RELAY_A, BURN_ANTENNA_2, BURN_TIME, DUTY_CYCLE);
+
+  int counter = millis();  
+  while((millis()-counter) < 2000 ) {
+    digitalWrite(ENAB_BURN2, HIGH);
+    delay(2);
+    digitalWrite(ENAB_BURN2, LOW);
+    delay(48); 
+  }
+  digitalWrite(ENAB_BURN2, HIGH);
+  delay(2);
+  digitalWrite(BURN_RELAY_A, LOW);
+  digitalWrite(ENAB_BURN2, LOW);
 }
 
-void Burn::burnSpriteOne() {
+void burn::burnSpriteOne() {
+  pinMode(BURN_RELAY_B, OUTPUT);
+  digitalWrite(BURN_RELAY_B, HIGH);
   pinMode(ENAB_BURN3, OUTPUT);
   digitalWrite(ENAB_BURN3, LOW);
-  burn(BURN_RELAY_B, BURN_SPRITE_1, BURN_TIME, DUTY_CYCLE);
+
+  int counter = millis();  
+  while((millis()-counter) < 2000 ) {
+    digitalWrite(ENAB_BURN3, HIGH);
+    delay(2);
+    digitalWrite(ENAB_BURN3, LOW);
+    delay(48); 
+  }
+  digitalWrite(ENAB_BURN3, HIGH);
+  delay(2);
+  digitalWrite(BURN_RELAY_B, LOW);
+  digitalWrite(ENAB_BURN3, LOW);
 }
 
-void Burn::burnSpriteTwo() {
+void burn::burnSpriteTwo() {
+  pinMode(BURN_RELAY_B, OUTPUT);
+  digitalWrite(BURN_RELAY_B, HIGH);
   pinMode(ENAB_BURN4, OUTPUT);
   digitalWrite(ENAB_BURN4, LOW);
-  burn(BURN_RELAY_B, BURN_SPRITE_2, BURN_TIME, DUTY_CYCLE);
+  int counter = millis();  
+  while((millis()-counter) < 2000 ) {
+    digitalWrite(ENAB_BURN4, HIGH);
+    delay(2);
+    digitalWrite(ENAB_BURN4, LOW);
+    delay(48); 
+  }
+  digitalWrite(ENAB_BURN4, HIGH);
+  delay(2);
+  digitalWrite(BURN_RELAY_B, LOW);
+  digitalWrite(ENAB_BURN4, LOW);
 }
 
-void Burn::burnSpriteThree(){
+void burn::burnSpriteThree(){
+  pinMode(BURN_RELAY_B, OUTPUT);
+  digitalWrite(BURN_RELAY_B, HIGH);
   pinMode(ENAB_BURN5, OUTPUT);
   digitalWrite(ENAB_BURN5, LOW);
-  burn(BURN_RELAY_B, BURN_SPRITE_3, BURN_TIME, DUTY_CYCLE);
-}
 
-void Burn::burnAntenna() {
-  pinMode(ENAB_BURN1, OUTPUT);
-  digitalWrite(ENAB_BURN1, LOW);
-  pinMode(ENAB_BURN2, OUTPUT);
-  digitalWrite(ENAB_BURN2, LOW);
-  burnAntennaOne();
-  burnAntennaTwo();
+  int counter = millis();  
+  while((millis()-counter) < 2000 ) {
+    digitalWrite(ENAB_BURN5, HIGH);
+    delay(2);
+    digitalWrite(ENAB_BURN5, LOW);
+    delay(48); 
+  }
+  digitalWrite(ENAB_BURN5, HIGH);
+  delay(2);
+  digitalWrite(BURN_RELAY_B, LOW);
+  digitalWrite(ENAB_BURN5, LOW);
 }
-
-Burn burn;
