@@ -1,7 +1,25 @@
 //**********************************************************
 // burn.c
-// updated 2018-10-06	M.Holliday
+// updated 2018-10-07 M.Holliday
 // testing and working with NDP6020P mosfets
+
+//                                +Y
+//                              (TOP)
+//          ------------------USB PORT---------------------
+//          |                                             |
+//          |                                             |
+//          |                                             |
+//          |                                             |
+// -X     ENAB_BURN1                                   ENAB_BURN2   +X
+//    (burnAntennaOne)                            (burnAntennaTwo)
+//          |                                             |
+//          |                                             |
+//          |                                             |
+//          |                                             |
+//      ENAB_BURN3-----(BARREL JACK)--ENAB_BURN5-------ENAB_BURN4
+//  (burnSpriteOne)---------------(burnSpriteThree)---(burnSpriteTwo)
+//                                -Y
+//
 //**********************************************************
 //TO DO: 
 
