@@ -35,9 +35,9 @@ void burn::burnAntennaOne() {
   int counter = millis();  
   while((millis()-counter) < 2000 ) {
     digitalWrite(ENAB_BURN1, HIGH);
-    delay(2);
+    delay(3);
     digitalWrite(ENAB_BURN1, LOW);
-    delay(48); 
+    delay(47); 
   }
   digitalWrite(ENAB_BURN1, HIGH);
   delay(2);
@@ -54,9 +54,9 @@ void burn::burnAntennaTwo() {
   int counter = millis();  
   while((millis()-counter) < 2000 ) {
     digitalWrite(ENAB_BURN2, HIGH);
-    delay(2);
+    delay(3);
     digitalWrite(ENAB_BURN2, LOW);
-    delay(48); 
+    delay(47); 
   }
   digitalWrite(ENAB_BURN2, HIGH);
   delay(2);
@@ -73,9 +73,9 @@ void burn::burnSpriteOne() {
   int counter = millis();  
   while((millis()-counter) < 2000 ) {
     digitalWrite(ENAB_BURN3, HIGH);
-    delay(2);
+    delay(3);
     digitalWrite(ENAB_BURN3, LOW);
-    delay(48); 
+    delay(47); 
   }
   digitalWrite(ENAB_BURN3, HIGH);
   delay(2);
@@ -91,9 +91,9 @@ void burn::burnSpriteTwo() {
   int counter = millis();  
   while((millis()-counter) < 2000 ) {
     digitalWrite(ENAB_BURN4, HIGH);
-    delay(2);
+    delay(3);
     digitalWrite(ENAB_BURN4, LOW);
-    delay(48); 
+    delay(47); 
   }
   digitalWrite(ENAB_BURN4, HIGH);
   delay(2);
@@ -110,9 +110,9 @@ void burn::burnSpriteThree(){
   int counter = millis();  
   while((millis()-counter) < 2000 ) {
     digitalWrite(ENAB_BURN5, HIGH);
-    delay(2);
+    delay(3);
     digitalWrite(ENAB_BURN5, LOW);
-    delay(48); 
+    delay(47); 
   }
   digitalWrite(ENAB_BURN5, HIGH);
   delay(2);
