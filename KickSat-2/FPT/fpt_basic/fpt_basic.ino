@@ -106,19 +106,16 @@ void setup() {
   } else {
     SerialUSB.println("IMU Could Not Be Intialized");
   }
-
   if(gyroscope.begin()){ // Initialize gyro
     SerialUSB.println("Gyro Intialized");
   } else {
     SerialUSB.println("Gyro Could Not Be Intialized");
   }
-
   if(SD.begin(SPI_CS_SD)) { //Initialize SD Card
     SerialUSB.println("SD initialized");
   } else {
     SerialUSB.println("SD not initialized");
-  }
-
+  }  
   if(!radio.init()) { //Setup radio
     SerialUSB.println("Radio couldnt initialize");
     SerialUSB.println(radio.statusRead(), HEX);
@@ -182,11 +179,10 @@ void loop() { //check all parts of the board
     SerialUSB.println("Invalid option");
   }
   
-  kSensor1.resetADC();
-  kSensor1.startADC();
-  delay(200);
-  kSensor1.regReadout();
-
+//  kSensor1.resetADC();
+//  kSensor1.startADC();
+//  delay(200);
+//  kSensor1.regReadout();
   delay(1000);
 }
 
@@ -278,8 +274,36 @@ void checkGyroHandler() { //gets data from the gyro
   SerialUSB.println("\n");
 }
 
+void printDirectory(File dir, int numTabs) {
+  while (true) {
+    File entry =  dir.openNextFile();
+    if (! entry) {
+      // no more files
+      break;
+    }
+    for (uint8_t i = 0; i < numTabs; i++) {
+      SerialUSB.print('\t');
+    }
+    SerialUSB.print(entry.name());
+    if (entry.isDirectory()) {
+      SerialUSB.println("/");
+      printDirectory(entry, numTabs + 1);
+    } else {
+      // files have sizes, directories do not
+      SerialUSB.print("\t\t");
+      SerialUSB.println(entry.size(), DEC);
+    }
+    entry.close();
+  }
+}
+
 void checkSDCard() { //read and writes to the SD Card
+  File root;
   SerialUSB.println("******Testing the SD Card******");
+  SerialUSB.println("Found the following files...");
+  root = SD.open("/");
+  printDirectory(root, 0);
+  
   filetest = SD.open("TestSD.txt", FILE_WRITE); //first open the file to write
   if(filetest) { //if the file exists, print one new line on the file
     SerialUSB.print("Writing to SD card...");
@@ -351,7 +375,6 @@ void checkRelays() { //toggles both relays to check if they are clicking or not
   SerialUSB.println("Relay B was toggled on and off 3 times");
   SerialUSB.println("");
 }
-
 void checkXTB() {
   SerialUSB.println("******Testing XTBs******");
   SerialUSB.println("Testing XTB1");
@@ -359,23 +382,32 @@ void checkXTB() {
   delay(200);
   kSensor1.startADC();
   delay(200);
-  kSensor1.regReadout();
-  delay(500);
+  kSensor1.shutdownADC();
+  delay(10);
   SerialUSB.println("Testing XTB2");
   kSensor2.resetADC();
   delay(200);
   kSensor2.startADC();
   delay(200);
-  kSensor2.regReadout();
-  delay(500);
+  kSensor2.shutdownADC();
+  delay(10);
   SerialUSB.println("Testing XTB3");
-  kSensor3.resetADC();
-  delay(200);
-  kSensor3.startADC();
-  delay(200);
-  kSensor3.regReadout();
-  delay(500);
-  SerialUSB.println("");
+  kSensor3.operate();
+  SerialUSB.println(".");
+  delay(100);
+  SerialUSB.println("..");
+  delay(100);
+  SerialUSB.println("...");
+
+  byte testData[9*4];
+  kSensor3.sensorData(testData, sizeof(testData));
+  for (uint8_t i = 0; i <sizeof(testData); i+=4) {
+    SerialUSB.print(i);
+    SerialUSB.print(" ");
+    SerialUSB.print(testData[i],HEX);
+    SerialUSB.print("\t");
+    SerialUSB.println(kSensor3.getFloat(testData,i),8); //casting bytes back in to float
+  }
 }
 
 void burnWire() { //burnwire test
