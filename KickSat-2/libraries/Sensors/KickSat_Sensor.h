@@ -8,12 +8,16 @@
 
 #ifndef KICKSAT_SENSOR_H_
 #define KICKSAT_SENSOR_H_
+#define sensor1_BUF_LEN 5
+#define sensor2_BUF_LEN 7
+#define sensor3_BUF_LEN 9
 
 class KickSat_Sensor
 {
   public:
     KickSat_Sensor(String boardfile);
-    void operate();
+
+    void operate(byte* bufarray);
     void burstWriteRegs(byte start, uint8_t len, byte* data);
     void startADC();
     void stopADC();
@@ -32,7 +36,10 @@ class KickSat_Sensor
     float voltageApplied;
     uint8_t bufflen = 0;
     String board;
-    
+    File datafile;
+    float dataOut1[sensor1_BUF_LEN];
+    float dataOut2[sensor2_BUF_LEN];
+    float dataOut[sensor3_BUF_LEN];
     
     struct datastore {
       float dat1;

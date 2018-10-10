@@ -24,6 +24,10 @@ void loop() {
   // example of accessing stored board data and printing it out as a float
   kSensor.sensorData("xtb1", dataArray, len); //read data for xtb1, data is provided as byte array (4 bytes per float!)
   for (uint8_t i = 0; i <= len*4; i+=4) {
+    Serial.print(i);
+    Serial.print(" ");
+    Serial.print(dataArray[i],HEX);
+    Serial.print("\t");
     Serial.println(kSensor.getFloat(dataArray,i),8); //casting bytes back in to float
   }
 }

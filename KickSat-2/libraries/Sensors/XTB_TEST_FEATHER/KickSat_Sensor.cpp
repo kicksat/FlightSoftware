@@ -398,7 +398,7 @@ void KickSat_Sensor::sensorData(String board, byte* data, uint8_t len){
     datafile.close();
   }
   datafile = SD.open(board+".dat", FILE_READ);
-  struct sensorPayload dataPac;
+//  struct sensorPayload dataPac;
   datafile.seek(datafile.size()-len*4);
 //  datafile.read((uint8_t *)&dataPac, sizeof(dataPac));
   datafile.read(data,len*4);

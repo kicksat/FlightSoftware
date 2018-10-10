@@ -6,9 +6,10 @@
 
 #include <KickSat_Sensor.h>
 #include <SPI.h>
+#include "SdFat.h"
 #define Serial SerialUSB
 extern SdFat SD;
-File datafile;
+
 
 //constructor, sets up this sensor object with the corresponding config file
 KickSat_Sensor::KickSat_Sensor(String boardfile) {
@@ -31,7 +32,10 @@ KickSat_Sensor::KickSat_Sensor(String boardfile) {
 }
 
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config writeable.
-void KickSat_Sensor::operate() {  
+void KickSat_Sensor::operate(byte* bufarray) {
+  float dataOut1[sensor1_BUF_LEN];
+  float dataOut2[sensor2_BUF_LEN];
+  float dataOut3[sensor3_BUF_LEN];  
   if (SD.begin(SPI_CS_SD)) {
     datafile = SD.open(board+".dat", FILE_WRITE);
   }
@@ -43,93 +47,96 @@ void KickSat_Sensor::operate() {
   startADC();
   delay(100);
   if (board== "xtb1"){ //H.ALPERT devices
-    float dataOut[8];
+    float dataTemp[4];
     //DEVICE B
-    dataOut[0] =     readTemp();
+    dataOut1[0] =     readTemp();
     GPIO(0x00,0x02);
-    dataOut[1] +=    hallGen(8, 4, 0x03, 5, 9, 50);
+    dataTemp[0] +=    hallGen(8, 4, 0x03, 5, 9, 50);
     GPIO(0x00,0x00);
-    dataOut[1] +=    hallGen(9, 5, 0x03, 8, 4, 50);
-    dataOut[1] += -1*hallGen(8, 4, 0x03, 9, 5, 50);
+    dataTemp[0] +=    hallGen(9, 5, 0x03, 8, 4, 50);
+    dataTemp[0] += -1*hallGen(8, 4, 0x03, 9, 5, 50);
     GPIO(0x00,0x01);
-    dataOut[1] += -1*hallGen(9, 5, 0x03, 4, 8, 50); 
+    dataTemp[0] += -1*hallGen(9, 5, 0x03, 4, 8, 50); 
     GPIO(0x00,0x00);  
-    dataOut[2] = (voltageApplied/4);
+    dataOut1[1] = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE A
-    dataOut[3] +=    hallGen(0, 2, 0x03, 3, 1, 50);
-    dataOut[3] +=    hallGen(1, 3, 0x03, 0, 2, 50);
-    dataOut[3] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
-    dataOut[3] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
-    dataOut[4] = (voltageApplied/4);
+    dataTemp[1] +=    hallGen(0, 2, 0x03, 3, 1, 50);
+    dataTemp[1] +=    hallGen(1, 3, 0x03, 0, 2, 50);
+    dataTemp[1] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
+    dataTemp[1] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
+    dataOut1[2] = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE C
-    dataOut[5] +=    hallGen(7, 12, 0x03, 6, 12, 50);
-    dataOut[5] +=    hallGen(12, 6, 0x03, 7, 12, 50);
-    dataOut[6] = (voltageApplied/2);
+    dataTemp[2] +=    hallGen(7, 12, 0x03, 6, 12, 50);
+    dataTemp[2] +=    hallGen(12, 6, 0x03, 7, 12, 50);
+    dataOut1[3] = (voltageApplied/2);
     voltageApplied = 0;
     //DEVICE D
-    dataOut[7] +=    hallGen(10, 12, 0x03, 11, 12, 50);
-    dataOut[7] +=    hallGen(11, 12, 0x03, 10, 12, 50);
-    dataOut[8] = (voltageApplied/2);
-    voltageApplied = 0;    
-    datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
+    dataTemp[3] +=    hallGen(10, 12, 0x03, 11, 12, 50);
+    dataTemp[3] +=    hallGen(11, 12, 0x03, 10, 12, 50);
+    dataOut1[4] = (voltageApplied/2);
+    voltageApplied = 0;
+    
+    datafile.write((const uint8_t *)&dataOut1, sizeof(dataOut1)); //save data to SD card as bytes (4 bytes per float);
     for (uint8_t i=0; i<8; i++){
-     Serial.println(dataOut[i],8);
-    }  
+     Serial.println(dataOut1[i],8);
+    }
+    memcpy(bufarray, dataOut1, sizeof(dataOut1));  
   }
   else if (board=="xtb2"){ //T.HEUSER devices
-    float dataOut[7];
-     dataOut[0] = readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
-     dataOut[1] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
-     dataOut[2] = readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
+    
+     dataOut2[0] = readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
+     dataOut2[1] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
+     dataOut2[2] = readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
      GPIO(0x00, 0x04);
-     dataOut[3] = readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
+     dataOut2[3] = readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
      GPIO(0x00, 0x00);
      delay(50);
      GPIO(0x00, 0x02);
-     dataOut[4] = readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
+     dataOut2[4] = readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
      GPIO(0x00, 0x00);
-     dataOut[5] = readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
+     dataOut2[5] = readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
      GPIO(0x00, 0x01);
-     dataOut[6] = readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
+     dataOut2[6] = readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
      GPIO(0x00, 0x00);
-     datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
+     datafile.write((const uint8_t *)&dataOut2, sizeof(dataOut2)); //save data to SD card as bytes (4 bytes per float);
      for (uint8_t i=0; i<7; i++){
-       Serial.println(dataOut[i],8);
-     } 
+       Serial.println(dataOut2[i],8);
+     }
+     memcpy(bufarray+sizeof(dataOut1), dataOut2, sizeof(dataOut2)); 
   }
-  else if (board=="xtb3"){ //M.HOLLIDAY devices
-    float dataOut[9];
+  else if (board=="xtb3"){ //M.HOLLIDAY devices    
     Serial.println(board);
-    dataOut[0] = readTemp();     
-    dataOut[1] = readPins(0x7C, 0xF7, 0x80, 200, 100, 0x03);
-    dataOut[2] = readPins(0x4C, 0xF4, 0x80, 200, 100, 0x03);
-    dataOut[3] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
-    dataOut[4] = readPins(0x2C, 0xF2, 0x80, 200, 100, 0x03);
+    dataOut3[0] = readTemp();     
+    dataOut3[1] = readPins(0x7C, 0xF7, 0x80, 200, 100, 0x03);
+    dataOut3[2] = readPins(0x4C, 0xF4, 0x80, 200, 100, 0x03);
+    dataOut3[3] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
+    dataOut3[4] = readPins(0x2C, 0xF2, 0x80, 200, 100, 0x03);
     readPins(0xCC, 0xFF, 0x80, 20, 1, 0x01);
      GPIO(0x00, 0x01);
-    dataOut[5] = readPins(0x58, 0xF5, 0x80, 200, 100, 0x01);
+    dataOut3[5] = readPins(0x58, 0xF5, 0x80, 200, 100, 0x01);
      GPIO(0x00, 0x00);
      delay(50);
      GPIO(0x00, 0x02);
-    dataOut[6] = readPins(0x59, 0xF5, 0x80, 200, 100, 0x01);
+    dataOut3[6] = readPins(0x59, 0xF5, 0x80, 200, 100, 0x01);
      GPIO(0x00, 0x00);
      delay(50);
      GPIO(0x00, 0x04);
-    dataOut[7] = readPins(0x0A, 0xF0, 0x80, 200, 100, 0x01);
+    dataOut3[7] = readPins(0x0A, 0xF0, 0x80, 200, 100, 0x01);
      GPIO(0x00, 0x00);
      delay(50);
      GPIO(0x00, 0x08);
-    dataOut[8] = readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
+    dataOut3[8] = readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
      GPIO(0x00, 0x00);
-     datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);    
+     datafile.write((const uint8_t *)&dataOut3, sizeof(dataOut3)); //save data to SD card as bytes (4 bytes per float);    
      for (uint8_t i=0; i<8; i++){
-       Serial.println(dataOut[i],8);
+       Serial.println(dataOut3[i],8);
      }
+     memcpy(bufarray+sizeof(dataOut1)+sizeof(dataOut2), dataOut3, sizeof(dataOut3));
   }  
   shutdownADC();  
-  datafile.close();
+  datafile.close();  
   delay(2000);
 }
 
@@ -417,7 +424,8 @@ void KickSat_Sensor::sensorData(byte* data, uint8_t len){
     datafile.close();
   }
   datafile = SD.open(board+".dat", FILE_READ);
-  struct sensorPayload dataPac;
+  SerialUSB.println(board+".dat");
+  // struct sensorPayload dataPac; //legacy?
   datafile.seek(datafile.size()-len*4);
 //  datafile.read((uint8_t *)&dataPac, sizeof(dataPac));
   datafile.read(data,len*4);

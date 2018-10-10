@@ -73,6 +73,7 @@ int SDWrites = 0;
 int WDTCounter = 1;
 unsigned int radioPackets = 1;
 File filetest;
+File datafile;
 
 //Flags
 bool LEDSTATE = false; // to toggle LED, helps us test whether the board is alive
@@ -274,35 +275,10 @@ void checkGyroHandler() { //gets data from the gyro
   SerialUSB.println("\n");
 }
 
-void printDirectory(File dir, int numTabs) {
-  while (true) {
-    File entry =  dir.openNextFile();
-    if (! entry) {
-      // no more files
-      break;
-    }
-    for (uint8_t i = 0; i < numTabs; i++) {
-      SerialUSB.print('\t');
-    }
-    SerialUSB.print(entry.name());
-    if (entry.isDirectory()) {
-      SerialUSB.println("/");
-      printDirectory(entry, numTabs + 1);
-    } else {
-      // files have sizes, directories do not
-      SerialUSB.print("\t\t");
-      SerialUSB.println(entry.size(), DEC);
-    }
-    entry.close();
-  }
-}
 
 void checkSDCard() { //read and writes to the SD Card
-  File root;
   SerialUSB.println("******Testing the SD Card******");
   SerialUSB.println("Found the following files...");
-  root = SD.open("/");
-  printDirectory(root, 0);
   
   filetest = SD.open("TestSD.txt", FILE_WRITE); //first open the file to write
   if(filetest) { //if the file exists, print one new line on the file
@@ -316,6 +292,8 @@ void checkSDCard() { //read and writes to the SD Card
     SerialUSB.println("Couldnt open TestSD.txt");
   }
 
+  
+  
   filetest = SD.open("TestSD.txt", FILE_READ); //reopen the file to read
   if(filetest) { //if the file opened, read all its contents
     SerialUSB.println("SDFile contents: ");
@@ -375,7 +353,9 @@ void checkRelays() { //toggles both relays to check if they are clicking or not
   SerialUSB.println("Relay B was toggled on and off 3 times");
   SerialUSB.println("");
 }
+
 void checkXTB() {
+  byte sensorPayload[sensor1_BUF_LEN+sensor2_BUF_LEN+sensor3_BUF_LEN];
   SerialUSB.println("******Testing XTBs******");
   SerialUSB.println("Testing XTB1");
   kSensor1.resetADC();
@@ -392,21 +372,36 @@ void checkXTB() {
   kSensor2.shutdownADC();
   delay(10);
   SerialUSB.println("Testing XTB3");
-  kSensor3.operate();
+  kSensor3.operate(sensorPayload);
   SerialUSB.println(".");
   delay(100);
   SerialUSB.println("..");
   delay(100);
   SerialUSB.println("...");
-
-  byte testData[9*4];
-  kSensor3.sensorData(testData, sizeof(testData));
-  for (uint8_t i = 0; i <sizeof(testData); i+=4) {
+  uint8_t len = sensor3_BUF_LEN;
+  byte testData[len*4];
+  kSensor3.sensorData(testData, len);
+  for (uint8_t i = 0; i <= len*4; i+=4) {
     SerialUSB.print(i);
     SerialUSB.print(" ");
     SerialUSB.print(testData[i],HEX);
     SerialUSB.print("\t");
     SerialUSB.println(kSensor3.getFloat(testData,i),8); //casting bytes back in to float
+  }
+
+  
+  
+  SerialUSB.println("alternatively... attempting to open file on SD and read data");
+  datafile = SD.open("xtb3.dat", FILE_READ);
+  if (datafile){
+    SerialUSB.println("found data file!");
+    while(datafile.available()) {
+      SerialUSB.print((char)datafile.read());
+    }
+    SerialUSB.println("");
+    datafile.close();
+  } else {
+    SerialUSB.println("Couldnt open xtb3.dat");
   }
 }
 
