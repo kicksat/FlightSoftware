@@ -25,9 +25,7 @@ IMUHandle IMU;
 GyroHandle gyroscope;
 SdFat SD;
 
-KickSat_Sensor kSensor1("xtb1");
-KickSat_Sensor kSensor2("xtb2");
-KickSat_Sensor kSensor3("xtb3");
+KickSat_Sensor kSensor(XTB_RST);
 
 //Radio 
 RHHardwareSPI spi;
@@ -180,10 +178,6 @@ void loop() { //check all parts of the board
     SerialUSB.println("Invalid option");
   }
   
-//  kSensor1.resetADC();
-//  kSensor1.startADC();
-//  delay(200);
-//  kSensor1.regReadout();
   delay(1000);
 }
 
@@ -355,54 +349,35 @@ void checkRelays() { //toggles both relays to check if they are clicking or not
 }
 
 void checkXTB() {
-  byte sensorPayload[sensor1_BUF_LEN+sensor2_BUF_LEN+sensor3_BUF_LEN];
-  SerialUSB.println("******Testing XTBs******");
-  SerialUSB.println("Testing XTB1");
-  kSensor1.resetADC();
-  delay(200);
-  kSensor1.startADC();
-  delay(200);
-  kSensor1.shutdownADC();
-  delay(10);
-  SerialUSB.println("Testing XTB2");
-  kSensor2.resetADC();
-  delay(200);
-  kSensor2.startADC();
-  delay(200);
-  kSensor2.shutdownADC();
-  delay(10);
-  SerialUSB.println("Testing XTB3");
-  kSensor3.operate(sensorPayload);
-  SerialUSB.println(".");
-  delay(100);
-  SerialUSB.println("..");
-  delay(100);
-  SerialUSB.println("...");
-  uint8_t len = sensor3_BUF_LEN;
-  byte testData[len*4];
-  kSensor3.sensorData(testData, len);
-  for (uint8_t i = 0; i <= len*4; i+=4) {
-    SerialUSB.print(i);
-    SerialUSB.print(" ");
-    SerialUSB.print(testData[i],HEX);
-    SerialUSB.print("\t");
-    SerialUSB.println(kSensor3.getFloat(testData,i),8); //casting bytes back in to float
-  }
+  byte One[sensor1_BUF_LEN*4];
+  byte Two[sensor2_BUF_LEN*4];
+  byte Three[sensor3_BUF_LEN*4];
+  SerialUSB.println("******Testing Sensors******");
+  SerialUSB.println("Testing sensor 1");
+  kSensor.operate("xtb1");
+  SerialUSB.println("Testing sensor 2");
+  kSensor.operate("xtb2");
+  SerialUSB.println("Testing sensor 3");
+  kSensor.operate("xtb3");
+  SerialUSB.println("Retriving data packet from SD card...");
+  kSensor.sensorPacket(One, Two, Three);
 
-  
-  
-  SerialUSB.println("alternatively... attempting to open file on SD and read data");
-  datafile = SD.open("xtb3.dat", FILE_READ);
-  if (datafile){
-    SerialUSB.println("found data file!");
-    while(datafile.available()) {
-      SerialUSB.print((char)datafile.read());
-    }
-    SerialUSB.println("");
-    datafile.close();
-  } else {
-    SerialUSB.println("Couldnt open xtb3.dat");
+  Serial.println("Printing data packet array 1:");
+  for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i+=4) {
+    Serial.print("\t"); 
+    Serial.println(kSensor.getFloat(One,i),8);   
   }
+  Serial.println("Printing data packet array 2:");
+  for (uint8_t i = 0; i < sensor2_BUF_LEN*4; i+=4) {
+    Serial.print("\t"); 
+    Serial.println(kSensor.getFloat(Two,i),8);   
+  }
+  Serial.println("Printing data packet array 3:");
+  for (uint8_t i = 0; i < sensor3_BUF_LEN*4; i+=4) {
+    Serial.print("\t"); 
+    Serial.println(kSensor.getFloat(Three,i),8);    
+  }
+  SerialUSB.println("");
 }
 
 void burnWire() { //burnwire test
