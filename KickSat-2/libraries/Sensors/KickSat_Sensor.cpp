@@ -478,3 +478,18 @@ float KickSat_Sensor::getFloat(byte packet[], uint8_t i){
     memcpy(&out, &packet[i], sizeof(float));
     return out;
 }
+
+void KickSat_Sensor::sensorStream(String board, int length, byte* data){
+  byte dataStream[length*4];
+  if (datafile.isOpen()) {
+    datafile.close();
+  }
+  if ((datafile = SD.open(board+".dat", FILE_WRITE)) && (datafile.size()>=length*4)) {
+    datafile.seek(datafile.size()-(length*4));
+    datafile.read(dataStream, length*4);    
+    datafile.close();
+    memcpy(data, dataStream, sizeof(dataStream));
+  } else {
+    Serial.println("Error: buffer size");
+  }  
+}
