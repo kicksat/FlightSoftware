@@ -5,6 +5,9 @@
 #define ADC_CS A2
 #define ADC_RST A1
 #define SD_CS 4
+#define sensor1_BUF_LEN 5
+#define sensor2_BUF_LEN 5
+#define sensor3_BUF_LEN 8
 
 class KickSat_Sensor
 {
@@ -21,7 +24,7 @@ class KickSat_Sensor
     void regReadout();
     void GPIO(byte pins, byte state);
     void writeReg(byte start, byte value);
-    void sensorData(String board, byte* data, uint8_t len);
+    void sensorData(byte* One, byte* Two, byte* Three);
     float getFloat(byte packet[], uint8_t i);
     float readTemp();
     float readPins(byte pinNums, byte idacPin, byte vbPin, int wait, int bufflen, byte idacMag);    
@@ -29,17 +32,13 @@ class KickSat_Sensor
     float dataConvert( byte a, byte b, byte c);   
     float voltageApplied;
     uint8_t bufflen = 0;
-    
-    
-    struct datastore {
-      float dat1;
-      float dat2;
-      float dat3;
-      float dat4;
-    };
     struct sensorPayload {
-      float d[100];
+      byte one[sensor1_BUF_LEN*4];
+      byte two[sensor2_BUF_LEN*4];
+      byte three[sensor3_BUF_LEN*4];
     };
+
+    struct sensorPayload dataPac;
   
   private:
     uint8_t _ADCchipSelect;
