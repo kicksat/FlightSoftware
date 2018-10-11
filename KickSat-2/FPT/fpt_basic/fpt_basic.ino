@@ -25,7 +25,7 @@ IMUHandle IMU;
 GyroHandle gyroscope;
 SdFat SD;
 
-KickSat_Sensor kSensor(XTB_RST);
+KickSat_Sensor kSensor(XTB_RESET);
 
 //Radio 
 RHHardwareSPI spi;
