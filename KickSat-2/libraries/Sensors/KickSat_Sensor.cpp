@@ -73,28 +73,28 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     GPIO(0x00,0x01);
     dataTemp[3] = -1*hallGen(9, 5, 0x04, 4, 8, 50); 
     GPIO(0x00,0x00);  
-    dataOut[1] = ((dataTemp[0]+dataTemp[1]+dataTemp[2]+dataTemp[3])/4);
-    dataOut[2] = (voltageApplied/4);
+    dataOut[1]  = ((dataTemp[0]+dataTemp[1]+dataTemp[2]+dataTemp[3])/4);
+    dataOut[2]  = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE A
     dataTemp[4] =    hallGen(0, 2, 0x04, 3, 1, 50);
     dataTemp[5] =    hallGen(1, 3, 0x04, 0, 2, 50);
     dataTemp[6] = -1*hallGen(0, 2, 0x04, 1, 3, 50);
     dataTemp[7] = -1*hallGen(1, 3, 0x04, 2, 0, 50);   
-    dataOut[3] = ((dataTemp[4]+dataTemp[5]+dataTemp[6]+dataTemp[7])/4);
-    dataOut[4] = (voltageApplied/4);
+    dataOut[3]  = ((dataTemp[4]+dataTemp[5]+dataTemp[6]+dataTemp[7])/4);
+    dataOut[4]  = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE C
     dataTemp[8] =    hallGen(7, 12, 0x04, 6, 12, 50);
     dataTemp[9] =    hallGen(12, 6, 0x04, 7, 12, 50);
-    dataOut[5] = ((dataTemp[8]+dataTemp[9])/2);
-    dataOut[6] = (voltageApplied/4);
+    dataOut[5]  = ((dataTemp[8]+dataTemp[9])/2);
+    dataOut[6]  = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE D
     dataTemp[10] =    hallGen(10, 12, 0x04, 11, 12, 50);
     dataTemp[11] =    hallGen(11, 12, 0x04, 10, 12, 50);
-    dataOut[7] = ((dataTemp[10]+dataTemp[11])/2);
-    dataOut[8] = (voltageApplied/4);
+    dataOut[7]   = ((dataTemp[10]+dataTemp[11])/2);
+    dataOut[8]   = (voltageApplied/4);
     voltageApplied = 0;
     memcpy(dataBuffer, dataOut, sizeof(dataOut));
     sensor1_count++; 
@@ -110,19 +110,19 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
   }
   else if (board=="xtb2"){ //T.HEUSER devices
     float dataOut[SENSOR2_BUF_LEN];
-    dataOut[0] = readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
-    dataOut[1] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
-    dataOut[2] = readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
+    dataOut[0] = readPins(0x6C, 0xF6, 0x80, 50, 50, 0x03);
+    dataOut[1] = readPins(0x3C, 0xF3, 0x80, 50, 50, 0x03);
+    dataOut[2] = readPins(0x2C, 0xF6, 0x80, 50, 50, 0x03);
     GPIO(0x00, 0x04);
-    dataOut[3] = readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
+    dataOut[3] = readPins(0x1A, 0xF1, 0x80, 50, 50, 0x03);
     GPIO(0x00, 0x00);
     delay(50);
     GPIO(0x00, 0x02);
-    dataOut[4] = readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
+    dataOut[4] = readPins(0x49, 0xF4, 0x80, 50, 50, 0x01);
     GPIO(0x00, 0x00);
-    dataOut[5] = readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
+    dataOut[5] = readPins(0x5C, 0xF5, 0x80, 50, 50, 0x01);
     GPIO(0x00, 0x01);
-    dataOut[6] = readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
+    dataOut[6] = readPins(0x78, 0xF7, 0x80, 50, 50, 0x01);
     GPIO(0x00, 0x00);
     memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
     sensor2_count++; 
@@ -136,25 +136,25 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     float dataOut[SENSOR3_BUF_LEN];
     Serial.println(board);
     dataOut[0] = readTemp();     
-    dataOut[1] = readPins(0x7C, 0xF7, 0x80, 200, 100, 0x03);
-    dataOut[2] = readPins(0x4C, 0xF4, 0x80, 200, 100, 0x03);
-    dataOut[3] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
-    dataOut[4] = readPins(0x2C, 0xF2, 0x80, 200, 100, 0x03);
+    dataOut[1] = readPins(0x7C, 0xF7, 0x80, 50, 50, 0x03);
+    dataOut[2] = readPins(0x4C, 0xF4, 0x80, 50, 50, 0x03);
+    dataOut[3] = readPins(0x3C, 0xF3, 0x80, 50, 50, 0x03);
+    dataOut[4] = readPins(0x2C, 0xF2, 0x80, 50, 50, 0x03);
     readPins(0xCC, 0xFF, 0x80, 20, 1, 0x01);
     GPIO(0x00, 0x01);
-    dataOut[5] = readPins(0x58, 0xF5, 0x80, 200, 100, 0x01);
+    dataOut[5] = readPins(0x58, 0xF5, 0x80, 50, 50, 0x01);
     GPIO(0x00, 0x00);
     delay(50);
     GPIO(0x00, 0x02);
-    dataOut[6] = readPins(0x59, 0xF5, 0x80, 200, 100, 0x01);
+    dataOut[6] = readPins(0x59, 0xF5, 0x80, 50, 50, 0x01);
     GPIO(0x00, 0x00);
     delay(50);
     GPIO(0x00, 0x04);
-    dataOut[7] = readPins(0x0A, 0xF0, 0x80, 200, 100, 0x01);
+    dataOut[7] = readPins(0x0A, 0xF0, 0x80, 50, 50, 0x01);
     GPIO(0x00, 0x00);
     delay(50);
     GPIO(0x00, 0x08);
-    dataOut[8] = readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
+    dataOut[8] = readPins(0x0B, 0xF0, 0x80, 50, 50, 0x01);
     GPIO(0x00, 0x00);
     memcpy(dataBuffer, dataOut, sizeof(dataOut));  
     sensor3_count++;     
@@ -165,7 +165,6 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     #endif    
   }  
   shutdownADC();  
-  delay(2000);
 }
 
 //==================== Register Commands ====================//
