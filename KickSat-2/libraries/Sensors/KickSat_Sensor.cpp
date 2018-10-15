@@ -23,19 +23,19 @@ KickSat_Sensor::KickSat_Sensor(uint8_t adc_rst) {
 }
 
 void KickSat_Sensor::initialize(){
-  _ADCchipSelect = SPI_CS_XTB1
+  _ADCchipSelect = SPI_CS_XTB1;
   wakeADC();
   delay(200);
   resetADC();
   delay(200);
   shutdownADC();
-  _ADCchipSelect = SPI_CS_XTB2
+  _ADCchipSelect = SPI_CS_XTB2;
   wakeADC();
   delay(200);
   resetADC();
   delay(200);
   shutdownADC(); 
-  _ADCchipSelect = SPI_CS_XTB3
+  _ADCchipSelect = SPI_CS_XTB3;
   wakeADC();
   delay(200);
   resetADC();
@@ -61,7 +61,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
   startADC();
   delay(300);
   if (board== "xtb1"){ //H.ALPERT devices
-    float dataOut[sensor1_BUF_LEN];
+    float dataOut[SENSOR1_BUF_LEN];
     float dataTemp[12];
     //DEVICE B
     dataOut[0] =      readTemp();
@@ -98,7 +98,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     voltageApplied = 0;
     memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
     #ifdef DEBUG
-      for (uint8_t i=0; i<sensor1_BUF_LEN; i++){      
+      for (uint8_t i=0; i<SENSOR1_BUF_LEN; i++){      
         Serial.println(dataOut[i],8);
       }
       Serial.println("Phases...");
@@ -108,7 +108,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     #endif    
   }
   else if (board=="xtb2"){ //T.HEUSER devices
-    float dataOut[sensor2_BUF_LEN];
+    float dataOut[SENSOR2_BUF_LEN];
     dataOut[0] = readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
     dataOut[1] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
     dataOut[2] = readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
@@ -126,13 +126,13 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
     // datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
     #ifdef DEBUG
-      for (uint8_t i=0; i<sensor2_BUF_LEN; i++){      
+      for (uint8_t i=0; i<SENSOR2_BUF_LEN; i++){      
         Serial.println(dataOut[i],8);
       }
     #endif    
   }
   else if (board=="xtb3"){ //M.HOLLIDAY devices
-    float dataOut[sensor3_BUF_LEN];
+    float dataOut[SENSOR3_BUF_LEN];
     Serial.println(board);
     dataOut[0] = readTemp();     
     dataOut[1] = readPins(0x7C, 0xF7, 0x80, 200, 100, 0x03);
@@ -158,7 +158,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     memcpy(dataBuffer, dataOut, sizeof(dataOut));  
     // datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);    
     #ifdef DEBUG
-     for (uint8_t i=0; i<sensor3_BUF_LEN; i++){      
+     for (uint8_t i=0; i<SENSOR3_BUF_LEN; i++){      
        Serial.println(dataOut[i],8);
      }
     #endif    
