@@ -1,25 +1,17 @@
 //**********************************************************
 // KickSat_Sensor.cpp
 //**********************************************************
-//TODO: test with all 3 boards on flight unit
+//TODO: 
 
 
 #include <KickSat_Sensor.h>
 #include <SPI.h>
+#include <SdFat.h>
 #define Serial SerialUSB
 extern SdFat SD;
-File datafile;
 
 //constructor, sets up this sensor object with the corresponding config file
-KickSat_Sensor::KickSat_Sensor(String boardfile) {
-  board = boardfile;
-  if (board== "xtb1"){
-    _ADCchipSelect = SPI_CS_XTB1;
-  } else if (board== "xtb2"){
-    _ADCchipSelect = SPI_CS_XTB2;
-  } else if (board== "xtb3"){
-    _ADCchipSelect = SPI_CS_XTB3;
-  }
+KickSat_Sensor::KickSat_Sensor(uint8_t adc_rst) {
   pinMode(SPI_CS_XTB1, OUTPUT);
   pinMode(SPI_CS_XTB2, OUTPUT);
   pinMode(SPI_CS_XTB3, OUTPUT);
@@ -31,11 +23,18 @@ KickSat_Sensor::KickSat_Sensor(String boardfile) {
 }
 
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config writeable.
-void KickSat_Sensor::operate() {  
-  if (SD.begin(SPI_CS_SD)) {
-    datafile = SD.open(board+".dat", FILE_WRITE);
+void KickSat_Sensor::operate(String board) {
+  if (board== "xtb1"){
+    _ADCchipSelect = SPI_CS_XTB1;
+  } else if (board== "xtb2"){
+    _ADCchipSelect = SPI_CS_XTB2;
+  } else if (board== "xtb3"){
+    _ADCchipSelect = SPI_CS_XTB3;
   }
   
+  if (SD.begin(SPI_CS_SD)) {
+    datafile = SD.open(board+".dat", FILE_WRITE);
+  }  
   wakeADC();
   delay(500);
   resetADC();
@@ -43,64 +42,71 @@ void KickSat_Sensor::operate() {
   startADC();
   delay(100);
   if (board== "xtb1"){ //H.ALPERT devices
-    float dataOut[8];
+    float dataOut[sensor1_BUF_LEN];
+    float dataTemp[4];
     //DEVICE B
     dataOut[0] =     readTemp();
     GPIO(0x00,0x02);
-    dataOut[1] +=    hallGen(8, 4, 0x03, 5, 9, 50);
+    dataTemp[0] +=    hallGen(8, 4, 0x03, 5, 9, 50);
     GPIO(0x00,0x00);
-    dataOut[1] +=    hallGen(9, 5, 0x03, 8, 4, 50);
-    dataOut[1] += -1*hallGen(8, 4, 0x03, 9, 5, 50);
+    dataTemp[0] +=    hallGen(9, 5, 0x03, 8, 4, 50);
+    dataTemp[0] += -1*hallGen(8, 4, 0x03, 9, 5, 50);
     GPIO(0x00,0x01);
-    dataOut[1] += -1*hallGen(9, 5, 0x03, 4, 8, 50); 
+    dataTemp[0] += -1*hallGen(9, 5, 0x03, 4, 8, 50); 
     GPIO(0x00,0x00);  
-    dataOut[2] = (voltageApplied/4);
+    dataOut[1] = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE A
-    dataOut[3] +=    hallGen(0, 2, 0x03, 3, 1, 50);
-    dataOut[3] +=    hallGen(1, 3, 0x03, 0, 2, 50);
-    dataOut[3] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
-    dataOut[3] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
-    dataOut[4] = (voltageApplied/4);
+    dataTemp[1] +=    hallGen(0, 2, 0x03, 3, 1, 50);
+    dataTemp[1] +=    hallGen(1, 3, 0x03, 0, 2, 50);
+    dataTemp[1] += -1*hallGen(0, 2, 0x03, 1, 3, 50);
+    dataTemp[1] += -1*hallGen(1, 3, 0x03, 2, 0, 50);   
+    dataOut[2] = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE C
-    dataOut[5] +=    hallGen(7, 12, 0x03, 6, 12, 50);
-    dataOut[5] +=    hallGen(12, 6, 0x03, 7, 12, 50);
-    dataOut[6] = (voltageApplied/2);
+    dataTemp[2] +=    hallGen(7, 12, 0x03, 6, 12, 50);
+    dataTemp[2] +=    hallGen(12, 6, 0x03, 7, 12, 50);
+    dataOut[3] = (voltageApplied/2);
     voltageApplied = 0;
     //DEVICE D
-    dataOut[7] +=    hallGen(10, 12, 0x03, 11, 12, 50);
-    dataOut[7] +=    hallGen(11, 12, 0x03, 10, 12, 50);
-    dataOut[8] = (voltageApplied/2);
-    voltageApplied = 0;    
+    dataTemp[3] +=    hallGen(10, 12, 0x03, 11, 12, 50);
+    dataTemp[3] +=    hallGen(11, 12, 0x03, 10, 12, 50);
+    dataOut[4] = (voltageApplied/2);
+    voltageApplied = 0;
+    
     datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
-    for (uint8_t i=0; i<8; i++){
-     Serial.println(dataOut[i],8);
-    }  
+    #ifdef DEBUG
+      for (uint8_t i=0; i<sensor1_BUF_LEN; i++){      
+        Serial.println(dataOut[i],8);
+      }
+    #endif    
   }
   else if (board=="xtb2"){ //T.HEUSER devices
-    float dataOut[7];
-     dataOut[0] = readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
-     dataOut[1] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
-     dataOut[2] = readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
-     GPIO(0x00, 0x04);
-     dataOut[3] = readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
-     GPIO(0x00, 0x00);
-     delay(50);
-     GPIO(0x00, 0x02);
-     dataOut[4] = readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
-     GPIO(0x00, 0x00);
-     dataOut[5] = readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
-     GPIO(0x00, 0x01);
-     dataOut[6] = readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
-     GPIO(0x00, 0x00);
-     datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
-     for (uint8_t i=0; i<7; i++){
-       Serial.println(dataOut[i],8);
-     } 
+    float dataOut[sensor2_BUF_LEN];
+    dataOut[0] = readPins(0x6C, 0xF6, 0x80, 200, 100, 0x03);
+    dataOut[1] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
+    dataOut[2] = readPins(0x2C, 0xF6, 0x80, 200, 100, 0x03);
+    GPIO(0x00, 0x04);
+    dataOut[3] = readPins(0x1A, 0xF1, 0x80, 200, 100, 0x03);
+    GPIO(0x00, 0x00);
+    delay(50);
+    GPIO(0x00, 0x02);
+    dataOut[4] = readPins(0x49, 0xF4, 0x80, 200, 100, 0x01);
+    GPIO(0x00, 0x00);
+    dataOut[5] = readPins(0x5C, 0xF5, 0x80, 200, 100, 0x01);
+    GPIO(0x00, 0x01);
+    dataOut[6] = readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
+    GPIO(0x00, 0x00);
+
+    datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
+    #ifdef DEBUG
+      for (uint8_t i=0; i<sensor2_BUF_LEN; i++){      
+        Serial.println(dataOut[i],8);
+      }
+    #endif    
   }
   else if (board=="xtb3"){ //M.HOLLIDAY devices
-    float dataOut[9];
+    float dataOut[sensor3_BUF_LEN];
     Serial.println(board);
     dataOut[0] = readTemp();     
     dataOut[1] = readPins(0x7C, 0xF7, 0x80, 200, 100, 0x03);
@@ -108,28 +114,31 @@ void KickSat_Sensor::operate() {
     dataOut[3] = readPins(0x3C, 0xF3, 0x80, 200, 100, 0x03);
     dataOut[4] = readPins(0x2C, 0xF2, 0x80, 200, 100, 0x03);
     readPins(0xCC, 0xFF, 0x80, 20, 1, 0x01);
-     GPIO(0x00, 0x01);
+    GPIO(0x00, 0x01);
     dataOut[5] = readPins(0x58, 0xF5, 0x80, 200, 100, 0x01);
-     GPIO(0x00, 0x00);
-     delay(50);
-     GPIO(0x00, 0x02);
+    GPIO(0x00, 0x00);
+    delay(50);
+    GPIO(0x00, 0x02);
     dataOut[6] = readPins(0x59, 0xF5, 0x80, 200, 100, 0x01);
-     GPIO(0x00, 0x00);
-     delay(50);
-     GPIO(0x00, 0x04);
+    GPIO(0x00, 0x00);
+    delay(50);
+    GPIO(0x00, 0x04);
     dataOut[7] = readPins(0x0A, 0xF0, 0x80, 200, 100, 0x01);
-     GPIO(0x00, 0x00);
-     delay(50);
-     GPIO(0x00, 0x08);
+    GPIO(0x00, 0x00);
+    delay(50);
+    GPIO(0x00, 0x08);
     dataOut[8] = readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
-     GPIO(0x00, 0x00);
-     datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);    
-     for (uint8_t i=0; i<8; i++){
+    GPIO(0x00, 0x00);
+
+    datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);    
+    #ifdef DEBUG
+     for (uint8_t i=0; i<sensor3_BUF_LEN; i++){      
        Serial.println(dataOut[i],8);
      }
+    #endif    
   }  
   shutdownADC();  
-  datafile.close();
+  datafile.close();  
   delay(2000);
 }
 
@@ -412,20 +421,75 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   return reading;
 }
 
-void KickSat_Sensor::sensorData(byte* data, uint8_t len){
+//reads sensor data from each sensor board and updates the sensorPayload struct
+void KickSat_Sensor::sensorPacket(byte* One, byte* Two, byte* Three){
   if (datafile.isOpen()) {
     datafile.close();
   }
-  datafile = SD.open(board+".dat", FILE_READ);
-  struct sensorPayload dataPac;
-  datafile.seek(datafile.size()-len*4);
-//  datafile.read((uint8_t *)&dataPac, sizeof(dataPac));
-  datafile.read(data,len*4);
-  datafile.close();
+  if (datafile = SD.open("xtb1.dat", FILE_READ)){
+    datafile.seek(datafile.size()-sensor1_BUF_LEN*4);
+    datafile.read(dataPac.one, sensor1_BUF_LEN*4);
+    datafile.close();
+    memcpy(One, dataPac.one, sizeof(dataPac.one));
+  }
+  if (datafile = SD.open("xtb2.dat", FILE_READ)){
+    datafile.seek(datafile.size()-sensor2_BUF_LEN*4);
+    datafile.read(dataPac.two, sensor2_BUF_LEN*4);
+    datafile.close();
+    memcpy(Two, dataPac.two, sizeof(dataPac.two));
+  }
+  if (datafile = SD.open("xtb3.dat", FILE_READ)){
+    datafile.seek(datafile.size()-sensor3_BUF_LEN*4);
+    datafile.read(dataPac.three, sensor3_BUF_LEN*4);
+    datafile.close();
+    memcpy(Three, dataPac.three, sizeof(dataPac.three));
+  }
+  #ifdef DEBUG
+    Serial.println("Printing BYTE Data from one");
+    for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i++) {
+      Serial.println(dataPac.one[i], HEX);    
+    }
+    Serial.println("Printing BYTE Data from two");
+    for (uint8_t i = 0; i < sensor2_BUF_LEN*4; i++) {
+      Serial.println(dataPac.two[i], HEX);    
+    }
+    Serial.println("Printing BYTE Data from three");
+    for (uint8_t i = 0; i < sensor3_BUF_LEN*4; i++) {
+      Serial.println(dataPac.three[i], HEX);    
+    }
+  
+    Serial.println("Printing FLOAT Data from one");
+    for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i+=4) {
+      Serial.println(getFloat(dataPac.one,i),8);   
+    }
+    Serial.println("Printing FLOAT Data from two");
+    for (uint8_t i = 0; i < sensor2_BUF_LEN*4; i+=4) {
+      Serial.println(getFloat(dataPac.two,i),8);   
+    }
+    Serial.println("Printing FLOAT Data from three");
+    for (uint8_t i = 0; i < sensor3_BUF_LEN*4; i+=4) {
+      Serial.println(getFloat(dataPac.three,i),8);    
+    }
+  #endif
 }
 
 float KickSat_Sensor::getFloat(byte packet[], uint8_t i){
     float out;
     memcpy(&out, &packet[i], sizeof(float));
     return out;
+}
+
+void KickSat_Sensor::sensorStream(String board, int length, byte* data){
+  byte dataStream[length*4];
+  if (datafile.isOpen()) {
+    datafile.close();
+  }
+  if ((datafile = SD.open(board+".dat", FILE_WRITE)) && (datafile.size()>=length*4)) {
+    datafile.seek(datafile.size()-(length*4));
+    datafile.read(dataStream, length*4);    
+    datafile.close();
+    memcpy(data, dataStream, sizeof(dataStream));
+  } else {
+    Serial.println("Error: buffer size");
+  }  
 }

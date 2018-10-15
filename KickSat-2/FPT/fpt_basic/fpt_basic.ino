@@ -25,9 +25,7 @@ IMUHandle IMU;
 GyroHandle gyroscope;
 SdFat SD;
 
-KickSat_Sensor kSensor1("xtb1");
-KickSat_Sensor kSensor2("xtb2");
-KickSat_Sensor kSensor3("xtb3");
+KickSat_Sensor kSensor(XTB_RESET);
 
 //Radio 
 RHHardwareSPI spi;
@@ -73,6 +71,7 @@ int SDWrites = 0;
 int WDTCounter = 1;
 unsigned int radioPackets = 1;
 File filetest;
+File datafile;
 
 //Flags
 bool LEDSTATE = false; // to toggle LED, helps us test whether the board is alive
@@ -179,10 +178,6 @@ void loop() { //check all parts of the board
     SerialUSB.println("Invalid option");
   }
   
-//  kSensor1.resetADC();
-//  kSensor1.startADC();
-//  delay(200);
-//  kSensor1.regReadout();
   delay(1000);
 }
 
@@ -274,35 +269,10 @@ void checkGyroHandler() { //gets data from the gyro
   SerialUSB.println("\n");
 }
 
-void printDirectory(File dir, int numTabs) {
-  while (true) {
-    File entry =  dir.openNextFile();
-    if (! entry) {
-      // no more files
-      break;
-    }
-    for (uint8_t i = 0; i < numTabs; i++) {
-      SerialUSB.print('\t');
-    }
-    SerialUSB.print(entry.name());
-    if (entry.isDirectory()) {
-      SerialUSB.println("/");
-      printDirectory(entry, numTabs + 1);
-    } else {
-      // files have sizes, directories do not
-      SerialUSB.print("\t\t");
-      SerialUSB.println(entry.size(), DEC);
-    }
-    entry.close();
-  }
-}
 
 void checkSDCard() { //read and writes to the SD Card
-  File root;
   SerialUSB.println("******Testing the SD Card******");
   SerialUSB.println("Found the following files...");
-  root = SD.open("/");
-  printDirectory(root, 0);
   
   filetest = SD.open("TestSD.txt", FILE_WRITE); //first open the file to write
   if(filetest) { //if the file exists, print one new line on the file
@@ -316,6 +286,8 @@ void checkSDCard() { //read and writes to the SD Card
     SerialUSB.println("Couldnt open TestSD.txt");
   }
 
+  
+  
   filetest = SD.open("TestSD.txt", FILE_READ); //reopen the file to read
   if(filetest) { //if the file opened, read all its contents
     SerialUSB.println("SDFile contents: ");
@@ -375,39 +347,37 @@ void checkRelays() { //toggles both relays to check if they are clicking or not
   SerialUSB.println("Relay B was toggled on and off 3 times");
   SerialUSB.println("");
 }
-void checkXTB() {
-  SerialUSB.println("******Testing XTBs******");
-  SerialUSB.println("Testing XTB1");
-  kSensor1.resetADC();
-  delay(200);
-  kSensor1.startADC();
-  delay(200);
-  kSensor1.shutdownADC();
-  delay(10);
-  SerialUSB.println("Testing XTB2");
-  kSensor2.resetADC();
-  delay(200);
-  kSensor2.startADC();
-  delay(200);
-  kSensor2.shutdownADC();
-  delay(10);
-  SerialUSB.println("Testing XTB3");
-  kSensor3.operate();
-  SerialUSB.println(".");
-  delay(100);
-  SerialUSB.println("..");
-  delay(100);
-  SerialUSB.println("...");
 
-  byte testData[9*4];
-  kSensor3.sensorData(testData, sizeof(testData));
-  for (uint8_t i = 0; i <sizeof(testData); i+=4) {
-    SerialUSB.print(i);
-    SerialUSB.print(" ");
-    SerialUSB.print(testData[i],HEX);
-    SerialUSB.print("\t");
-    SerialUSB.println(kSensor3.getFloat(testData,i),8); //casting bytes back in to float
+void checkXTB() {
+  byte One[sensor1_BUF_LEN*4];
+  byte Two[sensor2_BUF_LEN*4];
+  byte Three[sensor3_BUF_LEN*4];
+  SerialUSB.println("******Testing Sensors******");
+  SerialUSB.println("Testing sensor 1");
+  kSensor.operate("xtb1");
+  SerialUSB.println("Testing sensor 2");
+  kSensor.operate("xtb2");
+  SerialUSB.println("Testing sensor 3");
+  kSensor.operate("xtb3");
+  SerialUSB.println("Retriving data packet from SD card...");
+  kSensor.sensorPacket(One, Two, Three);
+
+  Serial.println("Printing data packet array 1:");
+  for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i+=4) {
+    Serial.print("\t"); 
+    Serial.println(kSensor.getFloat(One,i),8);   
   }
+  Serial.println("Printing data packet array 2:");
+  for (uint8_t i = 0; i < sensor2_BUF_LEN*4; i+=4) {
+    Serial.print("\t"); 
+    Serial.println(kSensor.getFloat(Two,i),8);   
+  }
+  Serial.println("Printing data packet array 3:");
+  for (uint8_t i = 0; i < sensor3_BUF_LEN*4; i+=4) {
+    Serial.print("\t"); 
+    Serial.println(kSensor.getFloat(Three,i),8);    
+  }
+  SerialUSB.println("");
 }
 
 void burnWire() { //burnwire test

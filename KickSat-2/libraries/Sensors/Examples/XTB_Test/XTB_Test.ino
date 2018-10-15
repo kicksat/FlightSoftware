@@ -1,10 +1,10 @@
-#include "KickSat_Sensor.h"
+#include <KickSat_Sensor.h>
 #include <SPI.h>
+#include <SdFat.h>
 #define Serial SerialUSB
+SdFat SD;
 
-KickSat_Sensor sensor1("xtb1");
-KickSat_Sensor sensor2("xtb2");
-KickSat_Sensor sensor3("xtb3");
+KickSat_Sensor kSensor(XTB_RESET);
 
 /*---------------SETUP---------------*/
 void setup() {
@@ -15,26 +15,29 @@ void setup() {
 
 /*---------------LOOP---------------*/
 void loop() {  
+  //arrays to store the sensor data (only for readback) 
+  byte One[sensor1_BUF_LEN*4];
+  byte Two[sensor2_BUF_LEN*4];
+  byte Three[sensor3_BUF_LEN*4];
+
+  kSensor.operate("xtb1"); //operate the specified sensor board (automatically stores data)
+  kSensor.operate("xtb2");
+  kSensor.operate("xtb3");
   
-  sensor1.operate(); //operate sensor1 and automatically record data
-  sensor2.operate(); //operate sensor2 and automatically record data
-  sensor3.operate(); //operate sensor2 and automatically record data  
+  // example of accessing stored sensor data and printing it out as a BYTE
+  kSensor.sensorPacket(One, Two, Three); //doesn't matter which sensor you call
+
+  Serial.println("Printing FLOAT Data from one");
+  for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i+=4) {
+    Serial.println(kSensor.getFloat(One,i),8);   
+  }
+  Serial.println("Printing FLOAT Data from two");
+  for (uint8_t i = 0; i < sensor2_BUF_LEN*4; i+=4) {
+    Serial.println(kSensor.getFloat(Two,i),8);   
+  }
+  Serial.println("Printing FLOAT Data from three");
+  for (uint8_t i = 0; i < sensor3_BUF_LEN*4; i+=4) {
+    Serial.println(kSensor.getFloat(Three,i),8);    
+  }
   
-  // example of accessing stored sensor data and printing it out as a float
-  byte dataArray1[8*4]; //data array must be 4X bigger due to floats
-  sensor1.sensorData(dataArray1, 8); //read data for sensor1, data is provided as byte array (4 bytes per float!)
-  for (uint8_t i = 0; i <= 8*4; i+=4) {
-    Serial.println(sensor1.getFloat(dataArray1,i),8); //casting bytes back in to float
-  }
-  byte dataArray2[7*4]; //data array must be 4X bigger due to floats
-  sensor2.sensorData(dataArray2, 7); //read data for sensor1, data is provided as byte array (4 bytes per float!)
-  for (uint8_t i = 0; i <= 7*4; i+=4) {
-    Serial.println(sensor1.getFloat(dataArray2,i),8); //casting bytes back in to float
-  }
-  byte dataArray3[9*4]; //data array must be 4X bigger due to floats
-  sensor3.sensorData(dataArray3, 9); //read data for sensor1, data is provided as byte array (4 bytes per float!)
-  for (uint8_t i = 0; i <= 9*4; i+=4) {
-    Serial.println(sensor1.getFloat(dataArray3,i),8); //casting bytes back in to float
-  }
-  delay(2000);
 }
