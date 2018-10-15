@@ -38,6 +38,9 @@ class KickSat_Sensor
     float dataConvert( byte a, byte b, byte c);   
     float voltageApplied;
     String board;
+    uint32_t sensor1_count = 0;
+    uint32_t sensor2_count = 0;
+    uint32_t sensor3_count = 0;
 
   private:
     uint8_t _ADCchipSelect;

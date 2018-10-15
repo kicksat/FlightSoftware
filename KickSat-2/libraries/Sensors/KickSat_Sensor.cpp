@@ -96,7 +96,8 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     dataOut[7] = ((dataTemp[10]+dataTemp[11])/2);
     dataOut[8] = (voltageApplied/4);
     voltageApplied = 0;
-    memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
+    memcpy(dataBuffer, dataOut, sizeof(dataOut));
+    sensor1_count++; 
     #ifdef DEBUG
       for (uint8_t i=0; i<SENSOR1_BUF_LEN; i++){      
         Serial.println(dataOut[i],8);
@@ -124,7 +125,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     dataOut[6] = readPins(0x78, 0xF7, 0x80, 200, 100, 0x01);
     GPIO(0x00, 0x00);
     memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
-    // datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);
+    sensor2_count++; 
     #ifdef DEBUG
       for (uint8_t i=0; i<SENSOR2_BUF_LEN; i++){      
         Serial.println(dataOut[i],8);
@@ -156,16 +157,14 @@ void KickSat_Sensor::operate(String board, float* dataBuffer) {
     dataOut[8] = readPins(0x0B, 0xF0, 0x80, 200, 100, 0x01);
     GPIO(0x00, 0x00);
     memcpy(dataBuffer, dataOut, sizeof(dataOut));  
-    // datafile.write((const uint8_t *)&dataOut, sizeof(dataOut)); //save data to SD card as bytes (4 bytes per float);    
+    sensor3_count++;     
     #ifdef DEBUG
      for (uint8_t i=0; i<SENSOR3_BUF_LEN; i++){      
        Serial.println(dataOut[i],8);
      }
     #endif    
   }  
-  shutdownADC(); 
-  
-  // datafile.close();  
+  shutdownADC();  
   delay(2000);
 }
 
@@ -449,7 +448,6 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   Serial.println(reading,8); 
   return reading;
 }
-
 
 float KickSat_Sensor::getFloat(byte packet[], uint8_t i){
     float out;
