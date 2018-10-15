@@ -10,25 +10,26 @@ by: Max
 //constructor
 BattHandle::BattHandle() {
   //configure pins and inputs
+  analogReference(AR_INTERNAL2V23);
   analogReadResolution(12); //setting 12 bit resolution
-  pinMode(VBATT, INPUT);
-  pinMode(L1_PROG, INPUT);
-  pinMode(I_BATT, INPUT);
+  //pinMode(VBATT, INPUT);
+  //pinMode(L1_PROG, INPUT);
+  //pinMode(I_BATT, INPUT);
 
 }
 
 //calculates VBATT
 float BattHandle::readBattVoltage() {
-  int voltagePinValue = analogRead(VBATT);
-  float battVoltage = voltagePinValue * (3.3/4096.0) * (426.0/110.0); //12bit-ADC with a 426/110 voltage divider
+  int voltagePinValue = analogRead(PIN_VBATT);
+  float battVoltage = voltagePinValue * (2.23/4095.0) * (426.0/110.0); //12bit-ADC with a 426/110 voltage divider
   return battVoltage;
 }
 
 //calculates I_BATT (in mA)
 // 8mV reading = 8mA 
 float BattHandle::readBattCurrent() { 
-  int currentPinValue = analogRead(I_BATT);
-  float battCurrent = currentPinValue * (3.3/4096.0); //12bit-ADC, in volts
+  int currentPinValue = analogRead(PIN_I_BATT);
+  float battCurrent = currentPinValue * (2.23/4095.0); //12bit-ADC, in volts
   battCurrent = battCurrent * 1000.0; //putting it in mA
   return battCurrent;
 }
@@ -40,8 +41,8 @@ float BattHandle::readBattCurrent() {
   Rprog=6.04K
 */
 float BattHandle::readBattChargeCurrent() {
-  int chargeCurrentPinValue = analogRead(L1_PROG);
-  float battChargeCurrent = chargeCurrentPinValue * (3.3/4096.0); //12bit-ADC, in volts
+  int chargeCurrentPinValue = analogRead(PIN_L1_PROG);
+  float battChargeCurrent = chargeCurrentPinValue * (2.23/4095.0); //12bit-ADC, in volts
   battChargeCurrent = ((battChargeCurrent * 988.0) / 6040.0) * 1000.0; //solve for Ichrg, convert to mA, 
   return battChargeCurrent;
 }
