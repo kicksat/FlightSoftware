@@ -18,6 +18,7 @@
 #include <SPI.h> 
 
 
+
 //Global objects
 BattHandle power;
 Counter watchdogTimer;
@@ -71,7 +72,6 @@ int SDWrites = 0;
 int WDTCounter = 1;
 unsigned int radioPackets = 1;
 File filetest;
-File datafile;
 
 //Flags
 bool LEDSTATE = false; // to toggle LED, helps us test whether the board is alive
@@ -313,9 +313,43 @@ void checkRadio() { //sends a radio packet
 }
 
 void removeFile() { //removes the test file (to delete any other file, replace the text file name in lines 268, 269 to the file youd like to remove)
+  SD.begin(SPI_CS_SD);
   SerialUSB.println("******Removing TestSD.txt******");
   if(SD.exists("TestSD.txt")) {
     if(SD.remove("TestSD.txt")) {
+      SerialUSB.println("Test file removed");
+      SDWrites = 0; //reset line counter for test file
+    } else { 
+      SerialUSB.println("Couldn't remove test file");
+    }
+  } else {
+    SerialUSB.println("TestSD.txt file doesnt exist");
+  }
+  SerialUSB.println("");
+  if(SD.exists("xtb1.dat")) {
+    if(SD.remove("xtb1.dat")) {
+      SerialUSB.println("Test file removed");
+      SDWrites = 0; //reset line counter for test file
+    } else { 
+      SerialUSB.println("Couldn't remove test file");
+    }
+  } else {
+    SerialUSB.println("TestSD.txt file doesnt exist");
+  }
+  SerialUSB.println("");
+  if(SD.exists("xtb2.dat")) {
+    if(SD.remove("xtb2.dat")) {
+      SerialUSB.println("Test file removed");
+      SDWrites = 0; //reset line counter for test file
+    } else { 
+      SerialUSB.println("Couldn't remove test file");
+    }
+  } else {
+    SerialUSB.println("TestSD.txt file doesnt exist");
+  }
+  SerialUSB.println("");
+  if(SD.exists("xtb3.dat")) {
+    if(SD.remove("xtb3.dat")) {
       SerialUSB.println("Test file removed");
       SDWrites = 0; //reset line counter for test file
     } else { 
@@ -349,35 +383,96 @@ void checkRelays() { //toggles both relays to check if they are clicking or not
 }
 
 void checkXTB() {
-  byte One[sensor1_BUF_LEN*4];
-  byte Two[sensor2_BUF_LEN*4];
-  byte Three[sensor3_BUF_LEN*4];
-  SerialUSB.println("******Testing Sensors******");
-  SerialUSB.println("Testing sensor 1");
-  kSensor.operate("xtb1");
-  SerialUSB.println("Testing sensor 2");
-  kSensor.operate("xtb2");
-  SerialUSB.println("Testing sensor 3");
-  kSensor.operate("xtb3");
-  SerialUSB.println("Retriving data packet from SD card...");
-  kSensor.sensorPacket(One, Two, Three);
+  File datafile;
 
-  Serial.println("Printing data packet array 1:");
-  for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i+=4) {
-    Serial.print("\t"); 
-    Serial.println(kSensor.getFloat(One,i),8);   
+  union SensorPayload {
+    float sensor_float[LENGTH_FLOAT];
+    byte sensor_byte[LENGTH_BYTE];
+  };
+  union SensorPayload sensorpayload;
+  
+  SerialUSB.println("******Testing Sensors******");
+  kSensor.operate("xtb1", &sensorpayload.sensor_float[SENSOR1_START]);
+  kSensor.operate("xtb2", &sensorpayload.sensor_float[SENSOR2_START]);
+  kSensor.operate("xtb3", &sensorpayload.sensor_float[SENSOR3_START]);
+  SerialUSB.println("Printing FLOAT Data from one");
+  for (uint8_t i = 0; i < LENGTH_FLOAT; i++) {
+    SerialUSB.println(sensorpayload.sensor_float[i],8);    
   }
-  Serial.println("Printing data packet array 2:");
-  for (uint8_t i = 0; i < sensor2_BUF_LEN*4; i+=4) {
-    Serial.print("\t"); 
-    Serial.println(kSensor.getFloat(Two,i),8);   
+//  SerialUSB.println("Printing BYTE Data from one");
+//  for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i++) {
+//    SerialUSB.println(sensorpayload.sensor_byte[i],HEX);    
+//  }
+
+  SD.begin(SPI_CS_SD);
+  datafile = SD.open("xtb1.dat", FILE_WRITE);
+  if (datafile){
+    datafile.write(&sensorpayload.sensor_byte[SENSOR1_START], sensor1_BUF_LEN*4);
+    datafile.close();  
   }
-  Serial.println("Printing data packet array 3:");
-  for (uint8_t i = 0; i < sensor3_BUF_LEN*4; i+=4) {
-    Serial.print("\t"); 
-    Serial.println(kSensor.getFloat(Three,i),8);    
+  datafile = SD.open("xtb2.dat", FILE_WRITE);
+  if (datafile){
+    datafile.write(&sensorpayload.sensor_byte[SENSOR2_START], sensor2_BUF_LEN*4);
+    datafile.close();  
   }
-  SerialUSB.println("");
+  datafile = SD.open("xtb3.dat", FILE_WRITE);
+  if (datafile){
+    datafile.write(&sensorpayload.sensor_byte[SENSOR3_START], sensor3_BUF_LEN*4);
+    datafile.close();  
+  }
+
+
+  
+//  datafile2 = SD.open("xtb76.dat", FILE_READ);
+//  if(datafile2) { //if the file opened, read all its contents
+//   datafile2.seek(datafile2.size()-sensor1_BUF_LEN*4);
+//   datafile2.read(dataPack, sensor1_BUF_LEN*4);
+//   datafile2.close();
+//  } else {
+//    SerialUSB.println("data file2 error");
+//  }
+//  
+//  SerialUSB.println("Printing BYTE Data from one");
+//  for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i++) {
+//    SerialUSB.println(dataPack[i], HEX);    
+//  }
+//  SerialUSB.println(kSensor.getFloat(dataPack,0),8);
+
+
+
+//  
+//  
+//  SerialUSB.println("Printing Data1");
+//  for (uint8_t i = 0; i < sensor1_BUF_LEN; i++) {
+//    SerialUSB.println(One[i],8);
+//  }
+//  SerialUSB.println("Printing Data2");
+//  for (uint8_t i = 0; i < sensor2_BUF_LEN; i++) {
+//    SerialUSB.println(Two[i],8);
+//  }
+//  SerialUSB.println("Printing Data3");
+//  for (uint8_t i = 0; i < sensor3_BUF_LEN; i++) {
+//    SerialUSB.println(Three[i],8);
+//  }
+//  SerialUSB.println("Retriving data packet from SD card...");
+//  kSensor.sensorPacket(One, Two, Three);
+//
+//  SerialUSB.println("Printing data packet array 1:");
+//  for (uint8_t i = 0; i < sensor1_BUF_LEN*4; i+=4) {
+//    SerialUSB.print("\t"); 
+//    SerialUSB.println(kSensor.getFloat(One,i),8);   
+//  }
+//  SerialUSB.println("Printing data packet array 2:");
+//  for (uint8_t i = 0; i < sensor2_BUF_LEN*4; i+=4) {
+//    SerialUSB.print("\t"); 
+//    SerialUSB.println(kSensor.getFloat(Two,i),8);   
+//  }
+//  SerialUSB.println("Printing data packet array 3:");
+//  for (uint8_t i = 0; i < sensor3_BUF_LEN*4; i+=4) {
+//    SerialUSB.print("\t"); 
+//    SerialUSB.println(kSensor.getFloat(Three,i),8);    
+//  }
+//  SerialUSB.println("");
 }
 
 void burnWire() { //burnwire test

@@ -7,16 +7,20 @@
 #ifndef KICKSAT_SENSOR_H_
 #define KICKSAT_SENSOR_H_
 
-#include <SdFat.h>
-#define sensor1_BUF_LEN 5
+#define sensor1_BUF_LEN 9
 #define sensor2_BUF_LEN 7
 #define sensor3_BUF_LEN 9
+#define SENSOR1_START 0
+#define SENSOR2_START sensor1_BUF_LEN
+#define SENSOR3_START sensor1_BUF_LEN+sensor2_BUF_LEN
+#define LENGTH_FLOAT sensor1_BUF_LEN+sensor2_BUF_LEN+sensor3_BUF_LEN
+#define LENGTH_BYTE LENGTH_FLOAT*4
 
 class KickSat_Sensor
 {
   public:
     KickSat_Sensor(uint8_t adc_rst);
-    void operate(String board);
+    void operate(String board, float* dataBuffer);
     void burstWriteRegs(byte start, uint8_t len, byte* data);
     void startADC();
     void stopADC();
@@ -26,8 +30,8 @@ class KickSat_Sensor
     void regReadout();
     void GPIO(byte pins, byte state);
     void writeReg(byte start, byte value);
-    void sensorPacket(byte* One, byte* Two, byte* Three);
-    void sensorStream(String board, int length, byte* stream);
+    // void sensorPacket(byte* One, byte* Two, byte* Three);
+    // void sensorStream(String board, int length, byte* stream);
     float getFloat(byte packet[], uint8_t i);
     float readTemp();
     float readPins(byte pinNums, byte idacPin, byte vbPin, int wait, int bufflen, byte idacMag);    
@@ -35,13 +39,14 @@ class KickSat_Sensor
     float dataConvert( byte a, byte b, byte c);   
     float voltageApplied;
     String board;
-    File datafile;
-    struct sensorPayload {
-      byte one[sensor1_BUF_LEN*4];
-      byte two[sensor2_BUF_LEN*4];
-      byte three[sensor3_BUF_LEN*4];
-    };
-    struct sensorPayload dataPac;
+    // File datafile;
+    // struct sensorPayload {
+    //   byte one[sensor1_BUF_LEN*4];
+    //   byte two[sensor2_BUF_LEN*4];
+    //   byte three[sensor3_BUF_LEN*4];
+    // };
+    // struct sensorPayload dataPac;
+
   private:
     uint8_t _ADCchipSelect;
     uint8_t _ADCreset;
