@@ -41,7 +41,8 @@ class KickSat_Sensor
     uint32_t sensor1_count = 0;
     uint32_t sensor2_count = 0;
     uint32_t sensor3_count = 0;
-    uint8_t pauseTime = 50uint8_t SenMode = 0;;
+    uint8_t pauseTime = 50;
+    uint8_t SenMode = 0;
 
   private:
     uint8_t _ADCchipSelect;

@@ -270,7 +270,7 @@ void KickSat_Sensor::GPIO(byte pins, byte state){
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1); 
-  SPI.transfer(0xpauseTime);  
+  SPI.transfer(0x50);  
   SPI.transfer(0x01); 
   SPI.transfer(pins);
   SPI.transfer(state); 
@@ -392,7 +392,7 @@ float KickSat_Sensor::readTemp() {
   delayMicroseconds(1);   
   SPI.transfer(0x49);   //Send register START location
   SPI.transfer(0x00);   //how many registers to write to
-  SPI.transfer(0xpauseTime);   //0x49  SYS  
+  SPI.transfer(0x50);   //0x49  SYS  
   delay(5);
   SPI.transfer(0x00);   //send NOPS
   SPI.transfer(0x00);
