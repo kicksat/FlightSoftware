@@ -20,7 +20,7 @@ class KickSat_Sensor
 {
   public:
     KickSat_Sensor(uint8_t adc_rst);
-    void operate(String board, float* dataBuffer);
+    void operate(String board, float* dataBuffer, uint8_t SenMode);
     void burstWriteRegs(byte start, uint8_t len, byte* data);
     void startADC();
     void stopADC();
@@ -41,6 +41,7 @@ class KickSat_Sensor
     uint32_t sensor1_count = 0;
     uint32_t sensor2_count = 0;
     uint32_t sensor3_count = 0;
+    uint8_t pauseTime = 50uint8_t SenMode = 0;;
 
   private:
     uint8_t _ADCchipSelect;
