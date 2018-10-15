@@ -22,6 +22,28 @@ KickSat_Sensor::KickSat_Sensor(uint8_t adc_rst) {
   digitalWrite(XTB_RESET, HIGH);
 }
 
+void KickSat_Sensor::initialize(){
+  _ADCchipSelect = SPI_CS_XTB1
+  wakeADC();
+  delay(200);
+  resetADC();
+  delay(200);
+  shutdownADC();
+  _ADCchipSelect = SPI_CS_XTB2
+  wakeADC();
+  delay(200);
+  resetADC();
+  delay(200);
+  shutdownADC(); 
+  _ADCchipSelect = SPI_CS_XTB3
+  wakeADC();
+  delay(200);
+  resetADC();
+  delay(200);
+  shutdownADC(); 
+}
+
+
 //this is the main function for using the sensor. this function will execute commands on the sensor board's ADC based on the config writeable.
 void KickSat_Sensor::operate(String board, float* dataBuffer) {
   if (board== "xtb1"){

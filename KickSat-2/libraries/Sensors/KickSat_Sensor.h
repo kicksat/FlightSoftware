@@ -30,8 +30,7 @@ class KickSat_Sensor
     void regReadout();
     void GPIO(byte pins, byte state);
     void writeReg(byte start, byte value);
-    // void sensorPacket(byte* One, byte* Two, byte* Three);
-    // void sensorStream(String board, int length, byte* stream);
+    void initialize();
     float getFloat(byte packet[], uint8_t i);
     float readTemp();
     float readPins(byte pinNums, byte idacPin, byte vbPin, int wait, int bufflen, byte idacMag);    
@@ -39,13 +38,6 @@ class KickSat_Sensor
     float dataConvert( byte a, byte b, byte c);   
     float voltageApplied;
     String board;
-    // File datafile;
-    // struct sensorPayload {
-    //   byte one[sensor1_BUF_LEN*4];
-    //   byte two[sensor2_BUF_LEN*4];
-    //   byte three[sensor3_BUF_LEN*4];
-    // };
-    // struct sensorPayload dataPac;
 
   private:
     uint8_t _ADCchipSelect;
