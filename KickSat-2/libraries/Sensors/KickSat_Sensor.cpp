@@ -106,7 +106,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     voltageApplied = 0;
     memcpy(dataBuffer, dataOut, sizeof(dataOut));
     sensor1_count++; 
-    #ifdef DEBUG
+    #ifdef KICKSAT_DEBUG
       for (uint8_t i=0; i<SENSOR1_BUF_LEN; i++){      
         SerialUSB.println(dataOut[i],8);
       }
@@ -134,7 +134,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     GPIO(0x00, 0x00);
     memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
     sensor2_count++; 
-    #ifdef DEBUG
+    #ifdef KICKSAT_DEBUG
       for (uint8_t i=0; i<SENSOR2_BUF_LEN; i++){      
         SerialUSB.println(dataOut[i],8);
       }
@@ -168,7 +168,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     GPIO(0x00, 0x00);
     memcpy(dataBuffer, dataOut, sizeof(dataOut));  
     sensor3_count++;     
-    #ifdef DEBUG
+    #ifdef KICKSAT_DEBUG
      for (uint8_t i=0; i<SENSOR3_BUF_LEN; i++){      
        SerialUSB.println(dataOut[i],8);
      }
