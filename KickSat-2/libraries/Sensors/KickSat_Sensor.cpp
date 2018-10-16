@@ -72,7 +72,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     float dataOut[SENSOR1_BUF_LEN];
     float dataTemp[12];
     //DEVICE B
-    dataOut[0] =      readTemp();
+    dataOut[0] =     readTemp();
     GPIO(0x00,0x02);
     dataTemp[0] =    hallGen(8, 4, 0x04, 5, 9, pauseTime);
     GPIO(0x00,0x00);
@@ -99,31 +99,45 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     dataOut[6]  = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE D
-    dataTemp[10] =    hallGen(10, 12, 0x04, 11, 12, pauseTime);
-    dataTemp[11] =    hallGen(11, 12, 0x04, 10, 12, pauseTime);
+    dataTemp[10] =   hallGen(10, 12, 0x04, 11, 12, pauseTime);
+    dataTemp[11] =   hallGen(11, 12, 0x04, 10, 12, pauseTime);
     dataOut[7]   = ((dataTemp[10]+dataTemp[11])/2);
     dataOut[8]   = (voltageApplied/4);
     voltageApplied = 0;
     memcpy(dataBuffer, dataOut, sizeof(dataOut));
     sensor1_count++; 
-    #ifdef KICKSAT_DEBUG
+    #ifdef KICKSAT_DEBUG      
+      SerialUSB.println("Hall Deivce B (phases)");
+      for (uint8_t i=0; i<4; i++){      
+        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
+      } SerialUSB.println("");
+      SerialUSB.println("Hall Deivce A (phases)");
+      for (uint8_t i=4; i<8; i++){      
+        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
+      } SerialUSB.println("");
+      SerialUSB.println("Hall Deivce C (phases)");
+      for (uint8_t i=8; i<10; i++){      
+        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
+      } SerialUSB.println("");
+      for (uint8_t i=10; i<12; i++){      
+        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
+      } SerialUSB.println("");
+      SerialUSB.println("Hall Output Data");
       for (uint8_t i=0; i<SENSOR1_BUF_LEN; i++){      
         SerialUSB.println(dataOut[i],8);
-      }
-      SerialUSB.println("Phases...");
-      for (uint8_t i=0; i<12; i++){      
-        SerialUSB.println(dataTemp[i],8);
-      }
+      } SerialUSB.println("");
     #endif    
   }
   else if (board=="xtb2"){ //T.HEUSER devices
     float dataOut[SENSOR2_BUF_LEN];
-    dataOut[0] = readPins(0x6C, 0xF6, 0x80, pauseTime, 50, 0x03);
-    dataOut[1] = readPins(0x3C, 0xF3, 0x80, pauseTime, 50, 0x03);
-    dataOut[2] = readPins(0x2C, 0xF6, 0x80, pauseTime, 50, 0x03);
+    dataOut[0] = readPins(0x6C, 0xF6, 0x80, pauseTime, 50, 0x01);
+    dataOut[1] = readPins(0x3C, 0xF3, 0x80, pauseTime, 50, 0x01);
+    dataOut[2] = readPins(0x2C, 0xF6, 0x80, pauseTime, 50, 0x01);
     GPIO(0x00, 0x04);
-    dataOut[3] = readPins(0x1A, 0xF1, 0x80, pauseTime, 50, 0x03);
+    dataOut[3] = readPins(0x1A, 0xF1, 0x80, pauseTime, 50, 0x01);
     GPIO(0x00, 0x00);
+    // GPIO(0x00, 0x08);
+    //dataOut[7] = readPins(0x0B, 0xF0, 0x80, pauseTime, 50, 0x01);
     delay(pauseTime);
     GPIO(0x00, 0x02);
     dataOut[4] = readPins(0x49, 0xF4, 0x80, pauseTime, 50, 0x01);
