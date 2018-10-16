@@ -481,9 +481,6 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   float reading = dataConvert(inByteA,inByteB,inByteC);
   float voltageApp = dataConvert(inByteD,inByteE,inByteF);
   voltageApplied += voltageApp; 
-  #ifdef KICKSAT_DEBUG
-  SerialUSB.println(reading,8);
-  #endif
   return reading;
 }
 
