@@ -59,6 +59,7 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     pauseTime = 300;
   } else if (SenMode== 3){
   } else if (SenMode== 4){
+  	hallCurr = 0x04;
   }
   
    
@@ -74,33 +75,33 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     //DEVICE B
     dataOut[0] =     readTemp();
     GPIO(0x00,0x02);
-    dataTemp[0] =    hallGen(8, 4, 0x04, 5, 9, pauseTime);
+    dataTemp[0] =    hallGen(8, 4, hallCurr, 5, 9, pauseTime);
     GPIO(0x00,0x00);
-    dataTemp[1] =    hallGen(9, 5, 0x04, 8, 4, pauseTime);
-    dataTemp[2] = -1*hallGen(8, 4, 0x04, 9, 5, pauseTime);
+    dataTemp[1] =    hallGen(9, 5, hallCurr, 8, 4, pauseTime);
+    dataTemp[2] = -1*hallGen(8, 4, hallCurr, 9, 5, pauseTime);
     GPIO(0x00,0x01);
-    dataTemp[3] = -1*hallGen(9, 5, 0x04, 4, 8, pauseTime); 
+    dataTemp[3] = -1*hallGen(9, 5, hallCurr, 4, 8, pauseTime); 
     GPIO(0x00,0x00);  
     dataOut[1]  = ((dataTemp[0]+dataTemp[1]+dataTemp[2]+dataTemp[3])/4);
     dataOut[2]  = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE A
-    dataTemp[4] =    hallGen(0, 2, 0x04, 3, 1, pauseTime);
-    dataTemp[5] =    hallGen(1, 3, 0x04, 0, 2, pauseTime);
-    dataTemp[6] = -1*hallGen(0, 2, 0x04, 1, 3, pauseTime);
-    dataTemp[7] = -1*hallGen(1, 3, 0x04, 2, 0, pauseTime);   
+    dataTemp[4] =    hallGen(0, 2, hallCurr, 3, 1, pauseTime);
+    dataTemp[5] =    hallGen(1, 3, hallCurr, 0, 2, pauseTime);
+    dataTemp[6] = -1*hallGen(0, 2, hallCurr, 1, 3, pauseTime);
+    dataTemp[7] = -1*hallGen(1, 3, hallCurr, 2, 0, pauseTime);   
     dataOut[3]  = ((dataTemp[4]+dataTemp[5]+dataTemp[6]+dataTemp[7])/4);
     dataOut[4]  = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE C
-    dataTemp[8] =    hallGen(7, 12, 0x04, 6, 12, pauseTime);
-    dataTemp[9] =    hallGen(12, 6, 0x04, 7, 12, pauseTime);
+    dataTemp[8] =    hallGen(7, 12, hallCurr, 6, 12, pauseTime);
+    dataTemp[9] =    hallGen(12, 6, hallCurr, 7, 12, pauseTime);
     dataOut[5]  = ((dataTemp[8]+dataTemp[9])/2);
     dataOut[6]  = (voltageApplied/4);
     voltageApplied = 0;
     //DEVICE D
-    dataTemp[10] =   hallGen(10, 12, 0x04, 11, 12, pauseTime);
-    dataTemp[11] =   hallGen(11, 12, 0x04, 10, 12, pauseTime);
+    dataTemp[10] =   hallGen(10, 12, hallCurr, 11, 12, pauseTime);
+    dataTemp[11] =   hallGen(11, 12, hallCurr, 10, 12, pauseTime);
     dataOut[7]   = ((dataTemp[10]+dataTemp[11])/2);
     dataOut[8]   = (voltageApplied/4);
     voltageApplied = 0;
@@ -123,10 +124,11 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
         SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
       } SerialUSB.println("");
       SerialUSB.println("Hall Output Data");
-      for (uint8_t i=0; i<SENSOR1_BUF_LEN; i++){      
-        SerialUSB.println(dataOut[i],8);
-      } SerialUSB.println("");
-    #endif    
+      for (uint8_t i=0; i<4; i+=2){      
+        SerialUSB.print(dataOut[i],8), SerialUSB.print(" Vapp: ");
+        SerialUSB.println(dataOut[i+1],8);
+      }
+    #endif     
   }
   else if (board=="xtb2"){ //T.HEUSER devices
     float dataOut[SENSOR2_BUF_LEN];
