@@ -156,9 +156,6 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
   }
   else if (board=="xtb3"){ //M.HOLLIDAY devices
     float dataOut[SENSOR3_BUF_LEN];
-    #ifdef KICKSAT_DEBUG
-    SerialUSB.println(board);
-    #endif
     dataOut[0] = readTemp();     
     dataOut[1] = readPins(0x7C, 0xF7, 0x80, pauseTime, 50, 0x03);
     dataOut[2] = readPins(0x4C, 0xF4, 0x80, pauseTime, 50, 0x03);
