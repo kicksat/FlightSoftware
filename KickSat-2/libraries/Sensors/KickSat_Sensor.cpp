@@ -466,7 +466,32 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   inByteA = SPI.transfer(0x00);
   inByteB = SPI.transfer(0x00);
   inByteC = SPI.transfer(0x00);
-  regReadout();
+  
+  #ifdef KICKSAT_HALL_DEBUG
+  byte aa, bb, cc, dd, ee, ff;
+  SPI.transfer(0x42);   //Send register START location
+  SPI.transfer(0x00);   //0x42  INPMUX 
+  SPI.transfer((inp << 4) | 12);   //how many registers to write to
+  delay(10);
+  SPI.transfer(0x00);
+  SPI.transfer(0x12);     //transfer read command  
+  aa = SPI.transfer(0x00);
+  bb = SPI.transfer(0x00);
+  cc = SPI.transfer(0x00);
+  SerialUSB.print("INPMUX_P: ");SerialUSB.print(dataConvert(aa,bb,cc),8);
+  delay(delayT);
+  SPI.transfer(0x42);   //Send register START location
+  SPI.transfer(0x00);   //0x42  INPMUX 
+  SPI.transfer((12 << 4) | inn);   //how many registers to write to
+  delay(10);
+  SPI.transfer(0x00);
+  SPI.transfer(0x12);     //transfer read command  
+  dd = SPI.transfer(0x00);
+  ee = SPI.transfer(0x00);
+  ff = SPI.transfer(0x00);
+  SerialUSB.print(" INPMUX_N: ");SerialUSB.println(dataConvert(dd,ee,ff),8);
+  #endif
+
   SPI.transfer(0x42);   //Send register START location
   SPI.transfer(0x00);   //0x42  INPMUX 
   SPI.transfer(vapp);   //how many registers to write to
@@ -481,6 +506,10 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   float reading = dataConvert(inByteA,inByteB,inByteC);
   float voltageApp = dataConvert(inByteD,inByteE,inByteF);
   voltageApplied += voltageApp; 
+  #ifdef KICKSAT_DEBUG
+  SerialUSB.print("Hall Read: "),SerialUSB.println(reading,8);
+  SerialUSB.print("Hall Vapp: "),SerialUSB.println(voltageApplied,8);
+  #endif
   return reading;
 }
 
