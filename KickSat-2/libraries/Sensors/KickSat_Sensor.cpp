@@ -7,6 +7,9 @@
 #include <KickSat_Sensor.h>
 #include <SPI.h>
 
+// #define KICKSAT_DEBUG
+// #define KICKSAT_HALL_DEBUG
+
 //constructor, sets up this sensor object with the corresponding config file
 KickSat_Sensor::KickSat_Sensor(uint8_t adc_rst) {
   pinMode(SPI_CS_XTB1, OUTPUT);
@@ -51,6 +54,8 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     _ADCchipSelect = SPI_CS_XTB3;
   }
 
+  byte hallCurr = 0x03;
+
   if (SenMode == 0){
     pauseTime = 50;
   } else if (SenMode == 1){
@@ -61,95 +66,48 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
   } else if (SenMode== 4){
   	hallCurr = 0x04;
   }
-  
+  #ifdef KICKSAT_DEBUG
+  hallCurr = 0x04;
+  #endif
    
   wakeADC();
-  delay(1);
+  delay(10);
   resetADC();
-  delay(1);
+  delay(10);
   startADC();
-  delay(5);
+  delay(10);
   if (board== "xtb1"){ //H.ALPERT devices
     float dataOut[SENSOR1_BUF_LEN];
     float dataTemp[12];
     //DEVICE B
     dataOut[0] =     readTemp();
-    GPIO(0x00,0x02);
-    dataTemp[0] =    hallGen(8, 4, hallCurr, 5, 9, pauseTime);
-    GPIO(0x00,0x00);
-    dataTemp[1] =    hallGen(9, 5, hallCurr, 8, 4, pauseTime);
-    dataTemp[2] = -1*hallGen(8, 4, hallCurr, 9, 5, pauseTime);
-    GPIO(0x00,0x01);
-    dataTemp[3] = -1*hallGen(9, 5, hallCurr, 4, 8, pauseTime); 
-    GPIO(0x00,0x00);  
-    dataOut[1]  = ((dataTemp[0]+dataTemp[1]+dataTemp[2]+dataTemp[3])/4);
-    dataOut[2]  = (voltageApplied/4);
-    voltageApplied = 0;
     //DEVICE A
-    dataTemp[4] =    hallGen(0, 2, hallCurr, 3, 1, pauseTime);
-    dataTemp[5] =    hallGen(1, 3, hallCurr, 0, 2, pauseTime);
-    dataTemp[6] = -1*hallGen(0, 2, hallCurr, 1, 3, pauseTime);
-    dataTemp[7] = -1*hallGen(1, 3, hallCurr, 2, 0, pauseTime);   
-    dataOut[3]  = ((dataTemp[4]+dataTemp[5]+dataTemp[6]+dataTemp[7])/4);
-    dataOut[4]  = (voltageApplied/4);
+    dataOut[1] =    hallGen(0, 2, hallCurr, 3, 1, pauseTime); //4
+    dataOut[2] = -1*hallGen(0, 2, hallCurr, 1, 3, pauseTime); //6
+    dataOut[3]  = (voltageApplied/2); //4
     voltageApplied = 0;
     //DEVICE C
-    dataTemp[8] =    hallGen(7, 12, hallCurr, 6, 12, pauseTime);
-    dataTemp[9] =    hallGen(12, 6, hallCurr, 7, 12, pauseTime);
-    dataOut[5]  = ((dataTemp[8]+dataTemp[9])/2);
-    dataOut[6]  = (voltageApplied/4);
-    voltageApplied = 0;
-    //DEVICE D
-    dataTemp[10] =   hallGen(10, 12, hallCurr, 11, 12, pauseTime);
-    dataTemp[11] =   hallGen(11, 12, hallCurr, 10, 12, pauseTime);
-    dataOut[7]   = ((dataTemp[10]+dataTemp[11])/2);
-    dataOut[8]   = (voltageApplied/4);
+    dataOut[4] =    hallGen(7, 12, hallCurr, 6, 12, pauseTime); //8
+    dataOut[5]  = (voltageApplied); //6
     voltageApplied = 0;
     memcpy(dataBuffer, dataOut, sizeof(dataOut));
-    sensor1_count++; 
     #ifdef KICKSAT_DEBUG      
-      SerialUSB.println("Hall Deivce B (phases)");
-      for (uint8_t i=0; i<4; i++){      
-        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
-      } SerialUSB.println("");
-      SerialUSB.println("Hall Deivce A (phases)");
-      for (uint8_t i=4; i<8; i++){      
-        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
-      } SerialUSB.println("");
-      SerialUSB.println("Hall Deivce C (phases)");
-      for (uint8_t i=8; i<10; i++){      
-        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
-      } SerialUSB.println("");
-      for (uint8_t i=10; i<12; i++){      
-        SerialUSB.print(dataTemp[i],8),SerialUSB.print("\t");
-      } SerialUSB.println("");
       SerialUSB.println("Hall Output Data");
-      for (uint8_t i=0; i<4; i+=2){      
-        SerialUSB.print(dataOut[i],8), SerialUSB.print(" Vapp: ");
-        SerialUSB.println(dataOut[i+1],8);
-      }
+      for (uint8_t i=0; i<SENSOR1_BUF_LEN; i+=2){      
+        SerialUSB.print(dataOut[i],8), SerialUSB.print(" ");
+      } SerialUSB.println("");
     #endif     
   }
   else if (board=="xtb2"){ //T.HEUSER devices
     float dataOut[SENSOR2_BUF_LEN];
     dataOut[0] = readPins(0x6C, 0xF6, 0x80, pauseTime, 50, 0x01);
-    dataOut[1] = readPins(0x3C, 0xF3, 0x80, pauseTime, 50, 0x01);
-    dataOut[2] = readPins(0x2C, 0xF6, 0x80, pauseTime, 50, 0x01);
-    GPIO(0x00, 0x04);
-    dataOut[3] = readPins(0x1A, 0xF1, 0x80, pauseTime, 50, 0x01);
-    GPIO(0x00, 0x00);
-    // GPIO(0x00, 0x08);
-    //dataOut[7] = readPins(0x0B, 0xF0, 0x80, pauseTime, 50, 0x01);
-    delay(pauseTime);
-    GPIO(0x00, 0x02);
-    dataOut[4] = readPins(0x49, 0xF4, 0x80, pauseTime, 50, 0x01);
-    GPIO(0x00, 0x00);
-    dataOut[5] = readPins(0x5C, 0xF5, 0x80, pauseTime, 50, 0x01);
+    dataOut[1] = readPins(0x2C, 0xF6, 0x80, pauseTime, 50, 0x01); //2
+    dataOut[2] = readPins(0x5C, 0xF5, 0x80, pauseTime, 50, 0x01); //5
     GPIO(0x00, 0x01);
-    dataOut[6] = readPins(0x78, 0xF7, 0x80, pauseTime, 50, 0x01);
-    GPIO(0x00, 0x00);
+    dataOut[3] = readPins(0x78, 0xF7, 0x80, pauseTime, 50, 0x01); //6
+    GPIO(0x00, 0x08);
+    dataOut[4] = readPins(0x0B, 0xF0, 0x80, pauseTime, 50, 0x01); //7
     memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
-    sensor2_count++; 
     #ifdef KICKSAT_DEBUG
       for (uint8_t i=0; i<SENSOR2_BUF_LEN; i++){      
         SerialUSB.println(dataOut[i],8);
@@ -159,35 +117,37 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
   else if (board=="xtb3"){ //M.HOLLIDAY devices
     float dataOut[SENSOR3_BUF_LEN];
     dataOut[0] = readTemp();     
-    dataOut[1] = readPins(0x7C, 0xF7, 0x80, pauseTime, 50, 0x03);
-    dataOut[2] = readPins(0x4C, 0xF4, 0x80, pauseTime, 50, 0x03);
-    dataOut[3] = readPins(0x3C, 0xF3, 0x80, pauseTime, 50, 0x03);
-    dataOut[4] = readPins(0x2C, 0xF2, 0x80, pauseTime, 50, 0x03);
-    readPins(0xCC, 0xFF, 0x80, 20, 1, 0x01);
+    dataOut[1] = readPins(0x7C, 0xF7, 0x98, pauseTime, 50, 0x03);
+    dataOut[2] = readPins(0x4C, 0xF4, 0x80, pauseTime, 50, 0x03); //biased
+    dataOut[3] = readPins(0x3C, 0xF3, 0x80, pauseTime, 50, 0x03); //biased
+    dataOut[4] = readPins(0x2C, 0xF2, 0x98, pauseTime, 50, 0x03);
+    readPins(0xCC, 0xFF, 0x98, 20, 1, 0x01);
     GPIO(0x00, 0x01);
-    dataOut[5] = readPins(0x58, 0xF5, 0x80, pauseTime, 50, 0x01);
+    dataOut[5] = readPins(0x58, 0xF5, 0x98, pauseTime, 50, 0x01);
     GPIO(0x00, 0x00);
     delay(pauseTime);
     GPIO(0x00, 0x02);
-    dataOut[6] = readPins(0x59, 0xF5, 0x80, pauseTime, 50, 0x01);
+    dataOut[6] = readPins(0x59, 0xF5, 0x98, pauseTime, 50, 0x01);
     GPIO(0x00, 0x00);
     delay(pauseTime);
     GPIO(0x00, 0x04);
-    dataOut[7] = readPins(0x0A, 0xF0, 0x80, pauseTime, 50, 0x01);
+    dataOut[7] = readPins(0x0A, 0xF0, 0x98, pauseTime, 50, 0x01);
     GPIO(0x00, 0x00);
     delay(pauseTime);
     GPIO(0x00, 0x08);
-    dataOut[8] = readPins(0x0B, 0xF0, 0x80, pauseTime, 50, 0x01);
+    dataOut[8] = readPins(0x0B, 0xF0, 0x98, pauseTime, 50, 0x01);
     GPIO(0x00, 0x00);
+    dataOut[9] = readPins(0x1C, 0xF0, 0x9A, pauseTime, 50, 0x00);
     memcpy(dataBuffer, dataOut, sizeof(dataOut));  
-    sensor3_count++;     
     #ifdef KICKSAT_DEBUG
      for (uint8_t i=0; i<SENSOR3_BUF_LEN; i++){      
        SerialUSB.println(dataOut[i],8);
      }
     #endif    
-  }  
+  }
+  if (board != "xtb3"){ 
   shutdownADC();  
+  }
 }
 
 //==================== Register Commands ====================//
@@ -198,7 +158,7 @@ void KickSat_Sensor::burstWriteRegs(byte start, uint8_t len, byte* data) {
   #ifdef KICKSAT_DEBUG
   SerialUSB.println("------Writing ADC Config------");
   #endif
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   SPI.transfer(start);   //Send register START location
   SPI.transfer(len - 1);   //how many registers to write to (must be len-1 as the ADC considers 0x00 to be 1, 0x01 is 2, ect)
@@ -214,7 +174,7 @@ void KickSat_Sensor::startADC() {
   #ifdef KICKSAT_DEBUG
   SerialUSB.println("------Starting ADC------");
   #endif
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x0A); //send stop byte
@@ -228,7 +188,7 @@ void KickSat_Sensor::stopADC() {
   #ifdef KICKSAT_DEBUG
   SerialUSB.println("------Stopping ADC------");
   #endif
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x0A); //send stop byte
@@ -242,7 +202,7 @@ void KickSat_Sensor::resetADC() {
   #ifdef KICKSAT_DEBUG
   SerialUSB.println("------Resetting ADC------");
   #endif
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x06); //send reset byte
@@ -258,7 +218,7 @@ void KickSat_Sensor::shutdownADC() {
   #ifdef KICKSAT_DEBUG
   SerialUSB.println("------Shutting Down ADC------");
   #endif
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x04); //send shutdown byte
@@ -271,7 +231,7 @@ void KickSat_Sensor::wakeADC()  {
   #ifdef KICKSAT_DEBUG
   SerialUSB.println("------Waking ADC------");
   #endif
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x02); //send wakeup byte
@@ -280,7 +240,7 @@ void KickSat_Sensor::wakeADC()  {
 }
 
 void KickSat_Sensor::GPIO(byte pins, byte state){
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1); 
   SPI.transfer(0x50);  
@@ -292,7 +252,7 @@ void KickSat_Sensor::GPIO(byte pins, byte state){
 }
 
 void KickSat_Sensor::writeReg(byte start, byte value){
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1); 
   SPI.transfer(start);  
@@ -306,7 +266,7 @@ void KickSat_Sensor::regReadout(){
   #ifdef KICKSAT_DEBUG
   SerialUSB.println("------Register Readout------");
   #endif
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);
   SPI.transfer(0x20);   //Send register START location
@@ -367,7 +327,7 @@ float KickSat_Sensor::dataConvert( byte a, byte b, byte c){
           and waits for 5 ms between measurements
 */
 float KickSat_Sensor::readPins(byte pinNums, byte idacPin, byte vbPin, int wait, int bufflen, byte idacMag){
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   byte pinDat1, pinDat2, pinDat3 = 0;
   float pinData = 0; 
   digitalWrite(_ADCchipSelect, LOW);
@@ -399,7 +359,7 @@ float KickSat_Sensor::readPins(byte pinNums, byte idacPin, byte vbPin, int wait,
 }
 
 float KickSat_Sensor::readTemp() {
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   byte aa, bb, cc = 0;
   digitalWrite(_ADCchipSelect, LOW);
   delayMicroseconds(1);   
@@ -434,7 +394,7 @@ float KickSat_Sensor::readTemp() {
 }
 
 float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t idacMux, uint8_t vb, int delayT) {
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE1));
   byte inByteA, inByteB, inByteC, vbPin, inByteD, inByteE, inByteF = 0;
   byte inpMux = ((inp << 4) | inn);
   byte vapp = (idacMux <<4) | vb;
@@ -474,7 +434,7 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   SPI.transfer(0x42);   //Send register START location
   SPI.transfer(0x00);   //0x42  INPMUX 
   SPI.transfer((inp << 4) | 12);   //how many registers to write to
-  delay(10);
+  delay(100);
   SPI.transfer(0x00);
   SPI.transfer(0x12);     //transfer read command  
   aa = SPI.transfer(0x00);
@@ -485,7 +445,7 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   SPI.transfer(0x42);   //Send register START location
   SPI.transfer(0x00);   //0x42  INPMUX 
   SPI.transfer((12 << 4) | inn);   //how many registers to write to
-  delay(10);
+  delay(100);
   SPI.transfer(0x00);
   SPI.transfer(0x12);     //transfer read command  
   dd = SPI.transfer(0x00);
@@ -510,7 +470,7 @@ float KickSat_Sensor::hallGen(uint8_t inp, uint8_t inn, byte idacMag, uint8_t id
   voltageApplied += voltageApp; 
   #ifdef KICKSAT_DEBUG
   SerialUSB.print("Hall Read: "),SerialUSB.println(reading,8);
-  SerialUSB.print("Hall Vapp: "),SerialUSB.println(voltageApplied,8);
+  SerialUSB.print("Hall Vapp: "),SerialUSB.println(voltageApplied/4,8);
   #endif
   return reading;
 }
