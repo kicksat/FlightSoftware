@@ -28,12 +28,6 @@ void KickSat_Sensor::initialize(){
   delay(1);
   resetADC();
   delay(1);
-  shutdownADC();
-  _ADCchipSelect = SPI_CS_XTB2;
-  wakeADC();
-  delay(1);
-  resetADC();
-  delay(1);
   shutdownADC(); 
   _ADCchipSelect = SPI_CS_XTB3;
   wakeADC();
