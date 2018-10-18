@@ -42,8 +42,6 @@ void KickSat_Sensor::initialize(){
 void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
   if (board== "xtb1"){
     _ADCchipSelect = SPI_CS_XTB1;
-  } else if (board== "xtb2"){
-    _ADCchipSelect = SPI_CS_XTB2;
   } else if (board== "xtb3"){
     _ADCchipSelect = SPI_CS_XTB3;
   }
@@ -77,12 +75,13 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
     dataOut[0] =     readTemp();
     //DEVICE A
     dataOut[1] =    hallGen(0, 2, hallCurr, 3, 1, pauseTime); //4
-    dataOut[2] = -1*hallGen(0, 2, hallCurr, 1, 3, pauseTime); //6
-    dataOut[3]  = (voltageApplied/2); //4
+    dataOut[1] += -1*hallGen(0, 2, hallCurr, 1, 3, pauseTime); //6
+    dataOut[1] = dataOut[1]/2.0;
+    dataOut[2]  = (voltageApplied/2); //4
     voltageApplied = 0;
     //DEVICE C
-    dataOut[4] =    hallGen(7, 12, hallCurr, 6, 12, pauseTime); //8
-    dataOut[5]  = (voltageApplied); //6
+    dataOut[3] =    hallGen(7, 12, hallCurr, 6, 12, pauseTime); //8
+    dataOut[4]  = (voltageApplied); //6
     voltageApplied = 0;
     memcpy(dataBuffer, dataOut, sizeof(dataOut));
     #ifdef KICKSAT_DEBUG      
@@ -91,22 +90,6 @@ void KickSat_Sensor::operate(String board, float* dataBuffer, uint8_t SenMode) {
         SerialUSB.print(dataOut[i],8), SerialUSB.print(" ");
       } SerialUSB.println("");
     #endif     
-  }
-  else if (board=="xtb2"){ //T.HEUSER devices
-    float dataOut[SENSOR2_BUF_LEN];
-    dataOut[0] = readPins(0x6C, 0xF6, 0x80, pauseTime, 50, 0x01);
-    dataOut[1] = readPins(0x2C, 0xF6, 0x80, pauseTime, 50, 0x01); //2
-    dataOut[2] = readPins(0x5C, 0xF5, 0x80, pauseTime, 50, 0x01); //5
-    GPIO(0x00, 0x01);
-    dataOut[3] = readPins(0x78, 0xF7, 0x80, pauseTime, 50, 0x01); //6
-    GPIO(0x00, 0x08);
-    dataOut[4] = readPins(0x0B, 0xF0, 0x80, pauseTime, 50, 0x01); //7
-    memcpy(dataBuffer, dataOut, sizeof(dataOut)); 
-    #ifdef KICKSAT_DEBUG
-      for (uint8_t i=0; i<SENSOR2_BUF_LEN; i++){      
-        SerialUSB.println(dataOut[i],8);
-      }
-    #endif    
   }
   else if (board=="xtb3"){ //M.HOLLIDAY devices
     float dataOut[SENSOR3_BUF_LEN];
